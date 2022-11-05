@@ -1,0 +1,26 @@
+<!-- <p>
+  {{icons|json}}
+</p> -->
+
+<button mat-icon-button [matMenuTriggerFor]="iconsMenu" (click)="$event.stopPropagation()" #menuTrigger="matMenuTrigger">
+  <mat-icon>{{selectedIcon}}</mat-icon>
+</button>
+<mat-menu #iconsMenu="matMenu" class="my-menu"  [overlapTrigger]="false">
+  <div (click)="$event.stopPropagation()">
+    <div class="row">
+      <div class="col-xs-4">
+        <button *ngFor="let icon of icons.categories" style="width: 100%" mat-raised-button color="primary" (click)="selectIconCategory(icon)">
+          {{icon.name}}
+        </button>        
+      </div>
+      <div class="col-xs-8">
+        <button *ngFor="let icon of selectedCategory.icons" mat-button (click)="selectIcon(icon);menuTrigger.closeMenu()">
+          <mat-icon>{{icon.ligature}}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</mat-menu>
+
+
+

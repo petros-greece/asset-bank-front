@@ -1,0 +1,24 @@
+<button *ngIf="label"
+  mat-button 
+  [matMenuTriggerFor]="menu"
+  [style.backgroundColor]="color">{{label}}
+</button>
+
+<button *ngIf="icon" mat-icon-button 
+  [matMenuTriggerFor]="menu"
+  [style.backgroundColor]="color">
+  <mat-icon>{{icon}}</mat-icon>
+</button> 
+
+  <mat-menu #menu="matMenu">
+  <div (click)="$event.stopPropagation()">
+      <input type="hidden"
+      colorPicker="undefined"
+      [cpCmykEnabled]="true"
+      [cpOutputFormat]="'rgba'" 
+      [cpDialogDisplay]="'inline'" 
+      [cpToggle]="true"
+      [cpDisableInput]="true"
+      (colorPickerChange)="onColorChange($event);"/>
+  </div>
+</mat-menu>

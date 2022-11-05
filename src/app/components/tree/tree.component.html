@@ -1,0 +1,175 @@
+<div class="pad-l-md pad-r-md my-scroll" style="overflow-y: scroll;height: 90vh;" fxFlex="35">
+   
+  <div class="row" class="pad-all-sm">
+    <button mat-icon-button (click)="edit=!edit">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button (click)="toggleTree()">
+      <mat-icon>{{openAll ? 'unfold_less' : 'unfold_more'}}</mat-icon>
+    </button>
+    <button mat-raised-button color="primary" (click)="addNewCategory()" class="mrgn-l-sm">Add Category</button>
+    <button 
+      *ngIf="!coreService.isProd"
+      class="mrgn-l-sm"
+      mat-raised-button color="primary" (click)="downloadConfig()">
+      Download Config
+    </button>
+  </div>
+
+
+  <ng-container *ngTemplateOutlet="categoryTree; context: { $implicit: {cats: categories, parent: {}} }"></ng-container>
+
+  <ng-template  #categoryTree let-categories>
+
+    <mat-accordion displayMode="flat" class="categories-accordeon" multi="true">
+      <mat-expansion-panel 
+        *ngFor="let category of categories.cats;index as i"
+        [hideToggle]="!category.childsNum"
+        [disabled]="!category.childsNum"
+        togglePosition="before">
+        
+        
+        <mat-expansion-panel-header style="overflow: visible;">
+          <mat-panel-title style="overflow: visible;">
+            <span [ngClass]="!category.childsNum ? 'hidden-indicator' : ''"></span>
+            <app-icons *ngIf="edit" 
+              [selectedIcon]="category.icon"
+              (onSelectIcon)="category.icon=$event"
+              >
+            </app-icons>
+            <mat-icon *ngIf="!edit" class="mrgn-r-sm">{{category.icon}}</mat-icon>
+            <div class="row" style="width: 100%;overflow: visible;">
+
+              <div class="col-xs-4 col-md-6">
+                <div class="top-7">
+
+                  <mat-form-field *ngIf="edit" (click)="$event.stopPropagation();">
+                    <mat-label>{{category.title}}</mat-label>
+                    <input matInput type="text" [(ngModel)]="category.title" (focus)="category.title === 'images' ? category.title = '' : ''">
+                  </mat-form-field>
+
+                  <span 
+                    *ngIf="!edit"
+                    style="cursor: pointer" 
+                    (click)="previewAssets(category, $event)">
+                    {{category.title}}
+                  </span>
+
+                  <span 
+                    style="display: inline-block;top:-13px;"
+                    *ngIf="category.files && category.files.length"
+                    class="mrgn-l-md"
+                    [matBadge]="category.files.length" 
+                    matBadgeSize="small" matBadgePosition="after">
+                  </span>
+ 
+                  <!-- <button mat-button
+                  *ngIf="category.files && category.files.length" 
+                  color="primary" 
+                  (click)="$event.stopPropagation();previewAssets(category)">
+                  View Assets
+                  ({{category?.files ? category.files.length : 0}})
+                </button> -->
+
+                  
+                </div>
+
+                
+
+              </div>
+ 
+              <div class="col-xs-8 col-md-6 end-xs">
+                <!-- <mat-icon>{{category.icon}}</mat-icon> -->
+
+                <button mat-button color="primary" (click)="$event.stopPropagation();openDropZone(category)">Add Assets</button>
+
+                <button mat-button mat-icon-button (click)="$event.stopPropagation();addChildToCategory(category);">
+                  <mat-icon>add_circle</mat-icon>
+                </button>
+               
+                <button
+                  [disabled]="(category.childsNum > 0) || (category?.files && (category?.files?.length !== 0))" 
+                  color="warn" 
+                  mat-button mat-icon-button (click)="removeCategory(categories.parent, i);">
+                  <mat-icon>remove_circle</mat-icon>
+                  <!--
+                  {{category.childsNum}} - {{category.files ? 'Yes' : 'Bo'}}
+                  -->
+                </button>
+
+              </div>
+
+    
+            </div>
+            
+          </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <mat-panel-description>	
+        <mat-progress-bar mode="indeterminate" *ngIf="!category.childs"></mat-progress-bar>
+      </mat-panel-description>
+      <ng-container *ngIf="category.childs">
+        <ng-container *ngTemplateOutlet=" categoryTree; context: { $implicit: {cats: category.childs, parent: category} }">
+        </ng-container>
+      </ng-container>
+      </mat-expansion-panel>
+
+    </mat-accordion>
+  
+  </ng-template>
+  
+  <button mat-raised-button color="primary" (click)="saveTree()" class="mrgn-t-sm">
+    Save
+    <mat-icon>save</mat-icon>
+  </button>
+
+</div>
+
+
+
+
+<ng-template #previewAssetsDialog>
+  
+  <div class="my-scroll" style="height: 75vh;">
+    <div class="row around-xs" style="margin: 0" [sortablejs]="selectedCategory.files">
+      <div *ngFor="let file of selectedCategory.files;index as i" 
+        class="pad-all-sm mrgn-all-sm gallery-card">
+
+      <div class="gallery-card-overlay">
+          <div style="width: 100%">
+            <button mat-icon-button (click)="previewAsset(file, i)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <!-- <button mat-icon-button>
+              <mat-icon>delete</mat-icon>
+            </button> -->
+          </div>
+
+        </div> 
+
+        <div style="background-size: contain;background-position: center;width: 150px;height: 150px;background-repeat: no-repeat;" 
+        [style.backgroundImage]="'url('+apiService.imgPath+(file | apiPath) +')'">
+        </div>
+
+      </div>
+    </div>
+  </div>
+    
+ 
+
+</ng-template>
+
+<ng-template #previewDialog>
+  <div style="height: 80vh" class="my-scroll">
+
+    <app-canvas 
+      *ngIf="this.selectedFilePath" 
+      [selectedFileIndex]="selectedFileIndex"
+      [category]="selectedCategory"
+      [selectedFilePath]="selectedFilePath">
+    </app-canvas>
+
+  </div>
+  <!-- <app-image-editor *ngIf="this.selectedFilePath" [selectedFilePath]="selectedFilePath"></app-image-editor> -->
+
+</ng-template>

@@ -1,0 +1,126 @@
+<div class="container-fluid" style="min-width: 50vw" class="mat-grey pad-all-xs">
+  <div class="row" style="margin: 0">
+    <div class="col-xs-4">
+      
+      <div>
+        <!-- <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();">
+          <mat-icon>refresh</mat-icon>
+        </button> -->
+      </div>
+
+  
+      <h4>Top Colors ({{info.colorCount}})</h4>
+      <span *ngFor="let color of info.colorObj;index as i">
+        <app-picker-menu
+          label="{{i+1}}" 
+          [color]="'rgb('+color[0]+')'" 
+          (onPickColor)="replaceUIColor($event.color, i)">
+        </app-picker-menu>
+      </span>
+
+      <h4 class="mrgn-t-md">Color Stops</h4>
+
+      <div *ngFor="let colorStop of colorStops;index as i">
+        <app-picker-menu
+          label="{{i+1}}" 
+          [color]="colorStop.color" 
+          (onPickColor)="colorStop.color = $event.color">
+        </app-picker-menu>
+        <mat-slider [min]="100" [max]="800" [(ngModel)]="colorStop.stop"></mat-slider>
+        <button mat-icon-button (click)="colorStops.splice(i, 1)">
+          <mat-icon>remove_circle</mat-icon>
+        </button>
+      </div>
+   <!-- {{colorStops|json}} -->
+
+      <button mat-icon-button (click)="colorStops.push({color: 'rgb(0,0,0)', stop: colorStops[colorStops.length-1].stop+100})">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+<!-- {{info|json}} -->
+
+      <div>
+        <button mat-raised-button color="accent" (click)="makeUIMultiColor()">
+          Apply Stops
+        </button>
+      </div> 
+
+      <!-- <h4 class="mrgn-t-md">Sciccors</h4>
+      
+      <button mat-raised-button color="accent" (click)="scissors()">scissors()</button> -->
+
+      <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
+      
+      <!-- <div class="row around-xs">
+        <button mat-raised-button color="primary" (click)="addEditedImageToCat()">
+          Add To {{category?.title}}
+        </button>
+        <button mat-raised-button color="primary" (click)="addEditedImageToCat(true)">
+          Add and close
+        </button>
+      </div> -->
+
+     
+    </div>
+     
+    <div class="col-xs-8" [style.background]="'rgb('+info.averageRgb.r+','+info.averageRgb.g+','+info.averageRgb.b+')'">
+      <div>
+      
+        <canvas id="canvas" [width]="width" [height]="height"></canvas>
+       
+
+        <div class="row middle-xs around-xs">
+          <app-picker-menu
+            [icon]="'brush'" 
+            [color]="brush.color" 
+            (onPickColor)="brush.color = $event.color;addBrush();">
+          </app-picker-menu>
+          <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="addBrush();"></mat-slider>
+          
+          <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="addBrush();" aria-label="Select an option">
+            <mat-button-toggle value="butt">
+              <mat-icon>rectangle</mat-icon>
+            </mat-button-toggle>
+            <mat-button-toggle value="round">
+              <mat-icon>lens</mat-icon>
+            </mat-button-toggle>
+            <mat-button-toggle value="square">
+              <mat-icon>square</mat-icon>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+      
+      
+          <button mat-icon-button (click)="addTextBox()">
+            <mat-icon>chat</mat-icon>
+          </button>
+      
+          <app-picker-menu
+            [icon]="'brush'" 
+            [color]="textbox.color" 
+            (onPickColor)="textbox.color = $event.color;">
+          </app-picker-menu>
+      
+          <app-picker-menu
+            [icon]="'format_paint'" 
+            [color]="textbox.background" 
+            (onPickColor)="textbox.background = $event.color;">
+          </app-picker-menu>
+      
+          <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize"></mat-slider>
+      
+          <button mat-icon-button (click)="removeSelection()">
+            <mat-icon>remove</mat-icon>
+          </button>
+      
+          <button mat-icon-button (click)="canvas.clear()">
+            <mat-icon>delete</mat-icon>
+          </button>
+      
+        </div>
+
+
+      </div>
+
+    </div>
+  </div> 
+
+ </div> 

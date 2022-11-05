@@ -1,0 +1,56 @@
+<button mat-raised-button color="primary" [matMenuTriggerFor]="userMenu"  *ngIf="!apiService.token">
+  Login
+</button>
+<mat-menu #userMenu="matMenu">
+  <button mat-menu-item (click)="openUserLoginDialog()">Login</button>
+  <button mat-menu-item (click)="openUserRegisterDialog()">Register</button>
+</mat-menu>
+
+<button mat-raised-button color="warn" (click)="userLogout()" *ngIf="apiService.token">
+  Logout
+</button>
+
+<ng-template #userLoginDialog>
+
+  <div class="col pad-all-sm">
+
+    <mat-form-field appearance="fill">
+      <mat-label>Email</mat-label>
+      <input matInput type="Email" [(ngModel)]="user.email">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="user.password">
+    </mat-form-field>
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="userLogin()">
+      Login
+    </button>
+
+  </div>
+
+</ng-template>
+
+<ng-template #userRegisterDialog>
+
+  <div class="col pad-all-sm">
+
+    <mat-form-field appearance="fill">
+      <mat-label>Email</mat-label>
+      <input matInput type="Email" [(ngModel)]="user.email">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="user.password">
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="userRegister()">
+      Register
+    </button>
+    
+  </div>
+
+
+
+</ng-template>

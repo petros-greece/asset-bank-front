@@ -1,0 +1,342 @@
+<div class="container-fluid" style="min-width: 50vw" class="mat-grey pad-all-xs">
+  <div class="row" style="margin: 0">
+    <div class="col-xs-4">
+      
+      <div>
+
+        <button mat-raised-button color="primary" (click)="downloadImage('jpeg')">
+          JPEG<mat-icon>download</mat-icon>
+        </button>
+        <button mat-raised-button color="primary" (click)="downloadImage('png')">
+          PNG<mat-icon>download</mat-icon>
+        </button>
+
+
+        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();">
+          <mat-icon>refresh</mat-icon>
+        </button>
+
+      </div>
+
+      <mat-accordion>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Confusion
+            </mat-panel-title>  
+          </mat-expansion-panel-header>   
+          <ng-template *ngTemplateOutlet="confusionTmpl"></ng-template>
+        </mat-expansion-panel>
+  
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Top Colors ({{info.colorCount}})
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="topColorsTmpl"></ng-template>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Color Stops
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="colorStopsTmpl"></ng-template>
+        </mat-expansion-panel>        
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Brightness
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="brightnessTmpl"></ng-template>
+        </mat-expansion-panel> 
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Pixelate
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="pixelateTmpl"></ng-template>
+        </mat-expansion-panel> 
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Mosaic
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="pixelateCircleTmpl"></ng-template>
+        </mat-expansion-panel>
+        
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              BNW
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="bnwTmpl"></ng-template>
+        </mat-expansion-panel>  
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Negatives
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="negativeTmpl"></ng-template>
+        </mat-expansion-panel> 
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Exposure
+            </mat-panel-title>   
+          </mat-expansion-panel-header>  
+          <ng-template *ngTemplateOutlet="exposureTmpl"></ng-template>
+        </mat-expansion-panel> 
+
+      </mat-accordion>      
+
+      <h4 class="mrgn-t-md">Sciccors</h4>
+          
+      <button mat-raised-button color="accent" (click)="scissors()">scissors()</button> 
+
+      <button mat-raised-button color="accent" (click)="mergeDataWithFabric()">
+        Merge Data
+      </button> 
+
+      
+
+      <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
+      
+      <div class="row around-xs" *ngIf="category">
+        <button mat-raised-button color="primary" (click)="addEditedImageToCat()">
+          Add To {{category?.title}}
+        </button>
+        <button mat-raised-button color="primary" (click)="addEditedImageToCat(true)">
+          Add and close
+        </button>
+      </div>
+
+      <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
+
+      <div class="row around-xs" *ngIf="selectedFileIndex !== undefined">
+        <button mat-raised-button color="warn" (click)="removeAsset()">
+          Remove
+        </button>       
+      </div>
+      
+
+     
+    </div>
+     
+    <div class="col-xs-8" [style.background]="'rgb('+info.averageRgb.r+','+info.averageRgb.g+','+info.averageRgb.b+')'">
+      
+      <div 
+        id="canvas-container"
+        style="position: relative;transform-origin: left top;" 
+        [style.transform]="'scale('+canvasScale+')'">
+      
+        <div [style.height]="height+'px'" ></div>
+
+        <canvas style="position: absolute;top: 0;left: 0;z-index: -1" id="dummy-canvas" [width]="width" [height]="height"></canvas>
+        <canvas style="position: absolute;top: 0;left: 0;" id="canvas" [width]="width" [height]="height"></canvas>
+        <app-fabric
+          *ngIf="width && height" 
+          (onEmitCTX)="onEmitCTX($event)"
+          [opts]="{
+          width: width,
+          height: height,
+          scale: canvasScale
+          }">
+        </app-fabric>
+  
+      </div>
+
+    </div>
+  </div> 
+
+ </div> 
+ 
+
+
+<ng-template #confusionTmpl>
+  <div>
+    <div>
+      <mat-checkbox [(ngModel)]="confusion.colors[0]" value="1">R</mat-checkbox>
+      <mat-checkbox [(ngModel)]="confusion.colors[1]" value="1" class="mrgn-l-sm">G</mat-checkbox>
+      <mat-checkbox [(ngModel)]="confusion.colors[2]" value="1" class="mrgn-l-sm">B</mat-checkbox>
+    </div>
+  
+    <div>
+      Start
+      <mat-slider thumbLabel [min]="0" [max]="200" [(ngModel)]="confusion.start">
+      </mat-slider>
+    </div>
+  
+    <div>
+      Randomness
+      <mat-slider thumbLabel [min]="0" [max]="50" [(ngModel)]="confusion.randomness"></mat-slider>
+    </div>
+  
+    <button mat-raised-button color="accent" (click)="addConfusion()">
+      Add confusion
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #topColorsTmpl>
+  <span *ngFor="let color of info.colorObj;index as i">
+    <app-picker-menu
+      label="{{i+1}}" 
+      [color]="'rgb('+color[0]+')'" 
+      (onPickColor)="replaceUIColor($event.color, i)">
+    </app-picker-menu>
+  </span> 
+</ng-template>
+
+<ng-template #colorStopsTmpl>
+  <div *ngFor="let colorStop of colorStops;index as i">
+    <app-picker-menu
+      label="{{i+1}}" 
+      [color]="colorStop.color" 
+      (onPickColor)="colorStop.color = $event.color">
+    </app-picker-menu>
+    <mat-slider [min]="100" [max]="800" [(ngModel)]="colorStop.stop"></mat-slider>
+    <button mat-icon-button (click)="colorStops.splice(i, 1)">
+      <mat-icon>remove_circle</mat-icon>
+    </button>
+  </div>
+
+
+  <button mat-icon-button (click)="colorStops.push({color: 'rgb(0,0,0)', stop: colorStops[colorStops.length-1].stop+100})">
+    <mat-icon>add_circle</mat-icon>
+  </button>
+
+  <div>
+    <button mat-raised-button color="accent" (click)="makeUIMultiColor()">
+      Apply Stops
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #brightnessTmpl>
+  <button mat-icon-button (click)="lighten()">
+    <mat-icon>wb_sunny</mat-icon>
+  </button>
+  
+  <button mat-icon-button (click)="brighten()">
+    <mat-icon>nightlight_round</mat-icon>
+  </button>    
+</ng-template>
+
+<ng-template #pixelateTmpl>
+  <div>
+    Factor
+    <mat-slider thumbLabel [min]="2" [max]="15" [(ngModel)]="pixelate.factor">
+    </mat-slider>
+  </div>      
+
+  <button mat-raised-button color="accent" (click)="pixelateData()">Pixelate</button>
+</ng-template>
+
+<ng-template #pixelateCircleTmpl>
+  <div>
+    Factor
+    <mat-slider thumbLabel [min]="2" [max]="15" [(ngModel)]="pixelate.circleFactor">
+    </mat-slider>
+  </div>      
+
+  <button mat-raised-button color="accent" (click)="pixelateCircleData()">Mosaic</button>
+  <button mat-raised-button color="accent" (click)="pixelateCircleData(true)">Mosaic Outline</button> 
+</ng-template>
+
+<ng-template #bnwTmpl>
+
+  <div>
+
+    <mat-form-field style="width: 40px;">
+      <mat-label>Slot1</mat-label>
+      <mat-select [(ngModel)]="bnw.rgb[0]">
+        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
+          {{rgb}}
+      </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field style="width: 40px;">
+      <mat-label>Slot2</mat-label>
+      <mat-select [(ngModel)]="bnw.rgb[1]">
+        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
+          {{rgb}}
+      </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field style="width: 40px;">
+      <mat-label>Slot3</mat-label>
+      <mat-select [(ngModel)]="bnw.rgb[2]">
+        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
+          {{rgb}}
+      </mat-option>
+      </mat-select>
+    </mat-form-field>  
+  
+    <button mat-raised-button color="accent" (click)="blackNWhite()" class="mrgn-l-sm">
+      BNW
+    </button>
+
+  </div>
+  
+</ng-template>
+
+<ng-template #negativeTmpl>
+
+    <mat-slider thumbLabel [min]="70" [max]="255" [(ngModel)]="negative.brightness">
+    </mat-slider>
+    <button mat-raised-button color="accent" (click)="giveNegative()">
+      Give
+    </button>
+
+</ng-template>
+
+<ng-template #exposureTmpl>
+
+  <mat-radio-group [(ngModel)]="exposure.xOry" aria-label="Select an option">
+    <mat-radio-button value="x">X</mat-radio-button>
+    <mat-radio-button value="y">Y</mat-radio-button>
+  </mat-radio-group>
+  <mat-slider thumbLabel [min]="0" [max]="50" [(ngModel)]="exposure.distance">
+  </mat-slider>
+<div>
+
+  <button mat-icon-button (click)="giveExposure(false)">
+    <mat-icon>remove_circle</mat-icon>
+  </button>
+  <button mat-icon-button (click)="giveExposure(true)">
+    <mat-icon>add_circle</mat-icon>
+  </button>
+</div>
+
+</ng-template>
+
+  <!-- <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
+    Save World
+    <mat-icon>save</mat-icon>
+  </button> -->
+
+  <!-- <mat-menu #menu="matMenu" (menuOpened)="true" [overlapTrigger]="false">
+    <div (click)="$event.stopPropagation()" class="pad-all-md">
+      <button class="pos-abs" mat-raised-button color="primary" (click)="getImageData()">text</button>                 
+    </div>
+  </mat-menu> -->
+
+  <!-- <canvas id="canvas" [width]="width" [height]="height"></canvas> -->
+
+
+
+

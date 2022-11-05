@@ -1,0 +1,22 @@
+<ngx-dropzone (change)="onDrop($event)" [multiple]="multipleDrop">
+	<ngx-dropzone-label style="outline: none;">{{verb}}</ngx-dropzone-label>
+	<ngx-dropzone-preview *ngFor="let f of files" [removable]="true" (removed)="onRemove(f)">
+		<ngx-dropzone-label>{{ f.name }} ({{ f.type }})</ngx-dropzone-label>
+	</ngx-dropzone-preview>
+</ngx-dropzone>
+
+<div class="row">
+  <ngx-dropzone-image-preview ngProjectAs="ngx-dropzone-preview" *ngFor="let f of files;index as i" [file]="f">
+    <ngx-dropzone-label>
+
+      <button mat-icon-button (click)="$event.stopPropagation();onSelect(f)">
+        <mat-icon>edit</mat-icon>
+      </button>
+
+      <button mat-icon-button (click)="onAdd(f, i)">
+        <mat-icon>add_circle</mat-icon>
+      </button>
+    </ngx-dropzone-label>
+  </ngx-dropzone-image-preview>
+</div>
+
