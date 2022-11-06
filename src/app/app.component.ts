@@ -23,17 +23,17 @@ export class AppComponent implements OnInit{
 
   ngOnInit(): void {
     console.log('app init');
-    this.apiService.getAsset('U-1667596642/jpg').subscribe((asset)=>{
-      this.toBase64(asset).subscribe(base64 => this.selectedFilePath = base64 )
+    // this.apiService.getAsset('U-1667596642/jpg').subscribe((asset)=>{
+    //   this.toBase64(asset).subscribe(base64 => this.selectedFilePath = base64 )
     
-      this.coreService.openDialog({
-        headerText: `Preview Image`,
-        template: this.previewDialog, 
-      },
-      {
-        id: 'previewCanvasDialog'
-      });     
-    })
+    //   this.coreService.openDialog({
+    //     headerText: `Preview Image`,
+    //     template: this.previewDialog, 
+    //   },
+    //   {
+    //     id: 'previewCanvasDialog'
+    //   });     
+    // })
     
     // //if(!this.coreService.getStorageObj('stldImagesTree')){
     //   this.selectedFilePath = false;

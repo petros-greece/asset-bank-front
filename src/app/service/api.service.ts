@@ -30,6 +30,9 @@ export class ApiService {
       this.apiUrl = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api';
       this.imgPath = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api/assets/'
     }
+    if(!this.user){
+      this.user = {id: 1};
+    }
 
     this.imgPath += this.user.id + '/';
     
@@ -52,6 +55,25 @@ export class ApiService {
       }
     ));
   }
+
+  getAuthData(uri:string, data: any = {}):Observable<any>{
+    if(!this.token){ 
+      return new Observable((observer) => {
+        throw {message: 'Unauthorized. Please login or Register First'};
+      });
+    }
+    return this.http.get((this.apiUrl+uri), {
+      headers:{
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`        
+      }
+    }).pipe(catchError(
+      err=>{
+        throw err;
+      }
+    ));
+  }
+
 
   postAuthData(uri:string, data: any = {}):Observable<any>{
     if(!this.token){ 

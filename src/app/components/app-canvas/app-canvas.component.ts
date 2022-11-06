@@ -485,6 +485,7 @@ export class AppCanvasComponent implements OnInit {
     let i = -4;
     let len = this.imageData.data.length;
     let point;
+    let mirror;
     let color;
     let avg = this.info.averageRgb.r + this.info.averageRgb.g +this.info.averageRgb.b;
     let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
@@ -496,37 +497,50 @@ export class AppCanvasComponent implements OnInit {
         y: Math.floor((i / 4) / this.width),
       };
 
-      let hypo = Math.hypot(center.x-point.x, center.y-point.y)
-
-      if(hypo > 200 && !(i%8)){
-        let a = 170;
-        this.imageData.data[i] > 127 ? 
-        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-        this.imageData.data[i+1] > 127 ? 
-        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-        this.imageData.data[i+2] > 127 ?
-        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;
-      }
-      else{
-        let a = 170;
-        this.imageData.data[i] < 127 ? 
-        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-        this.imageData.data[i+1] < 127 ? 
-        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-        this.imageData.data[i+2] < 127 ?
-        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;       
+      mirror = {
+        x: ((len - i) / 4) % this.width,
+        y: Math.floor(((len - i) / 4) / this.width),
       }
 
+      //if(point.y > point.x){
+        let a = 170;
+        this.imageData.data[i]=this.imageData.data[(len/2)-i];
+        this.imageData.data[i+1]=this.imageData.data[(len/2)-i+1];
+        this.imageData.data[i+2]=this.imageData.data[(len/2)-i+2];        
+      //}
 
-      if(hypo > 100){
-        let a = 0;
-        this.imageData.data[i] < 127 ? 
-        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-        this.imageData.data[i+1] < 127 ? 
-        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-        this.imageData.data[i+2] < 127 ?
-        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;   
-      }     
+
+      //let hypo = Math.hypot(center.x-point.x, center.y-point.y)
+
+      // if(hypo > 200 && !(i%8)){
+      //   let a = 170;
+      //   this.imageData.data[i] > 127 ? 
+      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+      //   this.imageData.data[i+1] > 127 ? 
+      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+      //   this.imageData.data[i+2] > 127 ?
+      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;
+      // }
+      // else{
+      //   let a = 170;
+      //   this.imageData.data[i] < 127 ? 
+      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+      //   this.imageData.data[i+1] < 127 ? 
+      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+      //   this.imageData.data[i+2] < 127 ?
+      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;       
+      // }
+
+
+      // if(hypo > 100){
+      //   let a = 0;
+      //   this.imageData.data[i] < 127 ? 
+      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+      //   this.imageData.data[i+1] < 127 ? 
+      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+      //   this.imageData.data[i+2] < 127 ?
+      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;   
+      // }     
 
 
       // color = {
@@ -683,10 +697,28 @@ export class AppCanvasComponent implements OnInit {
   addEditedImageToCat(closeDialog: boolean = false){
     this.mergeDataToDummy();
     const dataURL = this.dummyCanvas.toDataURL();
-    this.category.files ? this.category.files.push(dataURL) : this.category.files = [dataURL];
-    this.coreService.giveSnackbar(`Asset added to ${this.category.title}`);
-    if(!closeDialog) return;
-    this.coreService.closeDialogById('previewCanvasDialog');
+    let file = this.coreService.dataURLtoFile(dataURL, 'test.png');
+    this.apiService.uploadAsset('/asset', file).subscribe({
+      next: (res: any) => {
+        this.category.files ? this.category.files.push(res.data) : this.category.files = [res.data];
+        this.coreService.giveSnackbar(`Asset added to ${this.category.title}`);
+        if(!closeDialog) return;
+        this.coreService.closeDialogById('previewCanvasDialog');
+        //this.onAddFile.emit(res);
+      },
+      error: (err: any) => {
+        console.log(err)
+        this.coreService.giveSnackbar(err.message, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        //this.files.splice(i, 1);
+      },
+    });
+
+    
   }
 
   downloadImage(type: string){

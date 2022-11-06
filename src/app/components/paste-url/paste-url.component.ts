@@ -71,27 +71,12 @@ export class PasteUrlComponent implements OnInit {
     });
   }
 
-  dataURLtoFile(dataurl:string, filename:string) {
- 
-    let arr:any = dataurl.split(','),
-        mime = arr[0].match(/:(.*?);/)[1],
-        bstr = atob(arr[1]), 
-        n = bstr.length, 
-        u8arr = new Uint8Array(n);
-        
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    
-    return new File([u8arr], filename, {type:mime});
-  }
+
 
   saveImage(){
 
     let dataurl = this.fabricCanvas.toDataURL();
-
-    let file = this.dataURLtoFile(dataurl, 'test.png');
-
+    let file = this.coreService.dataURLtoFile(dataurl, 'test.png');
     this.apiService.uploadAsset('/asset', file).subscribe({
       next: (res: any) => {
         this.coreService.giveSnackbar(`Asset Uploaded!`);

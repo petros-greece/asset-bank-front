@@ -26,6 +26,7 @@ export class TreeComponent implements OnInit {
   @ViewChild('previewDialog', {static: true}) previewDialog: TemplateRef<any> | any; 
   @Output() onOpenDropZone = new EventEmitter<any>();
 
+  treeVersions: any;
   openAll: boolean = false;
   edit = false;
 
@@ -148,6 +149,44 @@ export class TreeComponent implements OnInit {
     //this.coreService.updateStorageObj('stldImagesTree', {categories: this.categories});
   } 
 
+  getTreeVersions(){
+    this.apiService.getAuthData(`/tree-versions/${this.apiService.user.id}`).subscribe(
+      {
+        next: (res: any) => {
+          res.length = 50;
+          this.treeVersions = res.filter( (e:any) => {return e});
+        },
+        error: (err: any) => {
+          this.coreService.giveSnackbar(err?.message, {
+            duration: 5000,
+            verticalPosition: 'top'
+          });        
+        },
+        complete: () => {
+          //this.coreService.closeAllDialogs();
+        },
+      }
+    )
+  }
+
+  renderTreeVersion(id:string){
+    this.apiService.getAuthData(`/tree-by-id/${this.apiService.user.id}/${id}`).subscribe(
+      {
+        next: (res: any) => {
+          this.categories = JSON.parse(res.categories);
+        },
+        error: (err: any) => {
+          this.coreService.giveSnackbar(err?.message, {
+            duration: 5000,
+            verticalPosition: 'top'
+          });        
+        },
+        complete: () => {
+          //this.coreService.closeAllDialogs();
+        },
+      }
+    )
+  }
 
   /** */
 

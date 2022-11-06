@@ -1,19 +1,38 @@
 <div class="pad-l-md pad-r-md my-scroll" style="overflow-y: scroll;height: 90vh;" fxFlex="35">
    
   <div class="row" class="pad-all-sm">
+    
     <button mat-icon-button (click)="edit=!edit">
       <mat-icon>edit</mat-icon>
     </button>
+    
     <button mat-icon-button (click)="toggleTree()">
       <mat-icon>{{openAll ? 'unfold_less' : 'unfold_more'}}</mat-icon>
     </button>
-    <button mat-raised-button color="primary" (click)="addNewCategory()" class="mrgn-l-sm">Add Category</button>
+    
+    <button mat-raised-button color="primary" (click)="addNewCategory()" class="mrgn-l-sm">
+      Add Category
+    </button>
+
+    <button mat-button [matMenuTriggerFor]="versionsMenu" (click)="getTreeVersions()">
+      Versions
+    </button>
+
+    <mat-menu #versionsMenu="matMenu" class="my-scroll">
+      <button mat-menu-item color="accent" *ngFor="let version of treeVersions;index as i"
+        (click)="renderTreeVersion(version.id)">
+        <b>{{i+1}})</b>
+        {{ version.created_at | date: 'dd/MM/yyyy HH:mm:ss' }}
+      </button>
+    </mat-menu>
+
     <button 
-      *ngIf="!coreService.isProd"
-      class="mrgn-l-sm"
+      class="mrgn-l-xl"
       mat-raised-button color="primary" (click)="downloadConfig()">
       Download Config
     </button>
+   
+
   </div>
 
 
