@@ -26,19 +26,28 @@ export class AppCanvasComponent implements OnInit {
 
   width: number = 0;
   height: number = 0;
+  image:any;
   imageData: any;
 
   canvasScale: number = 1;
 
+  /** */
+
+  runWithReInit: boolean = true;
+
   colorStops = [{color: 'rgb(0,255,0)', stop: 100}, {color: 'rgb(255,0,0)', stop: 500}];
+  
   confusion = {
     colors: [1,0,0],
     start: 0,
     randomness: 20
   }
+
   pixelate = {
     factor: 3,
-    circleFactor: 5
+    outline: false,
+    circleFactor: 5,
+    circleOutline: false
   }
   bnw = {
     rgb: ['b', 'b', 'b']
@@ -47,9 +56,12 @@ export class AppCanvasComponent implements OnInit {
   negative = {
     brightness: 255
   }
+  polychromeNegative = {
+    middlePoint: 127,
+    range: 100
+  }
   exposure = {
-    xOry: 'x',
-    distance: 0
+    distance: 2
   }
 
   info = {
@@ -61,7 +73,9 @@ export class AppCanvasComponent implements OnInit {
 
   
 
-  constructor(private coreService: CoreService, public apiService: ApiService) { 
+  constructor(
+    public coreService: CoreService, 
+    public apiService: ApiService) { 
 
   }
 
@@ -69,7 +83,7 @@ export class AppCanvasComponent implements OnInit {
 
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.initImageInfo().subscribe((image)=>{
+    this.initImageInfo(true).subscribe((image)=>{
       this.doScaleCanvas(image.width);
     });
 
@@ -97,38 +111,32 @@ export class AppCanvasComponent implements OnInit {
 
   /** */
 
-  initImageInfo():Observable<any>{
+  initImageInfo(getFullInfo:boolean = false):Observable<any>{
     return new Observable((observer) => {
       this.loadImage().subscribe((image)=>{
+
+        this.ctx.drawImage(
+          image,
+          0,
+          0,
+          image.width,
+          image.height
+        );
+
+        setTimeout(()=>{ this.getImageData(); }, 10); 
         
-        //this.toBase64(image).subscribe((bas64)=>{
-          //console.log(bas64);
-        //let blob = this.canvas.toBlob();
-
-          this.ctx.drawImage(
-            image,
-            0,
-            0,
-            image.width,
-            image.height
-          );
-
-           setTimeout(()=>{ this.getImageData(); }, 1000); 
-          setTimeout(()=>{ this.info.averageRgb = this.getAverageRGB(); }, 1000);
-          setTimeout(()=>{ this.info.colorObj = this.getColorsObj(); }, 1000); 
-           setTimeout(()=>{ observer.next(image) }, 1000); 
-        })
-
-  
-      //});
+        if(getFullInfo){
+          setTimeout(()=>{ this.info.averageRgb = this.getAverageRGB(); }, 10);
+          setTimeout(()=>{ this.info.colorObj = this.getColorsObj(); }, 20);
+        }
+        setTimeout(()=>{ observer.next(image) }, 30); 
+        
+       })
 
     });
  
   }
   
-
-
-
   loadImage():Observable<any>{
     //this.coreService.windowWidth
     return new Observable((observer) => {
@@ -139,12 +147,12 @@ export class AppCanvasComponent implements OnInit {
         this.height = image.height;
 
         setTimeout(()=>{
-          console.log(image)
+          //console.log(image)
+          this.image = image;
           observer.next(image)
         }, 0);
         
       };
-      console.log(this.selectedFilePath)
       image.src = this.selectedFilePath;
       image.crossOrigin = "Anonymous";
     });
@@ -212,11 +220,15 @@ export class AppCanvasComponent implements OnInit {
     return sortable;
   }
 
+  /** */
+
   replaceColor(color: any, replacer: any){
     let i = -4;
     let len = this.imageData.data.length;
     while ( (i +=  4) < len ) {
-      if( (this.imageData.data[i] === color.r) && (this.imageData.data[i+1] === color.g) && (this.imageData.data[i+2] === color.b) ){
+      if( (this.imageData.data[i] === color.r) && 
+        (this.imageData.data[i+1] === color.g) && 
+        (this.imageData.data[i+2] === color.b) ){
         this.imageData.data[i] = replacer.r;
         this.imageData.data[i+1] = replacer.g;
         this.imageData.data[i+2] = replacer.b;
@@ -224,21 +236,6 @@ export class AppCanvasComponent implements OnInit {
     }
     this.ctx.putImageData(this.imageData, 0, 0)
   }
-
-  makeMultiColor(colors = [{r: 0, g: 0, b: 255, stop: 100}, {r: 0, g: 255, b: 0, stop: 300}, {r: 255, g: 0, b: 0, stop: 766}]){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
-        let sumColor = this.imageData.data[i] + this.imageData.data[i+1] + this.imageData.data[i+1];
-        let color = (colors.filter((color)=> color.stop > sumColor))[0];
-          this.imageData.data[i] = color.r;
-          this.imageData.data[i + 1] = color.g;
-          this.imageData.data[i + 2] = color.b;
-          this.imageData.data[i + 3] = 255;
-    }
-    this.ctx.putImageData(this.imageData, 0, 0)
-  } 
-
 
   lighten(){
     let i = -4;
@@ -262,171 +259,223 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0);  
   }
 
+
   addConfusion(){
-    this.initImageInfo().subscribe(()=>{
+    this.runWithReinit(()=>{
       let i = -4;
       let len = this.imageData.data.length;
       while ( (i +=  4) < len ) {
-        if(this.confusion.colors[0]){this.imageData.data[i] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));}
-        if(this.confusion.colors[1]){this.imageData.data[i+1] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));}
-        if(this.confusion.colors[2]){this.imageData.data[i+2] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));}
+        if(this.confusion.colors[0]){
+          this.imageData.data[i] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+        }
+        if(this.confusion.colors[1]){
+          this.imageData.data[i+1] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+        }
+        if(this.confusion.colors[2]){
+          this.imageData.data[i+2] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+        }
       }
       this.ctx.putImageData(this.imageData, 0, 0); 
     });   
   }
 
-  pixelateData(){
+  makeMultiColor(colors = [{r: 0, g: 0, b: 255, stop: 100}, {r: 0, g: 255, b: 0, stop: 300}, {r: 255, g: 0, b: 0, stop: 766}]){
     let i = -4;
     let len = this.imageData.data.length;
-    let point;
-    let color;
-    let y = 0;
-    while ( (i += 4) < len ) { 
-      point = {
-        x: (i / 4) % this.width,
-        y: Math.floor((i / 4) / this.width),
-      }
-      if( (!(point.x%this.pixelate.factor*3)) && (!(point.y%this.pixelate.factor*3))){  
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        }
-        this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-        this.ctx.fillRect(point.x, point.y, this.pixelate.factor, this.pixelate.factor);
-      }
-      else{
-         y = i;
-      }
-  
-          
+    while ( (i +=  4) < len ) {
+        let sumColor = this.imageData.data[i] + this.imageData.data[i+1] + this.imageData.data[i+1];
+        let color = (colors.filter((color)=> color.stop > sumColor))[0];
+          this.imageData.data[i] = color.r;
+          this.imageData.data[i + 1] = color.g;
+          this.imageData.data[i + 2] = color.b;
+          this.imageData.data[i + 3] = 255;
     }
-    this.getImageData();     
-  }
+    this.ctx.putImageData(this.imageData, 0, 0);
+  } 
 
-  pixelateCircleData(stroke: boolean = false){
-    let i = -4;
-    let len = this.imageData.data.length;
-    let point;
-    let color;
-    let factor = this.pixelate.circleFactor;
-    let y = 0;
-    while ( (i += 4) < len ) { 
-      point = {
-        x: (i / 4) % this.width,
-        y: Math.floor((i / 4) / this.width),
-      }
-      if( (!(point.x%factor)) && (!(point.y%factor))){  
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
+  pixelateData(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point;
+      let color;
+      let y = 0;
+      while ( (i += 4) < len ) { 
+        point = {
+          x: (i / 4) % this.width,
+          y: Math.floor((i / 4) / this.width),
         }
-
-        if(stroke){
-          this.ctx.beginPath();
-          this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-          this.ctx.arc(point.x-(factor/2), point.y-(factor/2), (factor/2)+Math.round(factor/7), 0, 2 * Math.PI);
-          this.ctx.stroke();
+        if( (!(point.x%this.pixelate.factor*3)) && (!(point.y%this.pixelate.factor*3))){  
+          color = {
+            r: this.imageData.data[i],
+            g: this.imageData.data[i+1],
+            b: this.imageData.data[i+2],
+            a: this.imageData.data[i+3]
+          }
+          if(this.pixelate.outline){
+            this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+            this.ctx.strokeRect(point.x, point.y, this.pixelate.factor, this.pixelate.factor);
+          }
+          else{
+            this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+            this.ctx.fillRect(point.x, point.y, this.pixelate.factor, this.pixelate.factor);
+          }
         }
         else{
-          this.ctx.beginPath();
-          this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-          this.ctx.arc(point.x-(factor/2), point.y-(factor/2), (factor/2)+Math.round(factor/7), 0, 2 * Math.PI);
-          this.ctx.fill();
+          y = i;
+        }      
+      }
+    });   
+  }
+
+  pixelateCircleData(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point;
+      let color;
+      let factor = this.pixelate.circleFactor;
+      let y = 0;
+      while ( (i += 4) < len ) { 
+        point = {
+          x: (i / 4) % this.width,
+          y: Math.floor((i / 4) / this.width),
         }
+        if( (!(point.x%factor)) && (!(point.y%factor))){  
+          color = {
+            r: this.imageData.data[i],
+            g: this.imageData.data[i+1],
+            b: this.imageData.data[i+2],
+            a: this.imageData.data[i+3]
+          }
+
+          if(this.pixelate.circleOutline){
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+            this.ctx.arc(point.x, point.y, (factor/2)+Math.round(factor/7), 0, 2 * Math.PI);
+            this.ctx.stroke();
+          }
+          else{
+            this.ctx.beginPath();
+            this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+            this.ctx.arc(point.x, point.y, (factor/2)+Math.round(factor/7), 0, 2 * Math.PI);
+            this.ctx.fill();
+          }
+
+        }
+        else{
+          y = i;
+        }
+    
 
       }
-      else{
-         y = i;
-      }
-  
-          
-    }
-    this.getImageData();
-    //this.ctx.putImageData(this.imageData, 0, 0);   
+      //this.getImageData();
+      //this.ctx.putImageData(this.imageData, 0, 0); 
+    });  
   }
 
   blackNWhite(){
-    let i = -4;
-    let len = this.imageData.data.length;
-    let color;
-    while ( (i += 4) < len ) { 
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let color;
+      while ( (i += 4) < len ) { 
 
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
+        color = {
+          r: this.imageData.data[i],
+          g: this.imageData.data[i+1],
+          b: this.imageData.data[i+2],
+          a: this.imageData.data[i+3]
+        }
+
+        this.imageData.data[i] = color[this.bnw.rgb[0]];
+        this.imageData.data[i+1] = color[this.bnw.rgb[0]];
+        this.imageData.data[i+2] = color[this.bnw.rgb[0]];
+        
       }
-
-      this.imageData.data[i] = color[this.bnw.rgb[0]];
-      this.imageData.data[i+1] = color[this.bnw.rgb[1]];
-      this.imageData.data[i+2] = color[this.bnw.rgb[2]];
-      
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);      
+      this.ctx.putImageData(this.imageData, 0, 0);
+    });      
   }
 
   giveNegative(){
-    let i = -4;
-    let len = this.imageData.data.length;
-    let color;
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let color;
 
-    while ( (i += 4) < len ) { 
+      while ( (i += 4) < len ) { 
 
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
+        color = {
+          r: this.imageData.data[i],
+          g: this.imageData.data[i+1],
+          b: this.imageData.data[i+2],
+          a: this.imageData.data[i+3]
+        }
+
+        this.imageData.data[i] = this.negative.brightness - color.r;
+        this.imageData.data[i+1] =  this.negative.brightness - color.g;
+        this.imageData.data[i+2] = this.negative.brightness - color.b;           
       }
-
-      this.imageData.data[i] = this.negative.brightness - color.r;
-      this.imageData.data[i+1] =  this.negative.brightness - color.g;
-      this.imageData.data[i+2] = this.negative.brightness - color.b;           
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);     
+      this.ctx.putImageData(this.imageData, 0, 0);
+    });     
   }
 
-  giveExposure(increase: boolean = true){
-    let i = -4;
-    let len = this.imageData.data.length;
-    let point:any;
-    let color;
-    while ( (i += 4) < len ) { 
+  giveExposure(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point:any;
+      let color;
+      while ( (i += 4) < len ) { 
 
-      point = {
-        x: (i / 4) % this.width,
-        y: Math.floor((i / 4) / this.width),
-      }
-
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
-      }
-
-      if(increase){
-        if( !this.exposure.distance || point[`${this.exposure.xOry}`]%this.exposure.distance){
-          this.imageData.data[i] = color.r*2;
-          this.imageData.data[i+1] = color.g*2;
-          this.imageData.data[i+2] = color.b*2; 
+        point = {
+          x: (i / 4) % this.width,
+          y: Math.floor((i / 4) / this.width),
         }
-      } 
-      else{
-        if( !this.exposure.distance || point[`${this.exposure.xOry}`]%this.exposure.distance){
-          this.imageData.data[i] = color.r/2;
-          this.imageData.data[i+1] = color.g/2;
-          this.imageData.data[i+2] = color.b/2; 
-        }        
+
+        color = {
+          r: this.imageData.data[i],
+          g: this.imageData.data[i+1],
+          b: this.imageData.data[i+2],
+          a: this.imageData.data[i+3]
+        }
+
+        if(this.exposure.distance > 0){
+          this.imageData.data[i] = Math.round(color.r*this.exposure.distance);
+          this.imageData.data[i+1] = Math.round(color.g*this.exposure.distance);
+          this.imageData.data[i+2] = Math.round(color.b*this.exposure.distance); 
+        } 
+        else{
+          this.imageData.data[i] = Math.round(color.r/Math.abs(this.exposure.distance));
+          this.imageData.data[i+1] = Math.round(color.g/Math.abs(this.exposure.distance));
+          this.imageData.data[i+2] = Math.round(color.b/Math.abs(this.exposure.distance));           
+        }
+            
       }
-          
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);    
+      this.ctx.putImageData(this.imageData, 0, 0); 
+    });   
+  }
+
+  givePolychromeNegative(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let reverse = this.polychromeNegative.range;
+      let middlePoint = this.polychromeNegative.middlePoint;
+
+      while ( (i += 4) < len ) { 
+  
+        this.imageData.data[i] > middlePoint ? 
+        this.imageData.data[i]-=reverse : this.imageData.data[i]+=reverse;
+        this.imageData.data[i+1] > middlePoint ? 
+        this.imageData.data[i+1]-=reverse : this.imageData.data[i+1]+=reverse;
+        this.imageData.data[i+2] > middlePoint ?
+        this.imageData.data[i+2]-=reverse : this.imageData.data[i+2]+=reverse;
+  
+      }
+      this.ctx.putImageData(this.imageData, 0, 0);  
+       
+    });
   }
 
 
@@ -437,34 +486,100 @@ export class AppCanvasComponent implements OnInit {
     let len = this.imageData.data.length;
     let point;
     let color;
-    while ( (i += 4) < len ) { 
+    let avg = this.info.averageRgb.r + this.info.averageRgb.g +this.info.averageRgb.b;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
 
-      let avg = this.info.averageRgb.r + this.info.averageRgb.g +this.info.averageRgb.b;
+    while ( (i += 4) < len ) { 
 
       point = {
         x: (i / 4) % this.width,
         y: Math.floor((i / 4) / this.width),
+      };
+
+      let hypo = Math.hypot(center.x-point.x, center.y-point.y)
+
+      if(hypo > 200 && !(i%8)){
+        let a = 170;
+        this.imageData.data[i] > 127 ? 
+        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+        this.imageData.data[i+1] > 127 ? 
+        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+        this.imageData.data[i+2] > 127 ?
+        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;
+      }
+      else{
+        let a = 170;
+        this.imageData.data[i] < 127 ? 
+        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+        this.imageData.data[i+1] < 127 ? 
+        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+        this.imageData.data[i+2] < 127 ?
+        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;       
       }
 
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
-      }
-      let avgColor = color.r + color.g + color.b;
+
+      if(hypo > 100){
+        let a = 0;
+        this.imageData.data[i] < 127 ? 
+        this.imageData.data[i]-=a : this.imageData.data[i]+=a;
+        this.imageData.data[i+1] < 127 ? 
+        this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
+        this.imageData.data[i+2] < 127 ?
+        this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;   
+      }     
 
 
-      if(avgColor > avg ){
-      this.imageData.data[i] = 255;
-      //this.imageData.data[i+1] = 0;
-      //this.imageData.data[i+2] = 0;
-      this.imageData.data[i+3] = 0;
-      }   
+      // color = {
+      //   r: this.imageData.data[i],
+      //   g: this.imageData.data[i+1],
+      //   b: this.imageData.data[i+2],
+      //   a: this.imageData.data[i+3]
+      // };
+
+
+
+
+      //let avgColor = color.r + color.g + color.b;
+
+
+     // if(!(i%40)){
+        // this.imageData.data[i] = this.info.averageRgb.r;
+        // this.imageData.data[i+1] = this.info.averageRgb.g;
+        // this.imageData.data[i+2] = this.info.averageRgb.b;
+        
+        /** */
+        //this.ctx.beginPath();
+        //this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.r},${color.a-.3})`;
+
+        // var grd = this.ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 22);
+        // grd.addColorStop(0, `rgba(${color.r},${color.g},${color.b},${color.a})`);
+        // grd.addColorStop(1, `rgba(${color.b},${color.g},${color.r},${color.a})`);
+        
+        // Fill with gradient
+        // this.ctx.fillStyle = grd;
+        // this.ctx.arc(point.x, point.y, 22, 0, 2 * Math.PI);
+        // this.ctx.fill();
+
+        // let round = Math.ceil(Math.random()*93);
+        // this.ctx.moveTo(point.x, point.y);
+        // this.ctx.lineTo(point.x+round, point.y+round);
+        // this.ctx.lineTo(point.x-round, point.y+round);       
+        // this.ctx.quadraticCurveTo(point.x+round, point.y-round, point.x-round, point.y+2*round);
+        // this.ctx.stroke();
+
+
+      //this.imageData.data[i+3] = 0;
+     // } 
+      // else{
+        //let rand = -100 + Math.ceil(Math.random()*200); 
+        //this.imageData.data[i] = this.imageData.data[i]+rand;
+        //this.imageData.data[i+1] = this.imageData.data[i+1]+rand;
+        //this.imageData.data[i+2] = this.imageData.data[i+2]+rand;       
+      // }  
 
           
     }
-    this.ctx.putImageData(this.imageData, 0, 0);    
+    this.ctx.putImageData(this.imageData, 0, 0); console.log(this.info.colorObj)   
   }
 
   scissors2(){
@@ -481,24 +596,37 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0);    
   }
 
-  /** */
+  /** UI *******************/
+
+  runWithReinit( clbk: Function ){
+    if(this.runWithReInit){
+      this.initImageInfo().subscribe(()=>{
+        setTimeout(clbk(), 1000)     
+      });
+    }
+    else{
+      clbk();
+    }
+  }
 
   makeUIMultiColor(){
-    //this.initImageInfo().subscribe(()=>{
-      let mapped = this.colorStops.map((colorStop)=>{
+    this.runWithReinit(()=>{
+      let colorStopsClone = JSON.parse(JSON.stringify(this.colorStops));
+      let mapped = colorStopsClone.map((colorStop:any)=>{
         let color = this.rgbStrToObj(colorStop.color);
         return Object.assign(color, {stop: colorStop.stop});
       });
       mapped[mapped.length-1].stop = 800;
-      this.makeMultiColor(mapped);
-   // });
-
+      this.makeMultiColor(mapped);     
+    });
   }
 
   replaceUIColor(e:string, index: number){
-    let eventRGB = this.rgbStrToObj(e);
-    this.replaceColor( this.rgbStrToObj(this.info.colorObj[index][0]), eventRGB )
-    this.info.colorObj[index][0] = `${eventRGB.r}, ${eventRGB.g}, ${eventRGB.b}`;
+    this.runWithReinit(()=>{
+      let eventRGB = this.rgbStrToObj(e);
+      this.replaceColor( this.rgbStrToObj(this.info.colorObj[index][0]), eventRGB )
+      this.info.colorObj[index][0] = `${eventRGB.r}, ${eventRGB.g}, ${eventRGB.b}`;
+    });   
   }
 
   /*** */

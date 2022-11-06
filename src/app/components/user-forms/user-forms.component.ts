@@ -79,7 +79,23 @@ export class UserFormsComponent implements OnInit {
   }
 
   userRegister(){
-    this.apiService.postData('/register', this.user).subscribe();
+    this.apiService.postData('/register', this.user).subscribe({
+      next: (res: any) => {
+        console.log(res);
+        if(res.status === 'error'){
+          this.coreService.giveSnackbar(res.message, {
+            duration: 5000,
+            verticalPosition: 'top'
+          });
+          return;   
+        }
+        this.coreService.closeAllDialogs();
+        this.openUserLoginDialog();
+     
+        //this.apiService.user = user;
+        //this.apiService.token = user.token.access_token;
+      },
+    });
   }
 
   userLogout(){

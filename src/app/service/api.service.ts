@@ -10,8 +10,8 @@ import { CoreService } from './core.service';
  
 export class ApiService {
 		
-  apiUrl = 'http://localhost/asset-bank/asset-bank-api/public/api';
-  imgPath = 'http://localhost/asset-bank/asset-bank-api/public/api/assets/';
+  apiUrl = 'http://localhost/asset-bank-api/public/api';
+  imgPath = 'http://localhost/asset-bank-api/public/api/assets/';
   token:string = '';
   user:any;
 
@@ -26,6 +26,11 @@ export class ApiService {
   getAccessToken(){
     this.user = this.coreService.getStorageObj('asset_bank_user');
     this.token = this.user ? this.user.token.access_token : '';
+    if(this.coreService.isProd){
+      this.apiUrl = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api';
+      this.imgPath = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api/assets/'
+    }
+
     this.imgPath += this.user.id + '/';
     
   }
@@ -62,11 +67,10 @@ export class ApiService {
       }
     }).pipe(catchError(
       err=>{
-        throw err.message;
+        throw err;
       }
     ));
   }
-
 
 
   uploadAsset(uri:string, file:File):Observable<any>{

@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --base-href /tools/asset-bank/",
+    "build": "ng build --base-href /asset-bank/asset-bank-front/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

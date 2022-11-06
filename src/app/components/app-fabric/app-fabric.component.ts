@@ -32,7 +32,7 @@ export class AppFabricComponent implements OnInit {
   }
   textbox = {
     background: 'rgba(255, 255, 255, .5)',
-    color: 'rgba(100,100,100,1)',
+    color: 'rgba(50,50,50,1)',
     fontSize: 30,
   }
 
@@ -45,11 +45,11 @@ export class AppFabricComponent implements OnInit {
     this.fabricCanvas = new fabric.Canvas('fabricCanvas', {
       //controlsAboveOverlay: true,
       backgroundColor: 'rgba(0,0,0,0)',
-      selection: true,
+      //selection: true,
       //selectionColor: 'yellow',
       //selectionBorderColor: 'black',
       //selectionLineWidth: 5,
-      isDrawingMode: this.fabricCanvasOpts.isDrawingMode,
+      isDrawingMode: true,
       preserveObjectStacking: true,
       freeDrawingCursor: 'pointer',
       width: this.opts.width,
@@ -60,7 +60,8 @@ export class AppFabricComponent implements OnInit {
     this.onEmitCTX.emit({ctx: this.ctx, canvas: this.fabricCanvas});
     //this.addRolygon();
     //this.addBrush();
-    //this.mlpa();
+setTimeout(()=>{this.mlpa()}, 90)
+
     this.fabricCanvas.on('before:path:created', (opt:any) => {
       console.log(opt);
     });
@@ -80,7 +81,6 @@ export class AppFabricComponent implements OnInit {
     PencilBrush.strokeLineCap =  this.brush.strokeLineCap;//'butt','round', 'square'
     //PencilBrush.strokeDashArray = [25, 50]
     this.fabricCanvas.freeDrawingBrush = PencilBrush;
-
   }
 
   addTextBox(){
@@ -88,6 +88,8 @@ export class AppFabricComponent implements OnInit {
     this.fabricCanvas.selection = true;
     let textbox = new fabric.Textbox('Add Text', {
       stroke: this.textbox.color,
+      fill: this.textbox.color,
+      //cornerStrokeColor: this.textbox.color,
       //textBackgroundColor: this.textbox.color,
       top: 30,
       left: 30,
@@ -148,17 +150,17 @@ export class AppFabricComponent implements OnInit {
   mlpa(){
   
 
-    fabric.Image.fromURL('https://cdn.shopify.com/s/files/1/0130/3137/4906/products/GIA9339_HALO_TOP_BLACK_MOVEMENT_FF.jpg?v=1652610308', 
+    fabric.Image.fromURL('https://i.stack.imgur.com/KlKne.png', 
     (img)=>{
 
-
-      img.set({
-        cropX: 70,
-        cropY: 140,
-        width: 200,
-        height: 150,
-      });
-      this.fabricCanvas.add(img);     
+console.log(fabric)
+      // img.set({
+      //   cropX: 70,
+      //   cropY: 140,
+      //   width: 200,
+      //   height: 150,
+      // });
+      // this.fabricCanvas.add(img);     
     });    
   }
  // initFabric

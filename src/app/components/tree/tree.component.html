@@ -21,8 +21,8 @@
 
   <ng-template  #categoryTree let-categories>
 
-    <mat-accordion displayMode="flat" class="categories-accordeon" multi="true">
-      <mat-expansion-panel 
+    <mat-accordion displayMode="flat" class="categories-accordeon" multi="true" cdkDropList (cdkDropListDropped)="drop($event, categories)">
+      <mat-expansion-panel cdkDrag
         *ngFor="let category of categories.cats;index as i"
         [hideToggle]="!category.childsNum"
         [disabled]="!category.childsNum"
@@ -45,7 +45,9 @@
 
                   <mat-form-field *ngIf="edit" (click)="$event.stopPropagation();">
                     <mat-label>{{category.title}}</mat-label>
-                    <input matInput type="text" [(ngModel)]="category.title" (focus)="category.title === 'images' ? category.title = '' : ''">
+                    <input matInput type="text"
+                     (keydown)="$event.stopPropagation()"
+                     [(ngModel)]="category.title" (focus)="category.title === 'images' ? category.title = '' : ''">
                   </mat-form-field>
 
                   <span 

@@ -43,24 +43,23 @@ export class AppDropzoneComponent implements OnInit {
   onAdd(event:any, i: number){
     console.log('onAdd:', event);
 
-    //this.toBase64(event).subscribe((base64)=>{
-      this.apiService.uploadAsset('/asset', this.files[i]).subscribe({
-        next: (res: any) => {
-          this.coreService.giveSnackbar(`Asset Uploaded!`);
-          this.onAddFile.emit(res);
-        },
-        error: (err: any) => {
-          console.log(err)
-          this.coreService.giveSnackbar(err.error, {
-            duration: 5000,
-            verticalPosition: 'top'
-          });        
-        },
-        complete: () => {
-          //this.files.splice(i, 1);
-        },
-      });
-    //})
+    this.apiService.uploadAsset('/asset', this.files[i]).subscribe({
+      next: (res: any) => {
+        this.coreService.giveSnackbar(`Asset Uploaded!`);
+        this.onAddFile.emit(res);
+      },
+      error: (err: any) => {
+        console.log(err)
+        this.coreService.giveSnackbar(err.error, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        this.files.splice(i, 1);
+      },
+    });
+  
 
    // return;
        

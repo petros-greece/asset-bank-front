@@ -1,0 +1,28 @@
+<div class="container-fluid">
+
+  <div class="row around-xs" style="margin: 0">
+  
+    <div>
+      <mat-form-field appearance="fill">
+        <mat-label>Enter image link</mat-label>
+        <input matInput type="text" #link>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="showImage(link.value).subscribe();">
+        Show Image
+      </button>
+    </div>
+
+  </div>
+
+  <div class="row around-xs my-scroll" style="max-height: 200px;margin: 0">
+
+      <canvas id="fabricLinkCanvas"></canvas>
+
+  </div>
+
+  <div class="row around-xs" style="margin: 0" *ngIf="fabricCanvas.width">
+    <button mat-raised-button color="primary" (click)="saveImage()">Save</button>
+  </div>
+
+
+</div>

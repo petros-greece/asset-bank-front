@@ -3,6 +3,10 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+.mat-radio-button:not(:first-child){
+  margin-left: 0.5rem;
+}
+
 .pos-rel{
   position: relative !important;
 }

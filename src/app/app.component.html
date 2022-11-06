@@ -39,9 +39,16 @@
       (onAddFile)="onAddFile($event)"
       (onSelectFile)="onSelectFile($event)">
     </app-dropzone>
+
+    <app-paste-url 
+      (onAddFile)="onAddFile($event)">
+    </app-paste-url>
+
   </div> 
 </ng-template>
 
 
 <app-tree (onOpenDropZone)="onOpenDropZone($event)"></app-tree>
+
+
 

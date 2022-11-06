@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver';
 import { ApiService } from 'src/app/service/api.service';
 import {MatAccordion} from '@angular/material/expansion';
 import { ApiPathPipe } from 'src/app/pipe/asset-bank-pipes.pipe';
+import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
 
 export interface CategoryI{
   childsNum: number;
@@ -63,7 +64,20 @@ export class TreeComponent implements OnInit {
         //console.log(this.categories);
       });
     }
+    else{
+      this.coreService.getData('./assets/json/tree1.json', { responseType: 'json' }).subscribe(
+        (data)=>{
+          this.categories = data;
+        }
+      );
+    }
   }
+
+  drop(e:any, categories: any){
+    console.log(e, categories);
+    moveItemInArray(categories.cats, e.previousIndex, e.currentIndex);
+  }
+
 
   toggleTree(){
     if(this.openAll){ this.accordion.closeAll(); }
@@ -143,6 +157,7 @@ export class TreeComponent implements OnInit {
 
   previewAssets(category:CategoryI, e: Event){
     if(!category?.files?.length){
+      this.openDropZone(category);
       return;
     }
     e.stopPropagation();

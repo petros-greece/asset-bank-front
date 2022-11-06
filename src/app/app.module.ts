@@ -23,6 +23,7 @@ import { ImageEditorComponent } from './components/image-editor/image-editor.com
 import { SortablejsModule } from 'ngx-sortablejs';
 import { UserFormsComponent } from './components/user-forms/user-forms.component';
 import { BankPipesModule } from './pipe/pipe.module';
+import { PasteUrlComponent } from './components/paste-url/paste-url.component';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { BankPipesModule } from './pipe/pipe.module';
     IconsComponent,
     AppFabricComponent,
     ImageEditorComponent,
-    UserFormsComponent
+    UserFormsComponent,
+    PasteUrlComponent
   ],
   imports: [
     BrowserModule,

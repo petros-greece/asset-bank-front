@@ -34,6 +34,7 @@ export class AppComponent implements OnInit{
         id: 'previewCanvasDialog'
       });     
     })
+    
     // //if(!this.coreService.getStorageObj('stldImagesTree')){
     //   this.selectedFilePath = false;
     //   let path = 'http://localhost/asset-bank/asset-bank-api/public/api/assets/1/U-1667596642/jpg';

@@ -38,6 +38,10 @@
   <div class="col pad-all-sm">
 
     <mat-form-field appearance="fill">
+      <mat-label>Name</mat-label>
+      <input matInput type="Name" [(ngModel)]="user.name">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
       <mat-label>Email</mat-label>
       <input matInput type="Email" [(ngModel)]="user.email">
     </mat-form-field>
@@ -45,7 +49,11 @@
       <mat-label>Password</mat-label>
       <input matInput type="password" [(ngModel)]="user.password">
     </mat-form-field>
-    <button mat-raised-button color="primary" (click)="userRegister()">
+    <button 
+      [disabled]="!user.name || !user.email || !user.password"
+      mat-raised-button 
+      color="primary" 
+      (click)="userRegister()">
       Register
     </button>
     
