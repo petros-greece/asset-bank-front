@@ -25,90 +25,131 @@
       </mat-checkbox>
       <!-- runWithReinit( clbk: Function ){ -->
 
-      <mat-accordion>
-
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Confusion
-            </mat-panel-title>  
-          </mat-expansion-panel-header>   
-          <ng-template *ngTemplateOutlet="confusionTmpl"></ng-template>
-        </mat-expansion-panel>
+      <div style="max-height: 300px;" class="my-scroll">
+        <mat-accordion>
   
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Color Stops
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="colorStopsTmpl"></ng-template>
-        </mat-expansion-panel>        
-
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Pixelate
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="pixelateTmpl"></ng-template>
-        </mat-expansion-panel> 
-
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Mosaic
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="pixelateCircleTmpl"></ng-template>
-        </mat-expansion-panel>
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Confusion
+              </mat-panel-title>  
+            </mat-expansion-panel-header>   
+            <ng-template *ngTemplateOutlet="confusionTmpl"></ng-template>
+          </mat-expansion-panel>
+    
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                White Noise
+              </mat-panel-title>  
+            </mat-expansion-panel-header>   
+            <ng-template *ngTemplateOutlet="whiteNoiseTmpl"></ng-template>
+          </mat-expansion-panel>
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Color Stops
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="colorStopsTmpl"></ng-template>
+          </mat-expansion-panel>        
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Pixelate
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="pixelateTmpl"></ng-template>
+          </mat-expansion-panel> 
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Mosaic
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="pixelateCircleTmpl"></ng-template>
+          </mat-expansion-panel>
+          
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                BNW
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="bnwTmpl"></ng-template>
+          </mat-expansion-panel>  
+    
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Negatives
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="negativeTmpl"></ng-template>
+          </mat-expansion-panel> 
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Polychrome Negative
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="polychromeNegativeTmpl"></ng-template>
+          </mat-expansion-panel> 
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Paradise
+              </mat-panel-title>  
+            </mat-expansion-panel-header>   
+            <ng-template *ngTemplateOutlet="paradiseTmpl"></ng-template>
+          </mat-expansion-panel>
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Exposure
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="exposureTmpl"></ng-template>
+          </mat-expansion-panel>  
         
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              BNW
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="bnwTmpl"></ng-template>
-        </mat-expansion-panel>  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Intensity
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="intensityTmpl"></ng-template>
+          </mat-expansion-panel>
+  
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Bloom
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="bloomTmpl"></ng-template>
+          </mat-expansion-panel>
 
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Negatives
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="negativeTmpl"></ng-template>
-        </mat-expansion-panel> 
 
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Polychrome Negative
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="polychromeNegativeTmpl"></ng-template>
-        </mat-expansion-panel> 
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Top Colors ({{info.colorCount}})
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="topColorsTmpl"></ng-template>
+          </mat-expansion-panel>
+  
 
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Exposure
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="exposureTmpl"></ng-template>
-        </mat-expansion-panel> 
 
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Top Colors ({{info.colorCount}})
-            </mat-panel-title>   
-          </mat-expansion-panel-header>  
-          <ng-template *ngTemplateOutlet="topColorsTmpl"></ng-template>
-        </mat-expansion-panel>
-
-      </mat-accordion>      
+        </mat-accordion>      
+      </div>
 
      
       <button *ngIf="!coreService.isProd" mat-raised-button color="accent" (click)="scissors()">scissors()</button> 
@@ -338,9 +379,35 @@
     [(ngModel)]="polychromeNegative.range" 
     (change)="givePolychromeNegative()">
   </mat-slider> 
-
 </ng-template>
 
+<ng-template #whiteNoiseTmpl>
+  <mat-slider thumbLabel [min]="0" [max]="205" [step]="1" 
+    [(ngModel)]="whiteNoise.factor" 
+    (change)="giveWhiteNoise()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #paradiseTmpl>
+  <mat-slider thumbLabel [min]="0.1" [max]="1" [step]=".1" 
+    [(ngModel)]="paradise.factor" 
+    (change)="giveParadise()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #intensityTmpl>
+  <mat-slider thumbLabel [min]="0" [max]="1" [step]=".01" 
+    [(ngModel)]="intensity.factor" 
+    (change)="giveIntensity()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #bloomTmpl>
+  <mat-slider thumbLabel [min]="1" [max]="200" [step]="1" 
+    [(ngModel)]="bloom.factor" 
+    (change)="giveBloom()">
+  </mat-slider>
+</ng-template>
 
   <!-- <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
     Save World

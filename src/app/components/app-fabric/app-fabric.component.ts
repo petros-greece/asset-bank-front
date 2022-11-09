@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { fabric } from 'fabric';
+import { FabricService } from 'src/app/service/fabric.service';
 
 export interface FabricOptionsI{
   width: number;
@@ -20,47 +21,41 @@ export class AppFabricComponent implements OnInit {
   @Input()  ctx: any;
   @Output() onEmitCTX = new EventEmitter<any>();
   fabricCanvas: any;
-
-
   fabricCanvasOpts = {
     isDrawingMode: false
   }
   brush = {
-    color: 'white',
+    color: 'white', 
     strokeLineCap: 'butt',
     width: 30
   }
   textbox = {
-    background: 'rgba(255, 255, 255, .5)',
+    background: 'rgba(255, 255, 255, 1)',
     color: 'rgba(50,50,50,1)',
     fontSize: 30,
   }
 
 
 
-  constructor() { }
+  constructor(public fabricService: FabricService) { }
 
   ngOnInit(): void {
     
-    this.fabricCanvas = new fabric.Canvas('fabricCanvas', {
-      //controlsAboveOverlay: true,
-      backgroundColor: 'rgba(0,0,0,0)',
-      //selection: true,
-      //selectionColor: 'yellow',
-      //selectionBorderColor: 'black',
-      //selectionLineWidth: 5,
-      isDrawingMode: true,
-      preserveObjectStacking: true,
-      freeDrawingCursor: 'pointer',
-      width: this.opts.width,
-      height: this.opts.height,
+    this.fabricService.giveFabricCanvas('fabricCanvas', this.opts).subscribe((canvas)=>{
+      this.fabricCanvas = canvas;
+      this.ctx = this.fabricCanvas.getContext('2d');
+      this.onEmitCTX.emit({ctx: this.ctx, canvas: this.fabricCanvas});
+      this.fabricService.loadSVG(this.fabricCanvas, {
+        path: 'cloud.svg',
+        fill: 'yellow',
+        stroke: 'purple'
+      }); 
     });
-    this.ctx = this.fabricCanvas.getContext('2d');
-
-    this.onEmitCTX.emit({ctx: this.ctx, canvas: this.fabricCanvas});
+    
+    
     //this.addRolygon();
     //this.addBrush();
-setTimeout(()=>{this.mlpa()}, 90)
+    //setTimeout(()=>{this.mlpa()}, 90)
 
     this.fabricCanvas.on('before:path:created', (opt:any) => {
       console.log(opt);
@@ -72,79 +67,18 @@ setTimeout(()=>{this.mlpa()}, 90)
 
   /** */
 
-  addBrush(){
-    this.fabricCanvas.isDrawingMode = true;
-    this.fabricCanvas.selection = false;
-    let PencilBrush = new fabric.PencilBrush(this.fabricCanvas);
-    PencilBrush.color =  this.brush.color;//'red';
-    PencilBrush.width = this.brush.width;//30;
-    PencilBrush.strokeLineCap =  this.brush.strokeLineCap;//'butt','round', 'square'
-    //PencilBrush.strokeDashArray = [25, 50]
-    this.fabricCanvas.freeDrawingBrush = PencilBrush;
-  }
-
-  addTextBox(){
-    this.fabricCanvas.isDrawingMode = false;
-    this.fabricCanvas.selection = true;
-    let textbox = new fabric.Textbox('Add Text', {
-      stroke: this.textbox.color,
-      fill: this.textbox.color,
-      //cornerStrokeColor: this.textbox.color,
-      //textBackgroundColor: this.textbox.color,
-      top: 30,
-      left: 30,
-      fontSize: this.textbox.fontSize,
-      width: 200,
-      textAlign: 'center',
-      fontStyle: 'normal',
-      borderColor: this.textbox.background,
-      paintFirst: 'fill',
-      selectionBackgroundColor: this.textbox.background,
-      backgroundColor: this.textbox.background
-      //fontFamily:
-    });
-
-    this.fabricCanvas.add(textbox);
-  }
 
   removeSelection(){
-    let test = this.fabricCanvas.getActiveObject();
-    this.fabricCanvas.remove(test);
-   // test.delete;
-    console.log(this.fabricCanvas);
+    let activeObject = this.fabricCanvas.getActiveObject();
+    console.log(activeObject);
+    this.fabricCanvas.remove(activeObject);
   }
 
   eraseBrush(){
     let EraseBrush = this.fabricCanvas.SprayBrush();
   }
 
-  addRect(){
 
-    var rect = new fabric.Rect({
-      left: 100,
-      top: 50,
-      fill: '#D81B60',
-      width: 50,
-      height: 50,
-      strokeWidth: 2,
-      stroke: "#880E4F",
-      rx: 10,
-      ry: 10,
-      angle: 45,
-      scaleX: 3,
-      scaleY: 3,
-      hasControls: true,
-    });
-    
-    this.fabricCanvas.add(rect);
-  }
-
-  addRolygon(){
-
-    var rect = new fabric.Polygon([{x: 10, y: 10}, {x: 100, y: 10}, {x: 80, y: 100}, {x: 10, y: 100}], {selectable: true});
-    
-    this.fabricCanvas.add(rect);
-  }
 
 
   mlpa(){
@@ -163,6 +97,12 @@ console.log(fabric)
       // this.fabricCanvas.add(img);     
     });    
   }
- // initFabric
+
+
+
+
+
+
+ 
 
 }

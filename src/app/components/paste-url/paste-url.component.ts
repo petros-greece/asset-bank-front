@@ -3,6 +3,7 @@ import { fabric } from 'fabric';
 import { Observable } from 'rxjs';
 import { ApiService } from 'src/app/service/api.service';
 import { CoreService } from 'src/app/service/core.service';
+import { FabricService } from 'src/app/service/fabric.service';
 
 @Component({
   selector: 'app-paste-url',
@@ -19,59 +20,27 @@ export class PasteUrlComponent implements OnInit {
 
   constructor(
     public apiService: ApiService,
-    public coreService: CoreService
+    public coreService: CoreService,
+    public fabricService: FabricService
     ) { }
 
   ngOnInit(): void {
 
-    this.giveCanvas().subscribe((canvas)=>{
+    this.fabricService.giveFabricCanvas('fabricLinkCanvas', {width:0, height:0}).subscribe((canvas)=>{
       this.fabricCanvas = canvas;
       this.ctx = this.fabricCanvas.getContext('2d');
-      this.fabricCanvas.setDimensions({width:0, height:0});
-    })
+      //this.fabricCanvas.setDimensions({width:0, height:0});
+    });
 
-  }
-
-  giveCanvas():Observable<any>{
-    return new Observable((observer)=>{
-      let canvas = new fabric.Canvas('fabricLinkCanvas', {
-        //controlsAboveOverlay: true,
-        backgroundColor: 'rgba(0,0,0,0)',
-        //selection: true,
-        //selectionColor: 'yellow',
-        //selectionBorderColor: 'black',
-        //selectionLineWidth: 5,
-        isDrawingMode: true,
-        preserveObjectStacking: true,
-        freeDrawingCursor: 'pointer',
-        //width: this.opts.width,
-        //height: this.opts.height,
-      });
-      observer.next(canvas);
-    })
   }
 
   showImage(link: string){
-    return new Observable((observer)=>{
-      fabric.Image.fromURL(link, 
-      (img)=>{
-       //console.log(img.width);
-        img.set({
-          cropX: 0,
-          cropY: 0,
-          width: img.width,
-          height: img.height,
-
-        });
-        this.fabricCanvas.setDimensions({width:img.width, height:img.height});
-        this.fabricCanvas.add(img);   
-      }, {
-        crossOrigin: "anonymous"
-      });  
+    this.fabricService.showImage(link).subscribe((img:any)=>{
+      this.fabricCanvas.setDimensions({width:img.width, height:img.height});
+      this.fabricCanvas.add(img);   
     });
+    
   }
-
-
 
   saveImage(){
 

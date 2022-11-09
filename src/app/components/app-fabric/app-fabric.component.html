@@ -14,13 +14,14 @@
 
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
           <app-picker-menu
+            (click)="fabricService.addBrush(fabricCanvas, brush);"
             [icon]="'brush'" 
             [color]="brush.color" 
-            (onPickColor)="brush.color = $event.color;addBrush();">
+            (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);">
           </app-picker-menu>
-          <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="addBrush();"></mat-slider>
+          <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
           
-          <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="addBrush();" aria-label="Select an option">
+          <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
             <mat-button-toggle value="butt">
               <mat-icon>rectangle</mat-icon>
             </mat-button-toggle>
@@ -37,10 +38,14 @@
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
         <!-- <b>Ballon Text</b> -->
         
-        <button mat-raised-button color="accent" (click)="addTextBox()">
-          <mat-icon>chat</mat-icon>
+        <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
+          <mat-icon>notes</mat-icon>
         </button>
     
+        <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
+          <mat-icon>comment</mat-icon>
+        </button>
+
         <app-picker-menu
           [icon]="'text_fields'" 
           [color]="textbox.color" 
@@ -61,7 +66,12 @@
         </button>
     
       </div>
-    
+      <!-- <svg width="90" height="90" color="white">
+        <use xlink:href="./assets/img/fabric-icons/cloud.svg#icon-star"></use>
+           
+      </svg>      -->
+
+
       <div class="row end-xs">
         <button mat-raised-button (click)="fabricCanvas.clear()">
           <mat-icon>delete</mat-icon>

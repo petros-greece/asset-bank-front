@@ -23,6 +23,18 @@ export class ApiService {
       this.getAccessToken(); 
     }
  
+  checkAccessToken(){
+    console.log('checking token');
+    this.getAuthData('/checkToken').subscribe({
+      error: (e:any)=>{
+        this.token = '';
+        localStorage.removeItem('asset_bank_user');
+      }
+    })
+  }
+
+
+
   getAccessToken(){
     this.user = this.coreService.getStorageObj('asset_bank_user');
     this.token = this.user ? this.user.token.access_token : '';

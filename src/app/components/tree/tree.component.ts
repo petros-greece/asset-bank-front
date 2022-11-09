@@ -58,20 +58,11 @@ export class TreeComponent implements OnInit {
     ) {
   }
 
-  ngOnInit(): void {
-    if(this.apiService.user.id){
-      this.apiService.getData(`/tree/${this.apiService.user.id}`).subscribe((res)=>{
-        this.categories = JSON.parse(res.categories);
-        //console.log(this.categories);
-      });
-    }
-    else{
-      this.coreService.getData('./assets/json/tree1.json', { responseType: 'json' }).subscribe(
-        (data)=>{
-          this.categories = data;
-        }
-      );
-    }
+  ngOnInit(): void {  
+    this.apiService.getData(`/tree/${this.apiService.user.id}`).subscribe((res)=>{
+      this.categories = JSON.parse(res.categories);
+      //console.log(this.categories);
+    }); 
   }
 
   drop(e:any, categories: any){

@@ -69,7 +69,9 @@ export class AppCanvasComponent implements OnInit {
     colorObj:<any> [],
     colorCount: 0
   }
-
+  whiteNoise = {
+    factor: 30
+  }
 
   
 
@@ -478,7 +480,104 @@ export class AppCanvasComponent implements OnInit {
     });
   }
 
+  giveWhiteNoise(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
 
+      while ( (i += 4) < len ) { 
+          let rand = -this.whiteNoise.factor + Math.ceil(Math.random()*(2*this.whiteNoise.factor));
+          this.imageData.data[i]+=rand;
+          this.imageData.data[i+1]+=rand;
+          this.imageData.data[i+2]+=rand;       
+          
+      }
+      this.ctx.putImageData(this.imageData, 0, 0);
+    });    
+  }
+
+  paradise = {factor: .1};
+
+  giveParadise(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point;
+      let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+  
+      let factor = this.paradise.factor;
+  
+      while ( (i += 4) < len ) { 
+        
+        point = { x: (i / 4) % this.width, y: Math.floor((i / 4) / this.width) };
+  
+        let hypo = Math.hypot(center.x-point.x, center.y-point.y)
+          
+        this.imageData.data[i]+=factor*hypo;
+        this.imageData.data[i+1]+=factor*hypo;
+        this.imageData.data[i+2]+=factor*hypo;         
+            
+      }
+      this.ctx.putImageData(this.imageData, 0, 0); 
+    });   
+
+  }
+
+  intensity = { factor: .1};
+
+  giveIntensity(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let factor = this.intensity.factor;
+  
+      while ( (i += 4) < len ) { 
+        
+        let diffR = this.imageData.data[i] - this.info.averageRgb.r;
+        let diffG = this.imageData.data[i+1] - this.info.averageRgb.g;
+        let diffB = this.imageData.data[i+2] - this.info.averageRgb.b;  
+  
+        this.imageData.data[i] +=diffR*factor;
+        this.imageData.data[i+1] +=diffG*factor;
+        this.imageData.data[i+2] +=diffB*factor;
+     
+      }
+      this.ctx.putImageData(this.imageData, 0, 0); 
+      
+    });   
+  }
+
+  bloom = { factor: 20 }
+
+  giveBloom(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point;
+      let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }  
+      let data = JSON.parse(JSON.stringify(this.imageData.data));
+
+      while ( (i += 4) < len ) { 
+        
+        point = {
+          x: (i / 4) % this.width,
+          y: Math.floor((i / 4) / this.width),
+        };
+  
+        let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
+  
+        let newX = Math.round(point.x + (Math.cos(dirRadians)*this.bloom.factor));
+        let newY = Math.round(point.y + (Math.sin(dirRadians)*50));
+        let newI = (((newY-1)*this.width)+newX)*4;
+
+        this.imageData.data[i] = data[newI];
+        this.imageData.data[i+1] = data[newI+1];
+        this.imageData.data[i+2] = data[newI+2];
+          
+      }
+      this.ctx.putImageData(this.imageData, 0, 0);     
+    })
+  } 
 
   scissors(){
     console.log(this.info)
@@ -489,111 +588,129 @@ export class AppCanvasComponent implements OnInit {
     let color;
     let avg = this.info.averageRgb.r + this.info.averageRgb.g +this.info.averageRgb.b;
     let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    let rowLen = this.width*4;
+    let distance = 800;
+
+    let data = JSON.parse(JSON.stringify(this.imageData.data));
+    console.log(data)
+    let counter = 0;
+
 
     while ( (i += 4) < len ) { 
-
+      
       point = {
         x: (i / 4) % this.width,
         y: Math.floor((i / 4) / this.width),
       };
 
-      mirror = {
-        x: ((len - i) / 4) % this.width,
-        y: Math.floor(((len - i) / 4) / this.width),
+      color = {
+        r: this.imageData.data[i],
+        g: this.imageData.data[i+1],
+        b: this.imageData.data[i+2],
+        a: this.imageData.data[i+3]
+      };
+
+      let colorTotal = color.r + color.g + color.b;
+      let colorNextTotal = data[i+4] + data[i+5] + data[i+6];
+      let diffR = this.imageData.data[i] - this.info.averageRgb.r;
+      let diffG = this.imageData.data[i+1] - this.info.averageRgb.g;
+      let diffB = this.imageData.data[i+2] - this.info.averageRgb.b;  
+
+      // let hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
+      // let distFromCenter = Math.abs((this.width/2)-point.x);
+      // let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
+
+      // let newX = Math.round(point.x - (Math.cos(dirRadians)*40));
+      // let newY = Math.round(point.y - (Math.sin(dirRadians)*40));
+      // let newI = (((newY-1)*this.width)+newX)*4;
+ 
+      let factor = 20;
+
+      if( (Math.abs(color.r - data[i+4]) > factor) && (Math.abs(color.g - data[i+5]) > factor) &&
+      (Math.abs(color.b - data[i+6]) > factor) ){
+        this.imageData.data[i] = 0;
+        this.imageData.data[i+1] = 0;
+        this.imageData.data[i+2] = 0;
       }
 
-      //if(point.y > point.x){
-        let a = 170;
-        this.imageData.data[i]=this.imageData.data[(len/2)-i];
-        this.imageData.data[i+1]=this.imageData.data[(len/2)-i+1];
-        this.imageData.data[i+2]=this.imageData.data[(len/2)-i+2];        
-      //}
+
+      if(i<this.width){
+        console.log(colorTotal, colorNextTotal)
+      }
+
+      // this.imageData.data[i] = data[i];
+      // this.imageData.data[i+1] = data[i+1];
+      // this.imageData.data[i+2] = data[i+2];
 
 
-      //let hypo = Math.hypot(center.x-point.x, center.y-point.y)
 
-      // if(hypo > 200 && !(i%8)){
-      //   let a = 170;
-      //   this.imageData.data[i] > 127 ? 
-      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-      //   this.imageData.data[i+1] > 127 ? 
-      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-      //   this.imageData.data[i+2] > 127 ?
-      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;
+
+      //this.imageData.data[i+3] += Math.ceil(dirRadians);//  data[newI+3];      
+
+      /*circles*/
+      // if( mod > 60 + (distFromCenter/20) ){
+      //   //this.imageData.data[i] = 255 //- this.imageData.data[i];
+      //   //this.imageData.data[i+1] = 255 - this.imageData.data[i+1];
+      //   //this.imageData.data[i+2] += 55 //- this.imageData.data[i+2];
+      //   //this.imageData.data[i+3] =  255 - this.imageData.data[i+3];
       // }
-      // else{
-      //   let a = 170;
-      //   this.imageData.data[i] < 127 ? 
-      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-      //   this.imageData.data[i+1] < 127 ? 
-      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-      //   this.imageData.data[i+2] < 127 ?
-      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;       
-      // }
+      
+      // if( (hypo > 200 && hypo < 300) &&  (hypo%20) > 15 ){
 
+      //   this.imageData.data[i] = data[len-(i+4)];
+      //   this.imageData.data[i+1] = data[len-(i+3)];
+      //   this.imageData.data[i+2] = data[len-(i+2)];
+      //   this.imageData.data[i+3] = data[len-(i+1)]; 
 
-      // if(hypo > 100){
-      //   let a = 0;
-      //   this.imageData.data[i] < 127 ? 
-      //   this.imageData.data[i]-=a : this.imageData.data[i]+=a;
-      //   this.imageData.data[i+1] < 127 ? 
-      //   this.imageData.data[i+1]-=a : this.imageData.data[i+1]+=a;
-      //   this.imageData.data[i+2] < 127 ?
-      //   this.imageData.data[i+2]-=a : this.imageData.data[i+2]+=a;   
-      // }     
+      // }    
 
+      // if( (hypo < 200) &&  (hypo%20) > 18 ){
 
-      // color = {
-      //   r: this.imageData.data[i],
-      //   g: this.imageData.data[i+1],
-      //   b: this.imageData.data[i+2],
-      //   a: this.imageData.data[i+3]
-      // };
+      //   this.imageData.data[i] = data[len-(i+4)];
+      //   this.imageData.data[i+1] = data[len-(i+3)];
+      //   this.imageData.data[i+2] = data[len-(i+2)];
+      //   this.imageData.data[i+3] = data[len-(i+1)]; 
 
-
-
-
-      //let avgColor = color.r + color.g + color.b;
-
-
-     // if(!(i%40)){
-        // this.imageData.data[i] = this.info.averageRgb.r;
-        // this.imageData.data[i+1] = this.info.averageRgb.g;
-        // this.imageData.data[i+2] = this.info.averageRgb.b;
-        
-        /** */
-        //this.ctx.beginPath();
-        //this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.r},${color.a-.3})`;
-
-        // var grd = this.ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 22);
-        // grd.addColorStop(0, `rgba(${color.r},${color.g},${color.b},${color.a})`);
-        // grd.addColorStop(1, `rgba(${color.b},${color.g},${color.r},${color.a})`);
-        
-        // Fill with gradient
-        // this.ctx.fillStyle = grd;
-        // this.ctx.arc(point.x, point.y, 22, 0, 2 * Math.PI);
-        // this.ctx.fill();
-
-        // let round = Math.ceil(Math.random()*93);
-        // this.ctx.moveTo(point.x, point.y);
-        // this.ctx.lineTo(point.x+round, point.y+round);
-        // this.ctx.lineTo(point.x-round, point.y+round);       
-        // this.ctx.quadraticCurveTo(point.x+round, point.y-round, point.x-round, point.y+2*round);
-        // this.ctx.stroke();
-
-
-      //this.imageData.data[i+3] = 0;
-     // } 
-      // else{
-        //let rand = -100 + Math.ceil(Math.random()*200); 
-        //this.imageData.data[i] = this.imageData.data[i]+rand;
-        //this.imageData.data[i+1] = this.imageData.data[i+1]+rand;
-        //this.imageData.data[i+2] = this.imageData.data[i+2]+rand;       
       // }  
+
+
+      // if( i%8 === 0){
+      //   this.imageData.data[i] = data[len-(i+4)];
+      //   this.imageData.data[i+1] = data[len-(i+3)];
+      //   this.imageData.data[i+2] = data[len-(i+2)];
+      //   this.imageData.data[i+3] = data[len-(i+1)];
+      // }
+      
+      // if(counter < 40000){
+        
+      //   this.imageData.data[i] = this.imageData.data[counter];
+      //   this.imageData.data[i+1] = this.imageData.data[counter+1];
+      //   this.imageData.data[i+2] = this.imageData.data[counter+2];
+  
+      // }
+
+      // else{
+      //   counter = 0;
+      // }  
+
+
+
+
+      //if(hypo < 250 && hypo > 180){
+        
+
+     // }
+
+
+      //this.imageData.data[i] = 255;//this.imageData.data[i+(rowLen*2)];
+      //this.imageData.data[i+1] = //this.imageData.data[1+i+(rowLen*3)];
+      //this.imageData.data[i+2] = 255;//this.imageData.data[2+i+(rowLen*4)]; 
+      //this.imageData.data[i+rowLen+3] = .5;
+  
 
           
     }
-    this.ctx.putImageData(this.imageData, 0, 0); console.log(this.info.colorObj)   
+    this.ctx.putImageData(this.imageData, 0, 0);    
   }
 
   scissors2(){
@@ -683,12 +800,31 @@ export class AppCanvasComponent implements OnInit {
     let i = -4;
     let len = data.length;
     while ( (i +=  4) < len ) {
-        if(data[i+4]){
-          this.imageData.data[i] = data[i];
-          this.imageData.data[i + 1] = data[i+1];
-          this.imageData.data[i + 2] = data[i+2];
-          this.imageData.data[i + 3] = data[i+3];
-        }
+
+          if( data[i+3] ) {
+            console.log(1-(data[i+3]/255))
+            let gravity = (data[i+3]/255);
+            let avg1 =  this.imageData.data[i]*  (1-gravity) + data[i]* (gravity)   
+            let avg2 =  this.imageData.data[i+1]*(1-gravity) + data[i+1]*(gravity) 
+            let avg3 =  this.imageData.data[i+2]*(1-gravity) + data[i+2]*(gravity) 
+            //let avg4 = ( this.imageData.data[i+3]*(1-(data[i+3]/255)) + data[i+3]*((data[i+3]/255)) )/2
+
+            this.imageData.data[i] = Math.round(avg1);
+            this.imageData.data[i + 1] = Math.round(avg2);
+            this.imageData.data[i + 2] = Math.round(avg3);
+            this.imageData.data[i + 3] = 255//avg4;
+          }
+          // else{
+          //   this.imageData.data[i] = data[i];
+          //   this.imageData.data[i + 1] = data[i+1];
+          //   this.imageData.data[i + 2] = data[i+2];
+          //   this.imageData.data[i + 3] = data[i+3];
+          // }
+
+        
+        // else{
+        //   console.log(data[i+4])
+        // }
     }
     this.ctx.putImageData(this.imageData, 0, 0);
     this.fabricCanvas.clear();
