@@ -216,10 +216,10 @@
         <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
       
         <div class="row around-xs">
-          <button mat-raised-button color="primary" (click)="addEditedImageToCat()">
+          <button mat-raised-button color="primary" (click)="uploadImageToCat()">
             Add To {{category?.title}}
           </button>
-          <button mat-raised-button color="primary" (click)="addEditedImageToCat(true)">
+          <button mat-raised-button color="primary" (click)="uploadImageToCat(true)">
             Add and close
           </button>
         </div>
@@ -234,7 +234,18 @@
 
       </div>
 
-           
+      <div *ngIf="!category">
+        
+        <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
+      
+        <div class="row around-xs">
+          <button mat-raised-button color="warn" (click)="uploadImage()">
+            Upload Image
+          </button>       
+        </div>
+
+      </div>
+
     </div>
      
     <div class="col-xs-8" [style.background]="'rgb('+info.averageRgb.r+','+info.averageRgb.g+','+info.averageRgb.b+')'">

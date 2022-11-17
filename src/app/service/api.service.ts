@@ -3,6 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, ErrorObserver, pipe, catchError, throwError } from 'rxjs';
 import { CoreService } from './core.service';
 
+export interface CategoryI{
+  childsNum: number;
+  title: string;
+  icon: string;
+  files?:string[] | any;
+  childs: any[];
+}
 
 @Injectable({
 	providedIn: 'root'
@@ -14,6 +21,17 @@ export class ApiService {
   imgPath = 'http://localhost/asset-bank-api/public/api/asset/';
   token:string = '';
   user:any;
+
+  categories:CategoryI[] = [
+    {
+      childsNum: 0,
+      title: 'images',
+      icon: 'folder',
+      childs: [],
+      files:<any> []
+    }
+  ];
+
 
 	constructor(
     public http: HttpClient,

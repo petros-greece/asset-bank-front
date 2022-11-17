@@ -1160,7 +1160,7 @@ export class AppCanvasComponent implements OnInit {
     this.fabricCanvas.clear();
   }
 
-  addEditedImageToCat(closeDialog: boolean = false){
+  uploadImageToCat(closeDialog: boolean = false){
     this.mergeDataToDummy();
     const dataURL = this.dummyCanvas.toDataURL();
     let file = this.coreService.dataURLtoFile(dataURL, 'test.png');
@@ -1182,9 +1182,28 @@ export class AppCanvasComponent implements OnInit {
       complete: () => {
         //this.files.splice(i, 1);
       },
-    });
+    }); 
+  }
 
-    
+  uploadImage(){
+    this.mergeDataToDummy();
+    const dataURL = this.dummyCanvas.toDataURL();
+    let file = this.coreService.dataURLtoFile(dataURL, 'test.png');
+    this.apiService.uploadAsset('/asset', file).subscribe({
+      next: (res: any) => {
+        this.coreService.giveSnackbar(`Image Uplaoded`);
+      },
+      error: (err: any) => {
+        console.log(err);
+        this.coreService.giveSnackbar(err.message, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        //this.files.splice(i, 1);
+      },
+    });    
   }
 
   downloadImage(type: string){

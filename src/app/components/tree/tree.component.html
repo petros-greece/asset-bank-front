@@ -32,7 +32,7 @@
 
   </div>
 
-  <ng-container *ngTemplateOutlet="categoryTree; context: { $implicit: {cats: categories, parent: {}} }"></ng-container>
+  <ng-container *ngTemplateOutlet="categoryTree; context: { $implicit: {cats: apiService.categories, parent: {}} }"></ng-container>
 
   <button mat-raised-button color="primary" (click)="saveTree()" class="mrgn-t-sm">
     Save
@@ -41,6 +41,7 @@
 
 </div>
 
+<!--== TREEE =====================-->
 
 <ng-template  #categoryTree let-categories>
 
@@ -202,16 +203,29 @@
   </div>
 </ng-template>
 
+<ng-template #galleryClbkDialog>
+  <div class="my-scroll" style="height: 75vh;">
+    <app-gallery [hasClbk]="true" (onAddSelected)="onAddSelected()"></app-gallery>
+  </div>
+</ng-template>
+
 <ng-template #dropZoneDialog>
   <div class="column pad-all-lg" style="min-width: 50vw">
     <app-dropzone 
       (onAddFile)="onAddFile($event)"
       (onSelectFile)="onSelectFile($event)">
     </app-dropzone>
-
-    <app-paste-url 
+    <div class="mrgn-all-lg">
+      OR
+    </div>
+    <button mat-raised-button color="primary" (click)="openGalleryClbkDialog()">
+      Choose from Gallery
+    </button>
+    
+    <!-- <app-paste-url 
       (onAddFile)="onAddFile($event)">
-    </app-paste-url>
+    </app-paste-url> -->
+
   </div> 
 </ng-template>
 

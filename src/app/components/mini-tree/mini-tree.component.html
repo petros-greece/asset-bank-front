@@ -1,0 +1,48 @@
+<ng-container *ngTemplateOutlet="categoryMiniTree; context: { $implicit: {cats: apiService.categories, parent: {}} }"></ng-container>
+
+
+<ng-template #categoryMiniTree let-categories>
+
+  <mat-accordion displayMode="flat" class="categories-accordeon" multi="true">
+    <mat-expansion-panel
+      *ngFor="let category of categories.cats;index as i"
+      [hideToggle]="!category.childsNum"
+      [disabled]="!category.childsNum"
+      togglePosition="before">
+      
+      <mat-expansion-panel-header style="overflow: visible;">
+        <mat-panel-title style="overflow: visible;">
+          <span [ngClass]="!category.childsNum ? 'hidden-indicator' : ''"></span>
+
+          <mat-icon class="mrgn-r-sm">{{category.icon}}</mat-icon>
+          <div class="row" style="width: 100%;overflow: visible;">
+
+            <div class="col-xs-4 col-md-6">
+            
+                <span style="white-space: nowrap;" >
+                  {{category.title}}
+                </span>
+        
+            </div>
+
+            <div class="col-xs-8 col-md-6 end-xs">
+              <button mat-button (click)="selectCategory($event, category)">Select</button>
+            </div>
+
+          </div>
+          
+        </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <mat-panel-description>	
+      <mat-progress-bar mode="indeterminate" *ngIf="!category.childs"></mat-progress-bar>
+    </mat-panel-description>
+    <ng-container *ngIf="category.childs">
+      <ng-container *ngTemplateOutlet="categoryMiniTree; context: { $implicit: {cats: category.childs, parent: category} }">
+    </ng-container>
+    </ng-container>
+    </mat-expansion-panel>
+
+  </mat-accordion>
+
+</ng-template>

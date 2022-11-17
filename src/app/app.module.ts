@@ -28,6 +28,7 @@ import { CanvasNewComponent } from './components/canvas-new/canvas-new.component
 import { GalleryComponent } from './components/gallery/gallery.component';
 import { ComicComponent } from './components/comic/comic.component';
 import { PalletPickerComponent } from './components/pallet-picker/pallet-picker.component';
+import { MiniTreeComponent } from './components/mini-tree/mini-tree.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { PalletPickerComponent } from './components/pallet-picker/pallet-picker.
     CanvasNewComponent,
     GalleryComponent,
     ComicComponent,
-    PalletPickerComponent
+    PalletPickerComponent,
+    MiniTreeComponent
   ],
   imports: [
     BrowserModule,

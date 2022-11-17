@@ -9,10 +9,11 @@ import { CoreService } from 'src/app/service/core.service';
 })
 export class GalleryComponent implements OnInit {
 
-  @Output() onAddSelected = new EventEmitter<any>();
   @Input() hasClbk = false; 
+  @Output() onAddSelected = new EventEmitter<any>();
   @ViewChild('comicDialog', {static: true}) comicDialog: TemplateRef<any> | any;  
   @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+  @ViewChild('miniTreeDialog', {static: true}) miniTreeDialog: TemplateRef<any> | any;
 
   assets:any[]  = [];
   total: number = 0;
@@ -20,7 +21,6 @@ export class GalleryComponent implements OnInit {
   pageSize: number = 10;
   pages:number[] = [];
 
-  selectedFileIndex: number = -1;
   selectedFilePath: any;
 
   constructor(
@@ -40,7 +40,7 @@ export class GalleryComponent implements OnInit {
       next: (resp:any) => {
         this.assets = resp.assets;
         this.total = resp.total;
-        this.pages = Array.from(Array(Math.floor(this.total/this.pageSize)-1).keys());
+        this.pages = Array.from(Array(Math.floor((this.total-1)/this.pageSize)).keys());
       },
       error: (e)=>{
         console.log(e);
@@ -64,8 +64,7 @@ export class GalleryComponent implements OnInit {
     }); 
   }
 
-  openEditAssetDialog(file: any, i:number){
-    this.selectedFileIndex = i;
+  openEditAssetDialog(file: any){
     this.selectedFilePath = this.apiService.srcApiPath(file);
     //console.log(category);
     this.coreService.openDialog({
@@ -75,6 +74,54 @@ export class GalleryComponent implements OnInit {
     },{
       id: 'previewCanvasDialog'
     }); 
+  }
+
+  openMiniTreeDialog(){
+
+    if(this.hasClbk){
+      this.onAddSelected.emit();
+      return;
+    }
+
+
+    this.coreService.openDialog({
+      headerText: `Select Category`,
+      template: this.miniTreeDialog,
+    },{
+      id: 'miniTreeDialog'
+    }); 
+  }
+
+  onSelectCategory(category: any){
+    let assets = [...this.coreService.selectedAssets];
+    if(category.files){
+      (category.files).concat(assets);
+    }
+    else{
+      category.files = assets;
+    }
+
+    this.apiService.postAuthData('/tree', {
+      categories: this.apiService.categories,
+    }).subscribe({
+      next: (res: any) => {
+        this.coreService.giveSnackbar(`New tree version created`);
+      },
+      error: (err: any) => {
+        console.log(err)
+        this.coreService.giveSnackbar(err?.message, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        this.coreService.selectedAssets = [];
+        this.coreService.closeAllDialogs();
+        //location.reload();
+      },
+
+    });
+
   }
 
 }
