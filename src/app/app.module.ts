@@ -24,6 +24,10 @@ import { SortablejsModule } from 'ngx-sortablejs';
 import { UserFormsComponent } from './components/user-forms/user-forms.component';
 import { BankPipesModule } from './pipe/pipe.module';
 import { PasteUrlComponent } from './components/paste-url/paste-url.component';
+import { CanvasNewComponent } from './components/canvas-new/canvas-new.component';
+import { GalleryComponent } from './components/gallery/gallery.component';
+import { ComicComponent } from './components/comic/comic.component';
+import { PalletPickerComponent } from './components/pallet-picker/pallet-picker.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +41,11 @@ import { PasteUrlComponent } from './components/paste-url/paste-url.component';
     AppFabricComponent,
     ImageEditorComponent,
     UserFormsComponent,
-    PasteUrlComponent
+    PasteUrlComponent,
+    CanvasNewComponent,
+    GalleryComponent,
+    ComicComponent,
+    PalletPickerComponent
   ],
   imports: [
     BrowserModule,

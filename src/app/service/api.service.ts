@@ -11,7 +11,7 @@ import { CoreService } from './core.service';
 export class ApiService {
 		
   apiUrl = 'http://localhost/asset-bank-api/public/api';
-  imgPath = 'http://localhost/asset-bank-api/public/api/assets/';
+  imgPath = 'http://localhost/asset-bank-api/public/api/asset/';
   token:string = '';
   user:any;
 
@@ -40,7 +40,7 @@ export class ApiService {
     this.token = this.user ? this.user.token.access_token : '';
     if(this.coreService.isProd){
       this.apiUrl = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api';
-      this.imgPath = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api/assets/'
+      this.imgPath = 'https://tools.siteland.eu/asset-bank/asset-bank-api/public/api/asset/'
     }
     if(!this.user){
       this.user = {id: 1};
@@ -167,6 +167,18 @@ export class ApiService {
         //'Authorization': `Bearer ${this.token}`        
       },
       responseType: 'blob'
+    }).pipe(catchError(
+      err=>{
+        throw err.message;
+      }
+    ));    
+  }
+
+  getAssets(limit: number, offset: number){
+    return this.http.get((`${this.apiUrl}/assets/${this.user.id}/${limit}/${offset}`), {
+      headers:{
+        'Authorization': `Bearer ${this.token}`        
+      },
     }).pipe(catchError(
       err=>{
         throw err.message;

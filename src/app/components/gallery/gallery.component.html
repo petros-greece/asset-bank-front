@@ -1,0 +1,68 @@
+<div align="center"> 
+
+  <div class="row mrgn-t-sm" style="margin: 0">
+    <div class="col-xs-9 start-xs">
+      <button 
+        *ngFor="let p of pages;index as i"
+        mat-raised-button 
+        color="primary" 
+        [disabled]="page == (i+1)"
+        (click)="goToPage(i+1)">
+        {{i+1}}
+      </button>
+    </div>
+    <div class="col-xs-3">
+      <button mat-raised-button color="primary" *ngIf="coreService.selectedAssets.length" (click)="openComicDialog()">
+        Synthesize ({{coreService.selectedAssets.length}})
+      </button>
+    </div>
+  </div>
+
+
+  <div class="row around-xs" style="margin: 0" [sortablejs]="assets">
+    <div *ngFor="let asset of assets;index as i" 
+      class="pad-all-sm mrgn-all-sm gallery-card">
+      <!-- {{asset|json}} -->
+      <div class="gallery-card-overlay">
+        <div style="width: 100%">
+          <button mat-icon-button (click)="openEditAssetDialog(asset.src, i)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="coreService.selectedAssets.push(asset.src)">
+            <mat-icon>done</mat-icon>
+          </button>
+        </div>
+      </div> 
+      <div class="gallery-card-selected" 
+        *ngIf="coreService.selectedAssets.includes(asset.src)" 
+        (click)="coreService.selectedAssets.splice(coreService.selectedAssets.indexOf(asset.src), 1)">
+        <div style="width: 100%">
+          <button mat-icon-button class="mat-green">
+            <mat-icon>check</mat-icon>
+          </button>          
+        </div>
+      </div>
+
+      <div class="bg-image-contain" style="width: 150px;height: 150px;" 
+        [style.backgroundImage]="'url('+apiService.imgPath+(asset.src | apiPath) +')'">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!--== GALLERY ====================-->
+
+<ng-template #comicDialog>
+  <app-comic></app-comic>
+</ng-template>
+
+<ng-template #editAssetDialog>
+  <div class="my-scroll" style="height: 95vh;margin-bottom: -5px;">
+    <app-canvas 
+      *ngIf="this.selectedFilePath" 
+      [selectedFileIndex]="selectedFileIndex"
+      [selectedFilePath]="selectedFilePath">
+    </app-canvas>
+  </div>
+</ng-template>

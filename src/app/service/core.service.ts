@@ -19,6 +19,7 @@ export class CoreService {
   isMobile: boolean;
   windowWidth: number; 
 
+  selectedAssets: any[] = [];
 
   UI = {
     toastComponent: <any>{},
@@ -156,6 +157,18 @@ export class CoreService {
     }
     
     return new File([u8arr], filename, {type:mime});
+  }
+
+  toBase64(e:any){
+    return new Observable((observer) => {
+      setTimeout(()=>{
+        const reader = new FileReader();
+        reader.readAsDataURL(e);
+        reader.onload = () => {
+          observer.next(reader.result)
+        };
+      }, 0);
+    });
   }
 
 }

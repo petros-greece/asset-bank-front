@@ -22,9 +22,11 @@ export interface CategoryI{
 export class TreeComponent implements OnInit {
   
   @ViewChild(MatAccordion) accordion: MatAccordion | any;
-  @ViewChild('previewAssetsDialog', {static: true}) previewAssetsDialog: TemplateRef<any> | any;
   @ViewChild('previewDialog', {static: true}) previewDialog: TemplateRef<any> | any; 
-  @Output() onOpenDropZone = new EventEmitter<any>();
+  @ViewChild('previewAssetsDialog', {static: true}) previewAssetsDialog: TemplateRef<any> | any;
+  @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+  @ViewChild('galleryDialog', {static: true}) galleryDialog: TemplateRef<any> | any;
+  @ViewChild('dropZoneDialog', {static: true}) dropZoneDialog: TemplateRef<any> | any;
 
   treeVersions: any;
   openAll: boolean = false;
@@ -182,7 +184,11 @@ export class TreeComponent implements OnInit {
   /** */
 
   openDropZone(category:CategoryI){
-    this.onOpenDropZone.emit(category);
+    this.selectedCategory = category;
+    this.coreService.openDialog({
+      headerText: `Add Images to ${category.title}`,
+      template: this.dropZoneDialog
+    });
   }
 
   previewAssets(category:CategoryI, e: Event){
@@ -199,17 +205,53 @@ export class TreeComponent implements OnInit {
     }); 
   }
 
-  previewAsset(file: any, i:number){
+  openEditAssetDialog(file: any, i:number){
     this.selectedFileIndex = i;
     this.selectedFilePath = this.apiService.srcApiPath(file);
     //console.log(category);
     this.coreService.openDialog({
-      headerText: `Assets For ${this.selectedCategory.title}`,
-      template: this.previewDialog
+      headerText: `Category ${this.selectedCategory.title}`,
+      template: this.editAssetDialog,
+      cls: 'no-display'
     },{
       id: 'previewCanvasDialog'
     }); 
   }
+
+  /** */
+
+  openGalleryDialog(){
+    this.coreService.openDialog({
+      headerText: `Gallery`,
+      template: this.galleryDialog,
+    },{
+      id: 'galleryDialog'
+    }); 
+  }
+
+  onSelectFile(e:any){
+    this.selectedFilePath = false;
+    this.coreService.toBase64(e).subscribe(base64 => this.selectedFilePath = base64 ) 
+    this.coreService.openDialog({
+      headerText: `Preview Image`,
+      template: this.previewDialog, 
+    },
+    {
+      id: 'previewCanvasDialog'
+    });
+  }
+
+  onAddFile(e:any){
+      let src = (e.data).split('/').pop();
+      if(this.selectedCategory.files && this.selectedCategory.files.length){
+
+        this.selectedCategory.files.push(src);
+      }
+      else{
+        this.selectedCategory.files = [src];
+      }
+  }
+
 
 }
 

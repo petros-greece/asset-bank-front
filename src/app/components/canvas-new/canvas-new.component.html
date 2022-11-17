@@ -1,0 +1,10 @@
+<p>canvas-new works!</p>
+
+
+<div>
+  Start
+  <mat-slider thumbLabel [min]="0" [max]="1" step=".01" 
+  (change)="test()" 
+  [(ngModel)]="effects.brightness.factor">
+  </mat-slider>
+</div>

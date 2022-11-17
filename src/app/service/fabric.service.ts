@@ -1,18 +1,19 @@
 import { asNativeElements, Injectable } from '@angular/core';
 import { Observable, reduce } from 'rxjs';
 import { fabric } from 'fabric';
+import { ICanvasOptions, IImageOptions, IRectOptions, ITextboxOptions } from 'fabric/fabric-impl';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FabricService {
 
-  constructor() { }
+  constructor(private apiService: ApiService) { }
 
 
-  giveFabricCanvas(name: string, opts: any) : Observable<any>{
+  giveFabricCanvas(name: string, opts: ICanvasOptions) : Observable<any>{
     return new Observable((observer)=>{
-
       let canvas = new fabric.Canvas(name, {
         //controlsAboveOverlay: true,
         backgroundColor: 'rgba(0,0,0,0)',
@@ -27,95 +28,47 @@ export class FabricService {
         height: opts.height,
       });
       observer.next(canvas);
-
     });
-  }
-
-  ungroup(canvas: any, group: any) {
-    let items = group._objects;
-    group._restoreObjectsState();
-    canvas.remove(group);
-    for (var i = 0; i < items.length; i++) {
-        canvas.add(items[i]);
-    }
-    // if you have disabled render on addition
-    canvas.renderAll();
-};
-
-
-  addFromUrl(canvas:any){
-   
-    return new Observable((observer)=>{
-      fabric.Image.fromURL('https://i.stack.imgur.com/KlKne.png', 
-      (img)=>{
-        console.log(fabric)
-        // img.set({
-        //   cropX: 70,
-        //   cropY: 140,
-        //   width: 200,
-        //   height: 150,
-        // });
-        canvas.add(img);     
-      });   
-    });
-
- 
-    
   }
 
   addBrush(fabricCanvas:any, brushOpts:any){
     fabricCanvas.isDrawingMode = true;
     fabricCanvas.selection = false;
+
     let PencilBrush = new fabric.PencilBrush(fabricCanvas);
     PencilBrush.color = brushOpts.color;
     PencilBrush.width = brushOpts.width;
     PencilBrush.strokeLineCap = brushOpts.strokeLineCap;//'butt','round', 'square'
-    //PencilBrush.strokeDashArray = [25, 50]
     fabricCanvas.freeDrawingBrush = PencilBrush;
   }
 
-  addTextBox(fabricCanvas:any, textboxOpts:any){
+  addTextBox(fabricCanvas:any, textboxOpts:ITextboxOptions){
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = true;
 
     let textbox = new fabric.Textbox('Add Text', {
-      stroke: textboxOpts.color,
-      fill: textboxOpts.color,
-      //cornerStrokeColor: textboxOpts.color,
-      //textBackgroundColor: textboxOpts.color,
+      stroke: textboxOpts.stroke,
+      fill: textboxOpts.stroke,
+      //cornerStrokeColor: textboxOpts.stroke,
+      //textBackgroundColor: textboxOpts.stroke,
       top: 30,
       left: 30,
       fontSize: textboxOpts.fontSize,
       width: 200,
       textAlign: 'center',
       fontStyle: 'normal',
-      borderColor: textboxOpts.background,
+      borderColor: textboxOpts.borderColor,
       paintFirst: 'fill',
-      selectionBackgroundColor: textboxOpts.background,
-      backgroundColor: textboxOpts.background,
+      selectionBackgroundColor: textboxOpts.selectionBackgroundColor,
+      backgroundColor: textboxOpts.backgroundColor,
       hasControls: true,  
       //fontFamily:
     });
     fabricCanvas.add(textbox);
   }
 
-  addRect(fabricCanvas:any){
-    var rect = new fabric.Rect({
-      left: 100,
-      top: 50,
-      fill: '#D81B60',
-      width: 50,
-      height: 50,
-      strokeWidth: 2,
-      stroke: "#880E4F",
-      rx: 10,
-      ry: 10,
-      angle: 45,
-      scaleX: 3,
-      scaleY: 3,
-      hasControls: true,
-    });
-    
+  addRect(fabricCanvas:any, opts:IRectOptions){
+    let rect = new fabric.Rect(opts);
     fabricCanvas.add(rect);
   }
 
@@ -125,27 +78,51 @@ export class FabricService {
   }
   // this.ctx = this.fabricCanvas.getContext('2d');
 
-  showImage(link: string){
+  showImage(link: string, opts: IImageOptions = {}){
+
     return new Observable((observer)=>{
+    
       fabric.Image.fromURL(link, 
       (img)=>{
+
         if(!img.width){
-          //this.coreService.giveSnackbar('No usage rights to share this iamge!');
+          console.log('No usage rights to share this image!');
+          //this.coreService.giveSnackbar('No usage rights to share this image!');
           return;
         }
-        img.set({
+        let options = {
           cropX: 0,
           cropY: 0,
           width: img.width,
           height: img.height,
-        });
-        observer.next(img);
-        //this.fabricCanvas.setDimensions({width:img.width, height:img.height});
-        //this.fabricCanvas.add(img);   
-      }, { 
+        };
+        Object.assign(options, opts);
+        img.set(options);
+        observer.next(img);  
+      }, 
+      { 
         crossOrigin: "anonymous"
       });  
     });
+  }
+
+  showImagesFromService(links:string[]) : Observable<any>{
+    return new Observable((observer)=>{
+      let images:any = [];
+      links.forEach((link, i) => {
+        const image = new Image();
+        image.onload = () => {
+          let fabricImage:any = new fabric.Image(image, {});
+          fabricImage.id = `image-${i}`;
+          images.push(fabricImage);
+          if(i === (links.length-1)){
+            observer.next(images);
+          }
+        }
+        image.src = link;   
+      });    
+    });
+
   }
 
   speechBubble(canvas:any, opts:any){
@@ -155,8 +132,8 @@ export class FabricService {
     let strokeWidth = 2;
     let handleSize = 24;
     let msg = 'Text';
-    let fill = opts.background;
-    let stroke = opts.color;
+    let fill = opts.backgroundColor;
+    let stroke = opts.stroke;
     //text
     let textbox:any = new fabric.Textbox(msg, {
       left: 200,
@@ -296,18 +273,23 @@ export class FabricService {
 
   }
 
-  loadSVG(canvas:any, opts:any){
+  loadSVGFromString(canvas:any, opts:any){
 
-    fabric.loadSVGFromString(`
-    <svg>
-    <path d="M142.81,1c2,.26,4.06.45,6.06.8a46,46,0,0,1,23.86,11.61,34.93,34.93,0,0,1,9.89,15.67,1.74,1.74,0,0,0,.17.33c1.53-.48,3-1,4.53-1.41a57.66,57.66,0,0,1,33.2.31c9.12,2.87,16.36,7.71,21,15.13a23.31,23.31,0,0,1,3.35,9.49,4.34,4.34,0,0,0,.17.69v4.27c-.34,1.58-.57,3.19-1,4.74-1.92,6.3-6,11.46-11.66,15.81l-1,.73a.42.42,0,0,0-.08.12c1.15,1.34,2.38,2.64,3.44,4a22.32,22.32,0,0,1-1.74,30.56c-5.67,5.82-13,9.41-21.55,11.31a62.55,62.55,0,0,1-36.44-2.6,1.39,1.39,0,0,0-1.6.22c-10.19,7.75-22.16,11.14-35.78,10.4A52.79,52.79,0,0,1,118,128.35a1,1,0,0,0-1.16,0,47.47,47.47,0,0,1-20.68,7.92,59.32,59.32,0,0,1-32.91-4.11c-7.54-3.28-13.6-7.95-17.6-14.38a7,7,0,0,1-.75-1.36c-.3-.93-1-1.11-2.06-1.2C30,114,18.83,109.83,10.62,101,6,96,3.69,90.29,4,83.91a23,23,0,0,1,7-15c5.82-6,13.42-9.62,22.17-11.62,1.52-.35,3.08-.6,4.61-.89-.9-1.51-1.88-3-2.68-4.52-5.5-10.52-3.12-22,6.36-30.24a39.43,39.43,0,0,1,19.41-8.75A57,57,0,0,1,100,19.76l.85.5.74-1Q112,5,131.4,1.66c1.73-.29,3.5-.44,5.25-.66Z"/>
-    </svg>`, function(objects, options) {
+    fabric.loadSVGFromString(opts.path, function(objects, options) {
       console.log(objects, options)
       objects.forEach((object)=>{
         object.fill= opts.fill;
         object.stroke = opts.stroke;
+        object.strokeWidth = opts.strokeWidth;
+        //object.originY = 'center';
+        //object.originX = 'center';
+        //canvas.add(object);
       });
-      let obj = fabric.util.groupSVGElements(objects, { });
+       let obj = fabric.util.groupSVGElements(objects, {
+        
+       });
+       obj.scaleX = opts.scale;
+       obj.scaleY = opts.scale;
       
       canvas.add(obj).renderAll();
       
@@ -315,7 +297,102 @@ export class FabricService {
 
   }
 
+  /** FILTERS  *****************/
   
-
+  blendColor(image:any, color:string){
+    let filter = new fabric.Image.filters.BlendColor({ color: color, mode: 'multiply' });
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  blendImage(image:any){  
+    let filter = new fabric.Image.filters.BlendImage({});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  brightness(image:any, brightness:number){  
+    let filter = new fabric.Image.filters.Brightness({brightness: brightness});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  colorMatrix(image:any){  
+    let filter = new fabric.Image.filters.ColorMatrix({matrix: [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0]});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  contrast(image:any, contrast:number){  
+    let filter = new fabric.Image.filters.Contrast({contrast: contrast});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  convolute(image:any){  
+    let filter = new fabric.Image.filters.Convolute({matrix: [ 1,   1,  1, 1, 0.7, -1, -1,  -1, -1 ]});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  gradientTransparency(image:any, threshold:number){  
+    let filter = new fabric.Image.filters.GradientTransparency({threshold: threshold});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  grayscale(image:any){  
+    let filter = new fabric.Image.filters.Grayscale({});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  invert(image:any){  
+    let filter = new fabric.Image.filters.Invert({});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  mask(image:any, channel:number){  
+    let filter = new fabric.Image.filters.Mask({channel:channel});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  multiply(image:any, color: string){  
+    let filter = new fabric.Image.filters.Multiply({color: color});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  noise(image:any, noise: number){  
+    let filter = new fabric.Image.filters.Noise({noise: noise});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  pixelate(image:any, blocksize: number = 6){
+    let filter = new fabric.Image.filters.Pixelate({ blocksize: blocksize });
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  removeWhite(image:any, threshold:number, distance:number){  let filter = new fabric.Image.filters.RemoveWhite({threshold: threshold, distance: distance});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  //
+  resize(image:any){  let filter = new fabric.Image.filters.Resize({ scaleX: 2, scaleY: 2 });
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  saturation(image:any, saturation: number){  
+    let filter = new fabric.Image.filters.Saturation({saturation: saturation});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  //
+  sepia2(image:any){  
+    let filter = new fabric.Image.filters.Sepia2({});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  sepia(image:any){  
+    let filter = new fabric.Image.filters.Sepia({});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
+  tint(image:any, color: string, opacity: number){  
+    let filter = new fabric.Image.filters.Tint({color: color, opacity: opacity});
+    image.filters.push(filter);
+    image.applyFilters();
+  }
 
 }

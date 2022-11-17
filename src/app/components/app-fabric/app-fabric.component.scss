@@ -8,3 +8,17 @@
     margin-right: 7px;
   }
 }
+
+.svg-but{
+  width: 50px;
+  //fill: #ed6866;
+
+}
+.svg-but svg{
+  margin-top: 15px;
+}
+
+::ng-deep.mat-menu-panel {
+  max-width: none !important;
+}
+

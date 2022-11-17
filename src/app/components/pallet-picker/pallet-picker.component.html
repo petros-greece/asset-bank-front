@@ -1,0 +1,7 @@
+<div style="max-width: 100px">
+  <div style="display: inline-block;width: 20px; height: 20px;cursor: pointer;" *ngFor="let color of colors"
+    [style.background]="color.c"
+    [style.transform]="color.s ? 'scale(1.5)' : 'scale(1)'"
+    (click)="colorSelect(color);">
+  </div>
+</div>

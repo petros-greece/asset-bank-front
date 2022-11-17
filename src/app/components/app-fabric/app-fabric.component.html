@@ -1,16 +1,10 @@
 <div>
 
-  <div style="position: absolute;top: 0;left: 0;">
-
-    <canvas id="fabricCanvas"> </canvas>
-
-  </div>
-
-  <div *ngIf="opts.scale" class="row fabric-colors-con"
-    [style.width]="(opts.scale < 1) ? (90*(1/opts.scale))+'%' : '100%'"
-    [style.transform]="'scale('+( (opts.scale < 1) ? (1/opts.scale) : 1 )+')'">
+  <div class="row fabric-colors-con">
       
     <div class="col" style="width: 100%">
+
+      <!--== BRUSH ===================-->
 
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
           <app-picker-menu
@@ -32,12 +26,28 @@
               <mat-icon>square</mat-icon>
             </mat-button-toggle>
           </mat-button-toggle-group>
-    
+   
       </div>
     
+      <!--== TEXTBOXES ===================-->
+
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
         <!-- <b>Ballon Text</b> -->
         
+        <app-picker-menu
+          [icon]="'text_fields'" 
+          [color]="textbox.stroke" 
+          (onPickColor)="textbox.stroke = $event.color;">
+        </app-picker-menu>
+    
+        <app-picker-menu
+          [icon]="'format_paint'" 
+          [color]="textbox.backgroundColor" 
+          (onPickColor)="textbox.backgroundColor = $event.color;">
+        </app-picker-menu>
+    
+        <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize"></mat-slider>
+    
         <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
           <mat-icon>notes</mat-icon>
         </button>
@@ -46,34 +56,71 @@
           <mat-icon>comment</mat-icon>
         </button>
 
-        <app-picker-menu
-          [icon]="'text_fields'" 
-          [color]="textbox.color" 
-          (onPickColor)="textbox.color = $event.color;">
-        </app-picker-menu>
-    
-        <app-picker-menu
-          [icon]="'format_paint'" 
-          [color]="textbox.background" 
-          (onPickColor)="textbox.background = $event.color;">
-        </app-picker-menu>
-    
-
-        <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize"></mat-slider>
-    
-        <button mat-icon-button (click)="removeSelection()">
+        <button mat-raised-button color="warn" (click)="removeSelection()">
           <mat-icon>remove</mat-icon>
         </button>
-    
+        
       </div>
-      <!-- <svg width="90" height="90" color="white">
-        <use xlink:href="./assets/img/fabric-icons/cloud.svg#icon-star"></use>
-           
-      </svg>      -->
+
+      <!--== ICONS PANEL ===================-->
+
+      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+
+        <app-picker-menu
+          icon="border_color" 
+          [color]="icon.stroke" 
+          (onPickColor)="icon.stroke = $event.color;">
+        </app-picker-menu>
+
+        <app-picker-menu
+          icon="format_paint" 
+          [color]="icon.fill" 
+          (onPickColor)="icon.fill = $event.color;">
+        </app-picker-menu>
+
+        <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth"> </mat-slider>
+
+        <button mat-raised-button color="warn" class="mrgn-l-md" (click)="removeSelection()">
+          <mat-icon>remove</mat-icon>
+        </button>
 
 
-      <div class="row end-xs">
-        <button mat-raised-button (click)="fabricCanvas.clear()">
+
+
+
+      </div>
+
+      <!--== ICONS SELECT ===================-->
+
+      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+          
+        <button 
+          mat-icon-button 
+          [matMenuTriggerFor]="menu" 
+          (click)="showGallery = true;">
+          <mat-icon>folder</mat-icon>
+        </button>
+        
+        <mat-menu #menu="matMenu">
+          <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
+            <app-gallery [hasClbk]="true" (onAddSelected)="onAddSelected()"></app-gallery>
+          </div>
+        </mat-menu>
+
+
+
+        <button 
+          mat-button  
+          *ngFor="let svg of svgIcons" 
+          (click)="giveSVGIcon(svg.svg)"
+          style="fill: white;stroke:black;"
+          [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+          class="svg-but">
+        </button>
+      </div>
+
+      <div class="row end-xs mrgn-b-sm">
+        <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">
           <mat-icon>delete</mat-icon>
         </button>
       </div>
@@ -82,4 +129,4 @@
 
   </div>
 
-</div>
+</div> 

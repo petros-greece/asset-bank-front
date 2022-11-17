@@ -1,6 +1,9 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { fabric } from 'fabric';
+import { CoreService } from 'src/app/service/core.service';
 import { FabricService } from 'src/app/service/fabric.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ApiService } from 'src/app/service/api.service';
 
 export interface FabricOptionsI{
   width: number;
@@ -17,10 +20,13 @@ export interface FabricOptionsI{
 
 
 export class AppFabricComponent implements OnInit {
-  @Input()  opts: any;
+  @Input()  fabricCanvas: any;
   @Input()  ctx: any;
   @Output() onEmitCTX = new EventEmitter<any>();
-  fabricCanvas: any;
+
+  svgIcons: any;
+
+  showGallery: boolean = false;
   fabricCanvasOpts = {
     isDrawingMode: false
   }
@@ -30,36 +36,34 @@ export class AppFabricComponent implements OnInit {
     width: 30
   }
   textbox = {
-    background: 'rgba(255, 255, 255, 1)',
-    color: 'rgba(50,50,50,1)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    stroke: 'rgba(50,50,50, 1)',
     fontSize: 30,
+  }
+  icon = {
+    fill: 'white',
+    stroke: 'black',
+    scale: 2,
+    strokeWidth: .5
   }
 
 
-
-  constructor(public fabricService: FabricService) { }
+  constructor(
+    public apiService: ApiService,
+    public fabricService: FabricService,
+    public coreService: CoreService,
+    public sanitizer: DomSanitizer
+    ) { }
 
   ngOnInit(): void {
-    
-    this.fabricService.giveFabricCanvas('fabricCanvas', this.opts).subscribe((canvas)=>{
-      this.fabricCanvas = canvas;
-      this.ctx = this.fabricCanvas.getContext('2d');
-      this.onEmitCTX.emit({ctx: this.ctx, canvas: this.fabricCanvas});
-      this.fabricService.loadSVG(this.fabricCanvas, {
-        path: 'cloud.svg',
-        fill: 'yellow',
-        stroke: 'purple'
-      }); 
+  
+    this.coreService.getData('./assets/json/icon1.json').subscribe((data)=>{
+      this.svgIcons = data;
     });
     
-    
-    //this.addRolygon();
-    //this.addBrush();
-    //setTimeout(()=>{this.mlpa()}, 90)
-
-    this.fabricCanvas.on('before:path:created', (opt:any) => {
-      console.log(opt);
-    });
+    // this.fabricCanvas.on('before:path:created', (opt:any) => {
+    //   console.log(opt);
+    // });
     
    
   }
@@ -70,7 +74,6 @@ export class AppFabricComponent implements OnInit {
 
   removeSelection(){
     let activeObject = this.fabricCanvas.getActiveObject();
-    console.log(activeObject);
     this.fabricCanvas.remove(activeObject);
   }
 
@@ -78,7 +81,36 @@ export class AppFabricComponent implements OnInit {
     let EraseBrush = this.fabricCanvas.SprayBrush();
   }
 
+  giveSVGIcon(svg: any){
+    console.log('yo')
+      this.fabricService.loadSVGFromString(this.fabricCanvas, {
+        path: svg,
+        fill: this.icon.fill,
+        stroke: this.icon.stroke,
+        strokeWidth: this.icon.strokeWidth,
+        scale: this.icon.scale
+      }); 
+  }
 
+
+  onAddSelected(){
+
+    let selectedPaths = ([...this.coreService.selectedAssets]).map((link)=>{
+      return this.apiService.srcApiPath(link);
+    })
+
+    this.fabricService.showImagesFromService(selectedPaths).subscribe((images)=>{
+
+      images.forEach((img:any) => {
+        console.log(img)
+        this.fabricCanvas.add(img);
+      });
+      setTimeout(()=>{
+        this.fabricCanvas.renderAll();
+      },1000);
+
+    });
+  }
 
 
   mlpa(){

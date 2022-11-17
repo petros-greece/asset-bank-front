@@ -20,6 +20,8 @@ export class ImageEditorComponent implements OnInit {
   imageData: any;
 
 
+
+
   colorStops = [{color: 'rgb(0,255,0)', stop: 100}, {color: 'rgb(255,0,0)', stop: 500}];
   info = {
     averageRgb: {r:0,g:0,b:0},

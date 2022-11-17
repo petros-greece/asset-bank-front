@@ -1,54 +1,14 @@
 <mat-toolbar>
-  
 
-
-
-      
       <a href="https://siteland.eu/" style="text-decoration: none;color: #000;">
         Siteland
       </a> 
       &nbsp;- Asset Bank Demo
 
-
-
       <app-user-forms class="align-right">
       </app-user-forms>
 
-
-
 </mat-toolbar>
 
-
-<ng-template #previewDialog>
-  <div style="height: 80vh" class="my-scroll">
-
-    <app-canvas 
-      *ngIf="selectedFilePath" 
-      [category]="selectedCat"
-      [selectedFilePath]="selectedFilePath">
-    </app-canvas>
-
-  </div>
-  <!-- <app-image-editor *ngIf="this.selectedFilePath" [selectedFilePath]="selectedFilePath"></app-image-editor> -->
-
-</ng-template>
-
-<ng-template #dropZoneDialog>
-  <div class="column pad-all-lg" style="min-width: 50vw">
-    <app-dropzone 
-      (onAddFile)="onAddFile($event)"
-      (onSelectFile)="onSelectFile($event)">
-    </app-dropzone>
-
-    <app-paste-url 
-      (onAddFile)="onAddFile($event)">
-    </app-paste-url>
-
-  </div> 
-</ng-template>
-
-
-<app-tree (onOpenDropZone)="onOpenDropZone($event)"></app-tree>
-
-
+<app-tree></app-tree>
 
