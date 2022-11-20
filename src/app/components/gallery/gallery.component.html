@@ -1,18 +1,20 @@
 <div align="center"> 
 
+  <!--== PAGINATIO AND SELECTED MENU ==============================================-->
+
   <div class="row mrgn-t-sm" style="margin: 0">
     <div class="col-xs-9 start-xs">
       <button 
         *ngFor="let p of pages;index as i"
         mat-raised-button 
         color="primary" 
-        [disabled]="page == (i+1)"
-        (click)="goToPage(i+1)">
+        [disabled]="page == i"
+        (click)="goToPage(i)">
         {{i+1}}
       </button>
     </div>
-    <div class="col-xs-3">
 
+    <div class="col-xs-3">
       <button mat-button [matMenuTriggerFor]="selectedMenu" *ngIf="coreService.selectedAssets.length">
         Selected ({{coreService.selectedAssets.length}})
       </button>
@@ -20,14 +22,17 @@
         <button mat-menu-item (click)="openComicDialog()">
           Composition
         </button>
-        <button mat-menu-item (click)="openMiniTreeDialog()">
+        <button mat-menu-item (click)="openMiniTreeDialog()" *ngIf="!addToSelectedCat">
           Add to category
         </button>
+        <button mat-menu-item (click)="addToSelectedCategory()" *ngIf="addToSelectedCat">
+          Add to category {{ apiService.selectedCategory.title }}
+        </button>
       </mat-menu>
-
     </div>
   </div>
 
+  <!--== PAGINATION AND SELECTED MENU ==============================================-->
 
   <div class="row around-xs" style="margin: 0" [sortablejs]="assets">
     <div *ngFor="let asset of assets;index as i" 
@@ -35,6 +40,7 @@
       <!-- {{asset|json}} -->
       <div class="gallery-card-overlay">
         <div style="width: 100%">
+          <!-- {{asset.id}} -->
           <button mat-icon-button (click)="openEditAssetDialog(asset.src)">
             <mat-icon>edit</mat-icon>
           </button>
@@ -70,7 +76,9 @@
 <ng-template #editAssetDialog>
   <div class="my-scroll" style="height: 95vh;margin-bottom: -5px;">
     <app-canvas 
-      *ngIf="this.selectedFilePath" 
+      *ngIf="this.selectedFilePath"
+      (onRemoveFile)="assets.splice($event, 1)"
+      (onAddFile)="assets.push($event)"
       [selectedFilePath]="selectedFilePath">
     </app-canvas>
   </div>

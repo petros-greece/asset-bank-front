@@ -7,7 +7,6 @@ import { ApiPathPipe } from 'src/app/pipe/asset-bank-pipes.pipe';
 import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
 
 
-
 @Component({
   selector: 'app-tree',
   templateUrl: './tree.component.html',
@@ -16,11 +15,9 @@ import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag
 export class TreeComponent implements OnInit {
   
   @ViewChild(MatAccordion) accordion: MatAccordion | any;
-  @ViewChild('previewDialog', {static: true}) previewDialog: TemplateRef<any> | any; 
-  @ViewChild('previewAssetsDialog', {static: true}) previewAssetsDialog: TemplateRef<any> | any;
-  @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+
   @ViewChild('galleryDialog', {static: true}) galleryDialog: TemplateRef<any> | any;
-  @ViewChild('galleryClbkDialog', {static: true}) galleryClbkDialog: TemplateRef<any> | any;
+  @ViewChild('galleryDropZoneDialog', {static: true}) galleryDropZoneDialog: TemplateRef<any> | any;
   @ViewChild('dropZoneDialog', {static: true}) dropZoneDialog: TemplateRef<any> | any;
 
   treeVersions: any;
@@ -35,8 +32,7 @@ export class TreeComponent implements OnInit {
     files: []
   };
 
-  selectedCategory: any;
-  selectedFileIndex: number = -1;
+
   selectedFilePath: any;
   
   constructor(
@@ -48,18 +44,13 @@ export class TreeComponent implements OnInit {
   ngOnInit(): void {  
     this.apiService.getData(`/tree/${this.apiService.user.id}`).subscribe((res)=>{
       this.apiService.categories = JSON.parse(res.categories);
-
-      //this.selectedCategory = this.apiService.categories[0];
-      //this.openEditAssetDialog(this.apiService.categories[0].files[0], 0);
-
     }); 
   }
 
   drop(e:any, categories: any){
-    console.log(e, categories);
+    //console.log(e, categories);
     moveItemInArray(categories.cats, e.previousIndex, e.currentIndex);
   }
-
 
   toggleTree(){
     if(this.openAll){ this.accordion.closeAll(); }
@@ -77,17 +68,17 @@ export class TreeComponent implements OnInit {
   }
 
   addChildToCategory(category:CategoryI){
-    console.log(category)
+    //console.log(category)
     category.childsNum+=1;
     setTimeout(()=>{
-      category.childs.push( JSON.parse(JSON.stringify(this.newCategory)) );
+      category.childs.unshift( JSON.parse(JSON.stringify(this.newCategory)) );
     }, 10);
   }
 
   addNewCategory(){
     this.apiService.categories.push(JSON.parse(JSON.stringify(this.newCategory)));
   }
-
+  //not used
   downloadConfig(){
     let tree = this.coreService.getStorageObj('stldImagesTree');
     let json = JSON.stringify(tree);
@@ -105,7 +96,7 @@ export class TreeComponent implements OnInit {
     catParent.childsNum-=1;
   }
 
-  /** */
+  /** API */
 
   saveTree(){
     this.apiService.postAuthData('/tree', {
@@ -169,93 +160,44 @@ export class TreeComponent implements OnInit {
     )
   }
 
-  /** */
+  /** DROPZONE *****/
 
-  openDropZone(category:CategoryI){
-    this.selectedCategory = category;
+  openDropZoneDialog(category:CategoryI){
+    this.apiService.selectedCategory = category;
     this.coreService.openDialog({
       headerText: `Add Images to ${category.title}`,
       template: this.dropZoneDialog
     });
   }
 
-  previewAssets(category:CategoryI, e: Event){
-    e.stopPropagation();
-    if(!category?.files?.length){
-      this.openDropZone(category);
-      return;
-    }
-    this.selectedCategory = category;
-    //console.log(category);
-    this.coreService.openDialog({
-      headerText: `Assets For ${category.title}`,
-      template: this.previewAssetsDialog
-    }); 
-  }
-
-  openEditAssetDialog(file: any, i:number){
-    this.selectedFileIndex = i;
-    this.selectedFilePath = this.apiService.srcApiPath(file);
-    //console.log(category);
-    this.coreService.openDialog({
-      headerText: `Category ${this.selectedCategory.title}`,
-      template: this.editAssetDialog,
-      cls: 'no-display'
-    },{
-      id: 'previewCanvasDialog'
-    }); 
-  }
-
-  /** */
-
-  openGalleryDialog(){
+  openGalleryFromDropZoneDialog(){
     this.coreService.openDialog({
       headerText: `Gallery`,
-      template: this.galleryDialog,
+      template: this.galleryDropZoneDialog,
     },{
-      id: 'galleryDialog'
+      id: 'galleryDropZoneDialog'
     }); 
   }
-
-  openGalleryClbkDialog(){
-    this.coreService.openDialog({
-      headerText: `Gallery`,
-      template: this.galleryClbkDialog,
-    },{
-      id: 'galleryClbkDialog'
-    }); 
-  }
-
 
   onSelectFile(e:any){
     this.selectedFilePath = false;
     this.coreService.toBase64(e).subscribe(base64 => this.selectedFilePath = base64 ) 
-    this.coreService.openDialog({
-      headerText: `Preview Image`,
-      template: this.previewDialog, 
-    },
-    {
-      id: 'previewCanvasDialog'
-    });
-  }
-
-  onAddFile(e:any){
-      let src = (e.data).split('/').pop();
-      if(this.selectedCategory.files && this.selectedCategory.files.length){
-        this.selectedCategory.files.push(src);
-      }
-      else{
-        this.selectedCategory.files = [src];
-      }
+    // this.coreService.openDialog({
+    //   headerText: `Preview Image`,
+    //   template: this.editAssetDialog, 
+    // },
+    // {
+    //   id: 'previewCanvasDialog'
+    // });
   }
 
   onAddSelected(){
     let assets = [...this.coreService.selectedAssets];
-    if(this.selectedCategory.files){
-      this.selectedCategory.files = (this.selectedCategory.files).concat(assets);
+    if(this.apiService.selectedCategory.files){
+      this.apiService.selectedCategory.files = (this.apiService.selectedCategory.files).concat(assets);
     }
     else{
-      this.selectedCategory.files = assets;
+      this.apiService.selectedCategory.files = assets;
     }
 
     this.apiService.postAuthData('/tree', {
@@ -279,6 +221,33 @@ export class TreeComponent implements OnInit {
 
     });
   }
+
+  /** */
+
+  openGalleryCategoryDialog(category:CategoryI, e: Event){
+    e.stopPropagation();
+    if(!category?.files?.length){
+      this.openDropZoneDialog(category);
+      return;
+    }
+    this.apiService.selectedCategory = category;
+    //console.log(category);
+    this.coreService.openDialog({
+      headerText: `Assets For ${category.title}`,
+      template: this.galleryDialog
+    }); 
+  }
+
+  openGalleryDialog(){
+    this.apiService.selectedCategory = false;
+    this.coreService.openDialog({
+      headerText: `Gallery`,
+      template: this.galleryDialog,
+    },{
+      id: 'galleryDialog'
+    }); 
+  }
+
 
 
 }

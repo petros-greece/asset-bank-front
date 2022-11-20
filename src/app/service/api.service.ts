@@ -31,7 +31,7 @@ export class ApiService {
       files:<any> []
     }
   ];
-
+  selectedCategory: any;
 
 	constructor(
     public http: HttpClient,

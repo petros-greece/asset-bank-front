@@ -24,6 +24,19 @@ export class AppFabricComponent implements OnInit {
   @Input()  ctx: any;
   @Output() onEmitCTX = new EventEmitter<any>();
 
+
+
+  svgFiles = [
+    {
+      name: 'textbox',
+    },
+    {
+      name: 'christmas',
+    },  
+    {
+      name: 'superheroes'
+    }  
+  ];
   svgIcons: any;
 
   showGallery: boolean = false;
@@ -35,10 +48,14 @@ export class AppFabricComponent implements OnInit {
     strokeLineCap: 'butt',
     width: 30
   }
+
+  fonts = ['sans-serif', 'serif', 'Times New Roman', 'Helvetica', 'Arial', 'Verdana', 'Courier New'];
+
   textbox = {
     backgroundColor: 'rgba(255, 255, 255, 1)',
     stroke: 'rgba(50,50,50, 1)',
     fontSize: 30,
+    fontFamily: 'serif'
   }
   icon = {
     fill: 'white',
@@ -46,6 +63,8 @@ export class AppFabricComponent implements OnInit {
     scale: 2,
     strokeWidth: .5
   }
+
+
 
 
   constructor(
@@ -57,41 +76,83 @@ export class AppFabricComponent implements OnInit {
 
   ngOnInit(): void {
   
-    this.coreService.getData('./assets/json/icon1.json').subscribe((data)=>{
-      this.svgIcons = data;
-    });
+
     
     // this.fabricCanvas.on('before:path:created', (opt:any) => {
-    //   console.log(opt);
+    //   console.log(opt, this.fabricCanvas);
     // });
     
    
   }
 
 
-  /** */
+  getSvgFile(fname: string){
+    this.coreService.getData(`./assets/json/svg-${fname}.json`).subscribe((data)=>{
+      this.svgIcons = data;
+    });
+  }
 
+  /** */
 
   removeSelection(){
     let activeObject = this.fabricCanvas.getActiveObject();
     this.fabricCanvas.remove(activeObject);
-  }
-
-  eraseBrush(){
-    let EraseBrush = this.fabricCanvas.SprayBrush();
+    if(activeObject._objects){
+      activeObject._objects.forEach((obj:any) => {
+        this.fabricCanvas.remove(obj);
+      });
+    }
+    this.fabricCanvas.discardActiveObject();
   }
 
   giveSVGIcon(svg: any){
-    console.log('yo')
       this.fabricService.loadSVGFromString(this.fabricCanvas, {
         path: svg,
         fill: this.icon.fill,
         stroke: this.icon.stroke,
         strokeWidth: this.icon.strokeWidth,
-        scale: this.icon.scale
+        scale: this.icon.scale,
       }); 
   }
 
+  changeActiveIcon(){
+    let activeObject = this.fabricCanvas.getActiveObject();
+    console.log(activeObject);
+    if(!activeObject || (!activeObject.fromSVG && activeObject.name !== 'svg-group') ){return}
+    if(activeObject._objects){
+      activeObject._objects.forEach((obj:any) => {
+        obj.set('fill', this.icon.fill);
+        obj.set('stroke', this.icon.stroke);
+        obj.set('strokeWidth', this.icon.strokeWidth);     
+      });
+    }
+    else{
+      activeObject.set('fill', this.icon.fill);
+      activeObject.set('stroke', this.icon.stroke);
+      activeObject.set('strokeWidth', this.icon.strokeWidth);
+    }
+    this.fabricCanvas.renderAll();
+  }
+
+  changeActiveText(){
+    let activeObject = this.fabricCanvas.getActiveObject();
+    console.log(activeObject);
+    if(!activeObject || (activeObject.name !== 'my-textbox') ){return}
+    // if(activeObject._objects){
+    //   activeObject._objects.forEach((obj:any) => {
+    //     obj.set('fill', this.icon.fill);
+    //     obj.set('stroke', this.icon.stroke);
+    //     obj.set('strokeWidth', this.icon.strokeWidth);     
+    //   });
+    // }
+    // else{
+      activeObject.set('backgroundColor', this.textbox.backgroundColor);
+      activeObject.set('stroke', this.textbox.stroke);
+      activeObject.set('fontSize', this.textbox.fontSize);
+      activeObject.set('fontFamily', this.textbox.fontFamily);
+    // }
+    this.fabricCanvas.renderAll();
+  }
 
   onAddSelected(){
 
@@ -107,28 +168,25 @@ export class AppFabricComponent implements OnInit {
       });
       setTimeout(()=>{
         this.fabricCanvas.renderAll();
+        this.coreService.selectedAssets = [];
       },1000);
 
     });
   }
 
-
-  mlpa(){
-  
-
-    fabric.Image.fromURL('https://i.stack.imgur.com/KlKne.png', 
-    (img)=>{
-
-console.log(fabric)
-      // img.set({
-      //   cropX: 70,
-      //   cropY: 140,
-      //   width: 200,
-      //   height: 150,
-      // });
-      // this.fabricCanvas.add(img);     
-    });    
+  duplicateSelection(){
+    let activeObject;
+    this.fabricCanvas.getActiveObject().clone((cloned:any)=>{
+      activeObject = cloned;
+    });
+    console.log(activeObject);
+    if(!activeObject){return}
+    this.fabricCanvas.add(activeObject);
+    this.fabricCanvas.renderAll();
   }
+
+
+
 
 
 

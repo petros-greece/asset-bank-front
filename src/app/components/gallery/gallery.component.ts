@@ -9,15 +9,16 @@ import { CoreService } from 'src/app/service/core.service';
 })
 export class GalleryComponent implements OnInit {
 
-  @Input() hasClbk = false; 
+  @Input() addToSelectedCat = false; 
   @Output() onAddSelected = new EventEmitter<any>();
+
   @ViewChild('comicDialog', {static: true}) comicDialog: TemplateRef<any> | any;  
   @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
   @ViewChild('miniTreeDialog', {static: true}) miniTreeDialog: TemplateRef<any> | any;
 
   assets:any[]  = [];
   total: number = 0;
-  page: number = 1;
+  page: number = 0;
   pageSize: number = 10;
   pages:number[] = [];
 
@@ -28,10 +29,19 @@ export class GalleryComponent implements OnInit {
     public apiService: ApiService) { }
 
   ngOnInit(): void {
-    //setTimeout(()=>{
-    this.goToPage(1);
-    console.log('gallery inited');
-    //}, 1000)
+    let selectedAssets = this.apiService.selectedCategory?.files;
+    if(!selectedAssets || !selectedAssets.length){
+      this.goToPage(0);
+      this.openComicDialog();
+    }
+    else{
+      this.assets = selectedAssets.map((asset:any)=>{ return { src: asset } });
+      this.total = selectedAssets.length;
+      this.pages = [0];    
+    }
+    //console.log(selectedAssets);
+
+    
   }
 
   goToPage(i:number){
@@ -41,6 +51,7 @@ export class GalleryComponent implements OnInit {
         this.assets = resp.assets;
         this.total = resp.total;
         this.pages = Array.from(Array(Math.floor((this.total-1)/this.pageSize)).keys());
+        //console.log(this.assets)
       },
       error: (e)=>{
         console.log(e);
@@ -52,10 +63,6 @@ export class GalleryComponent implements OnInit {
   getTags(){}
 
   openComicDialog(){
-    if(this.hasClbk){
-      this.onAddSelected.emit();
-      return;
-    }
     this.coreService.openDialog({
       headerText: `Comic`,
       template: this.comicDialog,
@@ -64,8 +71,8 @@ export class GalleryComponent implements OnInit {
     }); 
   }
 
-  openEditAssetDialog(file: any){
-    this.selectedFilePath = this.apiService.srcApiPath(file);
+  openEditAssetDialog(src: string){
+    this.selectedFilePath = this.apiService.srcApiPath(src);
     //console.log(category);
     this.coreService.openDialog({
       headerText: ``,
@@ -77,13 +84,6 @@ export class GalleryComponent implements OnInit {
   }
 
   openMiniTreeDialog(){
-
-    if(this.hasClbk){
-      this.onAddSelected.emit();
-      return;
-    }
-
-
     this.coreService.openDialog({
       headerText: `Select Category`,
       template: this.miniTreeDialog,
@@ -95,7 +95,7 @@ export class GalleryComponent implements OnInit {
   onSelectCategory(category: any){
     let assets = [...this.coreService.selectedAssets];
     if(category.files){
-      (category.files).concat(assets);
+      category.files = (category.files).concat(assets);
     }
     else{
       category.files = assets;
@@ -109,6 +109,7 @@ export class GalleryComponent implements OnInit {
       },
       error: (err: any) => {
         console.log(err)
+        this.coreService.selectedAssets = [];
         this.coreService.giveSnackbar(err?.message, {
           duration: 5000,
           verticalPosition: 'top'
@@ -122,6 +123,19 @@ export class GalleryComponent implements OnInit {
 
     });
 
+  }
+
+  addToSelectedCategory(){
+    
+    let assets = [...this.coreService.selectedAssets];
+    if(this.apiService.selectedCategory.files){
+      this.apiService.selectedCategory.files = (this.apiService.selectedCategory.files).concat(assets);
+    }
+    else{
+      this.apiService.selectedCategory.files = assets;
+    } 
+    this.coreService.selectedAssets = [];
+    this.coreService.closeAllDialogs();      
   }
 
 }

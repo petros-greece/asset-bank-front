@@ -77,7 +77,7 @@
                 <span 
                   *ngIf="!edit"
                   style="cursor: pointer" 
-                  (click)="previewAssets(category, $event)">
+                  (click)="openGalleryCategoryDialog(category, $event)">
                   {{category.title}}
                 </span>
 
@@ -92,7 +92,7 @@
                 <!-- <button mat-button
                 *ngIf="category.files && category.files.length" 
                 color="primary" 
-                (click)="$event.stopPropagation();previewAssets(category)">
+                (click)="$event.stopPropagation();openGalleryCategoryDialog(category)">
                 View Assets
                 ({{category?.files ? category.files.length : 0}})
               </button> -->
@@ -109,7 +109,7 @@
 
               <button 
                 mat-button color="primary" 
-                (click)="$event.stopPropagation();openDropZone(category)">
+                (click)="$event.stopPropagation();openDropZoneDialog(category)">
                 Add Assets
               </button>
 
@@ -150,52 +150,7 @@
 
 <!--== DIALOGS =====================-->
 
-<ng-template #previewAssetsDialog>
-  
-  <div class="my-scroll" style="height: 75vh;">
-    <div class="row around-xs" style="margin: 0" [sortablejs]="selectedCategory.files">
-      <div *ngFor="let file of selectedCategory.files;index as i" 
-        class="pad-all-sm mrgn-all-sm gallery-card">
-
-        <div class="gallery-card-overlay">
-          <div style="width: 100%">
-            <button mat-icon-button (click)="openEditAssetDialog(file, i)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button (click)="coreService.selectedAssets.push(file)">
-              <mat-icon>done</mat-icon>
-            </button>
-          </div>
-        </div> 
-        <div class="gallery-card-selected" *ngIf="coreService.selectedAssets.includes(file)">
-          <div style="width: 100%">
-            <button mat-icon-button class="mat-green" 
-              (click)="coreService.selectedAssets.splice(coreService.selectedAssets.indexOf(file), 1)">
-              <mat-icon>check</mat-icon>
-            </button>          
-          </div>
-        </div>
-
-        <div class="bg-image-contain" style="width: 150px;height: 150px;" 
-          [style.backgroundImage]="'url('+apiService.imgPath+(file | apiPath) +')'">
-        </div>
-      </div>
-    </div>
-    <!-- {{coreService.selectedAssets|json}} -->
-  </div>
-    
-</ng-template>
-
-<ng-template #editAssetDialog>
-  <div class="my-scroll" style="height: 95vh;margin-bottom: -5px;">
-    <app-canvas 
-      *ngIf="this.selectedFilePath" 
-      [selectedFileIndex]="selectedFileIndex"
-      [category]="selectedCategory"
-      [selectedFilePath]="selectedFilePath">
-    </app-canvas>
-  </div>
-</ng-template>
+<!--THIS VERSION IS USED FROM category AND FROM GENERAL GALLERY -->
 
 <ng-template #galleryDialog>
   <div class="my-scroll" style="height: 75vh;">
@@ -203,22 +158,23 @@
   </div>
 </ng-template>
 
-<ng-template #galleryClbkDialog>
+<!--THIS VERSION IS USED FROM DROPZONE DIALOG -->
+
+<ng-template #galleryDropZoneDialog>
   <div class="my-scroll" style="height: 75vh;">
-    <app-gallery [hasClbk]="true" (onAddSelected)="onAddSelected()"></app-gallery>
+    <app-gallery [addToSelectedCat]="true"></app-gallery>
   </div>
 </ng-template>
 
 <ng-template #dropZoneDialog>
   <div class="column pad-all-lg" style="min-width: 50vw">
     <app-dropzone 
-      (onAddFile)="onAddFile($event)"
       (onSelectFile)="onSelectFile($event)">
     </app-dropzone>
     <div class="mrgn-all-lg">
       OR
     </div>
-    <button mat-raised-button color="primary" (click)="openGalleryClbkDialog()">
+    <button mat-raised-button color="primary" (click)="openGalleryFromDropZoneDialog()">
       Choose from Gallery
     </button>
     

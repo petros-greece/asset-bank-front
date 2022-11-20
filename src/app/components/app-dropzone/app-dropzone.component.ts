@@ -15,7 +15,6 @@ export class AppDropzoneComponent implements OnInit {
   @Input()   verb: string = 'Click or drop your image(s)'; 
   @Input()   previeHeader: string = 'Select';
   @Output() onSelectFile = new EventEmitter<any>();
-  @Output() onAddFile = new EventEmitter<any>(); 
 
   constructor(
     private coreService: CoreService,
@@ -45,8 +44,13 @@ export class AppDropzoneComponent implements OnInit {
 
     this.apiService.uploadAsset('/asset', this.files[i]).subscribe({
       next: (res: any) => {
-        this.coreService.giveSnackbar(`Asset Uploaded!`);
-        this.onAddFile.emit(res);
+        let src = (res.data).split('/').pop();
+        if(this.apiService.selectedCategory.files && this.apiService.selectedCategory.files.length){
+          this.apiService.selectedCategory.files.push(src);
+        }
+        else{
+          this.apiService.selectedCategory.files = [src];
+        }
       },
       error: (err: any) => {
         console.log(err)
@@ -57,6 +61,7 @@ export class AppDropzoneComponent implements OnInit {
       },
       complete: () => {
         this.files.splice(i, 1);
+        this.coreService.giveSnackbar(`Asset Uploaded!`);
       },
     });
   

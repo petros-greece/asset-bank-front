@@ -12,12 +12,12 @@ import { FabricService } from 'src/app/service/fabric.service';
 })
 export class AppCanvasComponent implements OnInit {
  
-  @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
-  @Input() category: any;
-  @Input() selectedFileIndex: any;
   @Input() selectedFilePath: any;
+  @Output() onRemoveFile = new EventEmitter<any>();
+  @Output() onAddFile = new EventEmitter<any>();
 
-  @Output() onDropFiles = new EventEmitter<any>();
+  @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+
   canvas: any;
   ctx: any;
   
@@ -69,7 +69,6 @@ export class AppCanvasComponent implements OnInit {
     factor: 30
   }
 
-
   info = {
     averageRgb: {r:0,g:0,b:0},
     colorObj:<any> [],
@@ -77,7 +76,6 @@ export class AppCanvasComponent implements OnInit {
   }
 
   
-
   constructor(
     public fabricService: FabricService,
     public coreService: CoreService, 
@@ -94,20 +92,28 @@ export class AppCanvasComponent implements OnInit {
     this.initImageInfo(true).subscribe((image)=>{
       this.fabricService.giveFabricCanvas('fabricCanvas', {width: image.width, height: image.height }).subscribe((canvas)=>{
         this.fabricCanvas = canvas;
+        this.fabricCanvas.preserveObjectStacking = false;
         this.ctxFabric = this.fabricCanvas.getContext('2d');
         this.doScaleCanvas(image.width);
       });
-
     });
-
-
+    //console.log(this.apiService.selectedCategory);
 
   }
 
 
+  endpointToSrc(endpoint: string){
+    let arr = this.selectedFilePath.split('/');
+    return arr[arr.length-2]+'.'+arr[arr.length-1];
+  }
+
+
   removeAsset(){
-    this.category.files.splice(this.selectedFileIndex, 1);
+    let src = this.endpointToSrc(this.selectedFilePath);
+    let index = this.apiService.selectedCategory.files.indexOf(src);
+    this.apiService.selectedCategory.files.splice(index, 1);
     this.coreService.closeDialogById('previewCanvasDialog');
+    this.onRemoveFile.emit(index);
   }
 
   doScaleCanvas(w: number = 100){
@@ -231,7 +237,7 @@ export class AppCanvasComponent implements OnInit {
     this.info.colorCount = sortable.length;
     sortable.length = howMany;
     console.log(sortable);
-    return sortable;
+    return sortable.filter((elem)=>{return elem;});
   }
 
   /** */
@@ -786,75 +792,83 @@ export class AppCanvasComponent implements OnInit {
   }
 
 
+  vinyl = {factor: 0.1}
 
-  scissors(){
+  giveVinyl(){
+    this.runWithReinit(()=>{
+      let degreesStop = 360;
+      let degreesPlus = 1;
+      for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
 
-    let colObj:any = [
-      // [244,67,54],
-      // [233,30,99],
-      // [156,39,176],
-      [103,58,183],
-      [63,81,181],
-      [33,150,243],
-      [3,169,244],
-      [0,188,212],
-      [0,150,136],
-      [76,175,80],
-      // [139,195,74],
-      // [205,220,57],
-      // [255,235,59],
-      // [255,193,7],
-      // [255,152,0],
-      // [255,87,34],
-      [121,85,72],
-      [158,158,158],
-      [96,125,139]
-    ];
-
-
-    let colorsLen = colObj.length;
-
-    //console.log(colObj);
-
-    //  let colorsLen = 20;
-    //  let colorsObj = this.getColorsObj(5, colorsLen);
-    //  let colObj:any = colorsObj.map((e)=>{ return e[0].split(',') })
-
-
-    let i = -4;
-    let len = this.imageData.data.length;
-    let color
-    while ( (i += 4) < len ) { 
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
-      };
-      let minDiffIndex = -1, minDiff = 765;
-      for(let j = 0; j < colorsLen; j+= 1){
-        let diff = Math.abs(color.r - colObj[j][0]) + Math.abs(color.g - colObj[j][1]) + Math.abs(color.b - colObj[j][2]);
-        if(diff < minDiff){
-          minDiffIndex = j;
-          minDiff = diff;
-          if(diff === 0){
-            break;
-          }
-        }
+          this.ctx.save();
+          this.ctx.translate(this.width/2, this.height/2);
+          this.ctx.globalAlpha = this.vinyl.factor;
+          this.ctx.rotate(degrees*Math.PI/180);
+          this.ctx.drawImage(this.image, 
+            0, 0, this.width, this.height, 
+            -(this.width/2), -(this.height/2), this.width, this.height);
+          this.ctx.restore();       
       }
-
-      this.imageData.data[i] = colObj[minDiffIndex][0];
-      this.imageData.data[i+1] = colObj[minDiffIndex][1];
-      this.imageData.data[i+2] = colObj[minDiffIndex][2];
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);  
+      this.getImageData();  
+    });  
   }
 
-  scissorskl(){
+  holyLight = {factor: 1}
+
+  giveHolyLight(){
+    this.runWithReinit(()=>{
+      let framesStop = 60;
+      let factor = 0;
+      let factorIncrease = this.holyLight.factor;
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = "lighter";
+      this.ctx.globalAlpha =  0.01;
+      for( let frames = 0; frames<framesStop; frames+= 1 ){
+          this.ctx.drawImage(this.image, 
+            0, 0, this.width, this.height, 
+            0-factor, 0-factor, this.width+(2*factor), this.height+(2*factor));
+            factor+= factorIncrease;     
+      }
+      this.ctx.restore(); 
+      this.getImageData();         
+    });     
+  }
+
+
+  scissorsfgfgf(){
+
+    let scalefactor = this.rotatingFrames.scaleFactor;
+    let degreesStop = 60;//this.rotatingFrames.degreesStop;
+    let degreesPlus = 1;//this.rotatingFrames.degreesPlus;
+    let factor = 0;
+    let factorIncrease = 10;
+    this.ctx.save();
+    //this.ctx.globalCompositeOperation = "lighter";
+    this.ctx.globalAlpha =  0.01;
+    for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
+        
+        //this.ctx.save();
+        //this.ctx.translate(this.width/2, this.height/2);
+        
+        //this.ctx.rotate(degrees*Math.PI/180);
+        this.ctx.drawImage(this.image, 
+          0+factor, 0+factor, this.width, this.height, 
+          0+factor, 0+factor, this.width, this.height);
+          factor+= factorIncrease;
+        //this.ctx.restore();       
+    }
+    this.ctx.restore(); 
+    this.getImageData();   
+  }
+
+  scissors(){
     //let data = JSON.parse(JSON.stringify(this.imageData.data));
-    
-    this.dummyCtx.drawImage(this.image, -this.width * 0.02, -this.height * 0.02, this.width * 1.04, this.height * 1.04);
+    let scale = 0;
+    this.dummyCtx.drawImage(this.image, - scale,  - scale , this.width + 2*scale, this.height + 2*scale);
     let data = (this.dummyCtx.getImageData(0,0,this.width, this.height)).data;
+
+    this.dummyCtx.drawImage(this.image, scale,  scale , this.width - 2*scale, this.height - 2*scale);
+    let data2 = (this.dummyCtx.getImageData(0,0,this.width, this.height)).data;
     console.log(data)
     console.log(this.imageData)
     let pixelIndex;
@@ -862,7 +876,7 @@ export class AppCanvasComponent implements OnInit {
     let point, color;
     let i = -4;
     let len = this.imageData.data.length;
-    while ( (i += 12) < len ) { 
+    while ( (i += 4) < len ) { 
       point = {
         x: (i / 4) % this.width,
         y: Math.floor((i / 4) / this.width),
@@ -873,15 +887,19 @@ export class AppCanvasComponent implements OnInit {
         b: this.imageData.data[i+2],
         a: this.imageData.data[i+3]
       };
-      //if(point.x%120 > 60 && point.y%120 > 60 ){
+      if(point.x%60 > 30 && point.y%60 > 30 ){
       
-      this.imageData.data[i+4] = color.r; 
-      this.imageData.data[i+5] = color.g;
-      this.imageData.data[i+6]= color.b; 
-      this.imageData.data[i+8] = color.r; 
-      this.imageData.data[i+9] = color.g;
-      this.imageData.data[i+10]= color.b;      
-
+      this.imageData.data[i] = data[i]; 
+      this.imageData.data[i+1] = data[i+1];
+      this.imageData.data[i+2]= data[i+2]; 
+      //this.imageData.data[i+3] = 100;      
+      }
+      else{
+        this.imageData.data[i] = data2[i]; 
+        this.imageData.data[i+1] = data2[i+1];
+        this.imageData.data[i+2]= data2[i+2]; 
+       // this.imageData.data[i+3] = data2[i+3];         
+      }
            
     }
     
@@ -1166,11 +1184,10 @@ export class AppCanvasComponent implements OnInit {
     let file = this.coreService.dataURLtoFile(dataURL, 'test.png');
     this.apiService.uploadAsset('/asset', file).subscribe({
       next: (res: any) => {
-        this.category.files ? this.category.files.push(res.data) : this.category.files = [res.data];
-        this.coreService.giveSnackbar(`Asset added to ${this.category.title}`);
-        if(!closeDialog) return;
-        this.coreService.closeDialogById('previewCanvasDialog');
-        //this.onAddFile.emit(res);
+        this.apiService.selectedCategory.files ? 
+        this.apiService.selectedCategory.files.push(res.data) : 
+        this.apiService.selectedCategory.files = [res.data];
+        this.onAddFile.emit({src: res.data});    
       },
       error: (err: any) => {
         console.log(err)
@@ -1180,7 +1197,9 @@ export class AppCanvasComponent implements OnInit {
         });        
       },
       complete: () => {
-        //this.files.splice(i, 1);
+        this.coreService.giveSnackbar(`Asset added to ${this.apiService.selectedCategory.title}`);
+        if(!closeDialog) return;
+        this.coreService.closeDialogById('previewCanvasDialog');
       },
     }); 
   }

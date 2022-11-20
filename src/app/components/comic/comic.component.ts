@@ -21,8 +21,10 @@ export class ComicComponent implements OnInit {
   images: any;
   imageData:any;
   selectedPaths:any = [];
- // [ "U-1667742810.png", "U-1667742742.png", "U-1667742696.png" ]
- //'http://localhost/asset-bank-api/public/api/asset/1/U-1667596642/jpg'
+
+  canvasScale = 1;
+  imgScale = 1;
+
   constructor(
     public apiService: ApiService, 
     public fabricService: FabricService,
@@ -31,45 +33,84 @@ export class ComicComponent implements OnInit {
 
   }
 
-
-
   ngOnInit(): void {
 
-    this.selectedPaths = ([...this.coreService.selectedAssets]).map((link)=>{
+    //let paths = [...this.coreService.selectedAssets];
+    let paths = ["U-1667743873.png","U-1667743906.png","U-1667895239.png","U-1668294752.jpg","U-1668723362.png","U-1668767466.png","U-1668880588.png","U-1668771012.png","U-1668881693.png","U-1668939699.jpg","U-1668939714.jpg","U-1668939699.jpg","U-1668880588.png"]
+
+    this.selectedPaths = paths.map((link)=>{
       return this.apiService.srcApiPath(link);
     });
 
     let box:any = document.getElementById('comic-canvas-container');
-    this.width = box.offsetWidth - 15;
+    this.width = box.offsetWidth - 45;
     this.height = Math.round(this.width * 1.5);
+    this.renderComicCanvas();
+   
 
+  }
+
+  renderComicCanvas(){
+    if(this.canvas){
+      this.canvas.clear();
+    }
     this.fabricService.giveFabricCanvas('my-comic-canvas', 
     { width: this.width, height: this.height, selection: true }).subscribe((canvas)=>{
       this.canvas = canvas;
+      this.canvas.clear();
       this.ctx = this.canvas.getContext('2d');
 
       this.fabricService.showImagesFromService(this.selectedPaths).subscribe((images)=>{
         this.images = images;
-        console.log(images);
-        images.forEach((img:any) => {
-          this.canvas.add(img);
-        });
-        this.canvas.renderAll();
-        this.canvas.preserveObjectStacking = false;
-        this.coreService.selectedAssets = [];
+        this.renderImages();
       });
+    });     
+  }
+
+  transform2(coords: any, img: any){
+    img.left = coords.x;
+    img.top  = coords.y; 
+    this.canvas.add(img);
+    coords.y+= img.height; 
+  }
+
+  transform1(coords: any, img: any){
+    let imgRight = coords.x + (img.width*this.imgScale);
+
+    //if is not the first in the row and will exceed the limits
+    if( coords.x && (imgRight > this.width) ){
+      coords.x = 0;
+      coords.y+= coords.maxH;
+      coords.maxH = 0;
+    }
+    
+    if(img.height*this.imgScale >= coords.maxH){
+      coords.maxH = img.height*this.imgScale;
+    }
+
+    img.set({
+      scaleX: this.imgScale,
+      scaleY: this.imgScale,
+      left: coords.x,
+      top: coords.y
+    });
+    // img.left = coords.x;
+    // img.top  = coords.y; 
+    this.canvas.add(img);
+  
+    coords.x+= img.width*this.imgScale;
  
-    }); 
-    
-   
-
-
-
   }
 
-  renderComic(){
-    
+  renderImages(){
+    let coords = {x:0, y: 0, maxH: 0};
+    this.images.forEach((img:any) => {
+      this.transform1(coords, img);
+    });
+    this.canvas.preserveObjectStacking = false;
+    this.canvas.selectable = true;
+    this.canvas.renderAll();
+    this.coreService.selectedAssets = [];   
   }
-
 
 }

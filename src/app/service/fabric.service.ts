@@ -47,6 +47,7 @@ export class FabricService {
     fabricCanvas.selection = true;
 
     let textbox = new fabric.Textbox('Add Text', {
+      name: 'my-textbox',
       stroke: textboxOpts.stroke,
       fill: textboxOpts.stroke,
       //cornerStrokeColor: textboxOpts.stroke,
@@ -62,7 +63,7 @@ export class FabricService {
       selectionBackgroundColor: textboxOpts.selectionBackgroundColor,
       backgroundColor: textboxOpts.backgroundColor,
       hasControls: true,  
-      //fontFamily:
+      fontFamily: textboxOpts.fontFamily
     });
     fabricCanvas.add(textbox);
   }
@@ -136,6 +137,7 @@ export class FabricService {
     let stroke = opts.stroke;
     //text
     let textbox:any = new fabric.Textbox(msg, {
+      name: 'my-textbox',
       left: 200,
       top: 80,
       width: 180,
@@ -285,12 +287,12 @@ export class FabricService {
         //object.originX = 'center';
         //canvas.add(object);
       });
-       let obj = fabric.util.groupSVGElements(objects, {
-        
-       });
-       obj.scaleX = opts.scale;
-       obj.scaleY = opts.scale;
-      
+      let obj = fabric.util.groupSVGElements(objects, {
+        name: 'svg-group'
+      });
+      obj.scaleX = opts.scale;
+      obj.scaleY = opts.scale;
+  
       canvas.add(obj).renderAll();
       
     })
