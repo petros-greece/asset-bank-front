@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit, AfterViewChecked, AfterContentInit} from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, TemplateRef, AfterContentInit} from '@angular/core';
 import { Observable } from 'rxjs';
 import { CoreService } from 'src/app/service/core.service';
 import { saveAs } from 'file-saver';
@@ -13,6 +13,8 @@ import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag
   styleUrls: ['./comic.component.scss']
 })
 export class ComicComponent implements OnInit {
+
+  @ViewChild('miniTreeDialog', {static: true}) miniTreeDialog: TemplateRef<any> | any;
 
   canvas:any;
   dummyCanvas:any;
@@ -166,9 +168,73 @@ export class ComicComponent implements OnInit {
 
 
 
+  openMiniTreeDialog(){
+    this.coreService.openDialog({
+      headerText: `Select Category`,
+      template: this.miniTreeDialog,
+    },{
+      id: 'miniTreeDialog'
+    }); 
+  }
 
 
 
+  onSelectCategory(category: any){
+    
+    const dataURL = this.canvas.toDataURL();
+    let file = this.coreService.dataURLtoFile(dataURL, 'test.png');
+
+    this.apiService.uploadAsset('/asset', file).subscribe({
+      next: (res: any) => {  
+        //console.log(res);return;    
+        if(category.files){
+          (category.files).unshift(res.data);
+        }
+        else{
+          category.files = res.data;
+        }
+        console.log(category);
+      },
+      error: (err: any) => {
+        console.log(err)
+        this.coreService.giveSnackbar(err.message, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        this.coreService.giveSnackbar(`Asset added to ${category.title}`);
+        this.coreService.closeDialogById('miniTreeDialog');
+        this.saveTree();
+      },
+    });
+
+  }
+
+
+  saveTree(){
+    this.apiService.postAuthData('/tree', {
+      categories: this.apiService.categories,
+    }).subscribe({
+      next: (res: any) => {
+        this.coreService.giveSnackbar(`New tree version created`);
+      },
+      error: (err: any) => {
+        console.log(err)
+        this.coreService.selectedAssets = [];
+        this.coreService.giveSnackbar(err?.message, {
+          duration: 5000,
+          verticalPosition: 'top'
+        });        
+      },
+      complete: () => {
+        this.coreService.selectedAssets = [];
+        //this.coreService.closeAllDialogs();
+        //location.reload();
+      },
+
+    });
+  }
 
 
 

@@ -94,6 +94,11 @@
         [view]="'comic'">
       </app-fabric>
 
+      <button mat-raised-button color="primary" (click)="openMiniTreeDialog()">
+        Add to Category
+        <mat-icon>save</mat-icon>
+      </button> 
+
 
      <div style="margin-top: 10px;opacity: 0">
        
@@ -116,7 +121,7 @@
         <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
         <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
         <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
-        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button> 
+        <button mat-raised-button color="primary" (click)="openMiniTreeDialog()">text</button> 
       </div>
   
    
@@ -125,3 +130,9 @@
   
   </div>
 </div>
+
+<ng-template #miniTreeDialog>
+  <div class="my-scroll" style="height: 95vh;margin-bottom: -5px;min-width: 300px">
+    <app-mini-tree (onSelectCategory)="onSelectCategory($event)"></app-mini-tree>
+  </div>
+</ng-template>

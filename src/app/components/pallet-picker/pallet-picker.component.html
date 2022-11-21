@@ -4,4 +4,9 @@
     [style.transform]="color.s ? 'scale(1.5)' : 'scale(1)'"
     (click)="colorSelect(color);">
   </div>
+  <div>
+    <button mat-icon-button (click)="selectAll()">
+      <mat-icon>select_all</mat-icon>
+    </button>
+  </div>
 </div>

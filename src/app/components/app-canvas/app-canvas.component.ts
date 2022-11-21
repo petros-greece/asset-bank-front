@@ -36,38 +36,25 @@ export class AppCanvasComponent implements OnInit {
 
   runWithReInit: boolean = true;
 
-  colorStops = [
-    {color: 'rgb(0,255,0)', stop: 100}, 
-    {color: 'rgb(255,0,0)', stop: 500},
-    {color: 'rgb(0,0,0)', stop: 800},
-  ];
-  confusion = {
-    colors: [1,0,0],
-    start: 0,
-    randomness: 20
-  }
-  pixelate = {
-    factor: 3,
-    outline: false,
-    circleFactor: 5,
-    circleOutline: false
-  }
-  bnw = {
-    rgb: ['b', 'b', 'b']
-  }
-  negative = {
-    brightness: 255
-  }
-  polychromeNegative = {
-    middlePoint: 127,
-    range: 100
-  }
-  exposure = {
-    distance: 2
-  }
-  whiteNoise = {
-    factor: 30
-  }
+  colorStops = [ {color: 'rgb(0,255,0)', stop: 100}, {color: 'rgb(255,0,0)', stop: 500}, {color: 'rgb(0,0,0)', stop: 800}, ];
+  confusion = { colors: [1,0,0], start: 0, randomness: 20 };
+  pixelate = { factor: 3, outline: false, circleFactor: 5, circleOutline: false };
+  bnw = { rgb: ['b', 'b', 'b'] };
+  negative = { brightness: 255 };
+  polychromeNegative = { middlePoint: 127, range: 100 };
+  exposure = { distance: 2 };
+  whiteNoise = { factor: 30 };
+  paradise = {factor: .1};
+  intensity = { factor: .1};
+  bloom = { factor: 20 };
+  outlines = { factor: 10, bgColor: 'rgba(255,255,255,1)', hasBg: false };
+  water = { factor: 200 }
+  blocks = { factor: 50 };
+  frames = { factor: 10, stop: 300 }
+  rotatingFrames = { scaleFactor: .25, degreesStop: 360, degreesPlus: 1 };
+  cartoonColors = [];
+  vinyl = {factor: 0.1};
+  holyLight = {factor: 1};
 
   info = {
     averageRgb: {r:0,g:0,b:0},
@@ -131,6 +118,7 @@ export class AppCanvasComponent implements OnInit {
   /** */
 
   initImageInfo(getFullInfo:boolean = false):Observable<any>{
+    this.ctx.clearRect(0,0,this.width, this.height);
     if(this.image){
       return new Observable((observer) => {
           this.ctx.drawImage(
@@ -151,8 +139,6 @@ export class AppCanvasComponent implements OnInit {
           
       });
     }
-
-
 
     return new Observable((observer) => {
       this.loadImage().subscribe((image)=>{
@@ -262,7 +248,7 @@ export class AppCanvasComponent implements OnInit {
     return sortable.filter((elem)=>{return elem;});
   }
 
-  /** */
+  /** PIXEL MANIPULATION EFFECTS **************/
 
   replaceColor(color: any, replacer: any){
     let i = -4;
@@ -301,7 +287,6 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0);  
   }
 
-
   addConfusion(){
     this.runWithReinit(()=>{
       let i = -4;
@@ -330,7 +315,7 @@ export class AppCanvasComponent implements OnInit {
           this.imageData.data[i] = color.r;
           this.imageData.data[i + 1] = color.g;
           this.imageData.data[i + 2] = color.b;
-          this.imageData.data[i + 3] = 255;
+          //this.imageData.data[i + 3] = 255;
     }
     this.ctx.putImageData(this.imageData, 0, 0);
   } 
@@ -356,11 +341,11 @@ export class AppCanvasComponent implements OnInit {
           }
           if(this.pixelate.outline){
             this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-            this.ctx.strokeRect(point.x, point.y, this.pixelate.factor, this.pixelate.factor);
+            this.ctx.strokeRect(point.x - Math.round(this.pixelate.factor/2), point.y - Math.round(this.pixelate.factor/2), this.pixelate.factor, this.pixelate.factor);
           }
           else{
             this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-            this.ctx.fillRect(point.x, point.y, this.pixelate.factor, this.pixelate.factor);
+            this.ctx.fillRect(point.x - Math.round(this.pixelate.factor/2), point.y - Math.round(this.pixelate.factor/2), this.pixelate.factor, this.pixelate.factor);
           }
         }
         else{
@@ -536,8 +521,6 @@ export class AppCanvasComponent implements OnInit {
     });    
   }
 
-  paradise = {factor: .1};
-
   giveParadise(){
     this.runWithReinit(()=>{
       let i = -4;
@@ -563,8 +546,6 @@ export class AppCanvasComponent implements OnInit {
 
   }
 
-  intensity = { factor: .1};
-
   giveIntensity(){
     this.runWithReinit(()=>{
       let i = -4;
@@ -586,8 +567,6 @@ export class AppCanvasComponent implements OnInit {
       
     });   
   }
-
-  bloom = { factor: 20 }
 
   giveBloom(){
     this.runWithReinit(()=>{
@@ -618,8 +597,6 @@ export class AppCanvasComponent implements OnInit {
       this.ctx.putImageData(this.imageData, 0, 0);     
     })
   } 
-
-  outlines = { factor: 10, bgColor: 'rgba(255,255,255,1)', hasBg: false };
 
   giveOutlines(){
     this.runWithReinit(()=>{
@@ -676,8 +653,6 @@ export class AppCanvasComponent implements OnInit {
     });    
   }
 
-  water = { factor: 200 }
-
   giveWater(){
     this.runWithReinit(()=>{
 
@@ -707,9 +682,7 @@ export class AppCanvasComponent implements OnInit {
     });
   }
 
-  /** */
-
-  blocks = { factor: 50 };
+  /** MULTI IMAGES EFFECTS **************************************/
 
   giveBlocks(){
     this.runWithReinit(()=>{
@@ -718,17 +691,12 @@ export class AppCanvasComponent implements OnInit {
       let ratio2 = factor*(this.height/this.width);
 
       for( let y = 0; y < this.height; y+=ratio2 ){
-        for( let x = 0; x < this.width; x+=ratio1 ){         
-        this.ctx.drawImage(this.image, 0, 0, this.width, this.height, x, y, ratio1, ratio2);
+        for( let x = 0; x < this.width; x+=ratio1 ){        
+          this.ctx.drawImage(this.image, 0, 0, this.width, this.height, x, y, ratio1, ratio2);
         }      
       }
       this.getImageData();      
     });
-  }
-
-  frames = {
-    factor: 10,
-    stop: 300
   }
 
   giveFrames(){
@@ -744,12 +712,6 @@ export class AppCanvasComponent implements OnInit {
       }
       this.getImageData();      
     });
-  }
-
-  rotatingFrames = {
-    scaleFactor: .25,
-    degreesStop: 360,
-    degreesPlus: 1
   }
 
   giveRotatingFrames(){
@@ -773,8 +735,6 @@ export class AppCanvasComponent implements OnInit {
       this.getImageData();      
     });
   }
-
-  cartoonColors = [];
 
   giveCartoonColors(){
     this.runWithReinit(()=>{
@@ -813,9 +773,6 @@ export class AppCanvasComponent implements OnInit {
     });  
   }
 
-
-  vinyl = {factor: 0.1}
-
   giveVinyl(){
     this.runWithReinit(()=>{
       let degreesStop = 360;
@@ -834,8 +791,6 @@ export class AppCanvasComponent implements OnInit {
       this.getImageData();  
     });  
   }
-
-  holyLight = {factor: 1}
 
   giveHolyLight(){
     this.runWithReinit(()=>{
@@ -856,79 +811,34 @@ export class AppCanvasComponent implements OnInit {
     });     
   }
 
-
-  scissorsfgfgf(){
-
-    let scalefactor = this.rotatingFrames.scaleFactor;
-    let degreesStop = 60;//this.rotatingFrames.degreesStop;
-    let degreesPlus = 1;//this.rotatingFrames.degreesPlus;
-    let factor = 0;
-    let factorIncrease = 10;
-    this.ctx.save();
-    //this.ctx.globalCompositeOperation = "lighter";
-    this.ctx.globalAlpha =  0.01;
-    for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
-        
-        //this.ctx.save();
-        //this.ctx.translate(this.width/2, this.height/2);
-        
-        //this.ctx.rotate(degrees*Math.PI/180);
-        this.ctx.drawImage(this.image, 
-          0+factor, 0+factor, this.width, this.height, 
-          0+factor, 0+factor, this.width, this.height);
-          factor+= factorIncrease;
-        //this.ctx.restore();       
-    }
-    this.ctx.restore(); 
-    this.getImageData();   
-  }
+  /** TESTING  */
 
   scissors(){
-    //let data = JSON.parse(JSON.stringify(this.imageData.data));
-    let scale = 70;
-    this.dummyCtx.drawImage(this.image, - scale,  - scale , this.width + 2*scale, this.height + 2*scale);
-    let data = (this.dummyCtx.getImageData(0,0,this.width, this.height)).data;
-
-    this.dummyCtx.drawImage(this.image, scale,  scale , this.width - 2*scale, this.height - 2*scale);
-    let data2 = (this.dummyCtx.getImageData(0,0,this.width, this.height)).data;
-    console.log(data)
-    console.log(this.imageData)
-    let pixelIndex;
-    let factor = 20;
-    let point, color;
     let i = -4;
     let len = this.imageData.data.length;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    let point, color;
     while ( (i += 4) < len ) { 
+
       point = {
         x: (i / 4) % this.width,
         y: Math.floor((i / 4) / this.width),
       };
+
       color = {
         r: this.imageData.data[i],
         g: this.imageData.data[i+1],
         b: this.imageData.data[i+2],
         a: this.imageData.data[i+3]
       };
-      if(point.x%60 > 10 && point.y%60 > 50 ){
-      
-        this.imageData.data[i] = 255 - data2[i]; 
-        this.imageData.data[i+1] = 255 - data2[i+1];
-        this.imageData.data[i+2]= 255 - data2[i+2]; 
-        //this.imageData.data[i+3] = 100;      
-      }
-      else{
-        // this.imageData.data[i] = data2[i]; 
-        // this.imageData.data[i+1] = data2[i+1];
-        // this.imageData.data[i+2]= data2[i+2]; 
-       // this.imageData.data[i+3] = data2[i+3];         
-      }
-           
-    }
-    
-    this.ctx.putImageData(this.imageData, 0, 0);  
-    
-  }
 
+      //if(){}
+
+      let hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
+
+    }
+
+  }
 
   scissors5(){
     console.log(this.info)
@@ -1083,19 +993,10 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0);    
   }
 
-  scissors2(){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
-          if(i%9){
-            this.imageData.data[i] = 255;
-            this.imageData.data[i + 1] = 0;
-            this.imageData.data[i + 2] = 0;
-            this.imageData.data[i + 3] = 255;
-          }
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);    
+  giveRandom(){
+   
   }
+
 
   /** UI *******************/
 

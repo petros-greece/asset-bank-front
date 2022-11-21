@@ -13,7 +13,7 @@
           PNG<mat-icon>download</mat-icon>
         </button>
 
-        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();">
+        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();" class="d-xs-none">
           <mat-icon>refresh</mat-icon>
         </button>
 
@@ -21,12 +21,12 @@
 
       <ng-template *ngTemplateOutlet="brightnessTmpl"></ng-template>
 
-      <mat-checkbox [(ngModel)]="runWithReInit">
+      <mat-checkbox [(ngModel)]="runWithReInit" class="d-xs-none">
         Restart On Effect Change
       </mat-checkbox>
       <!-- runWithReinit( clbk: Function ){ -->
 
-      <div style="max-height: 400px;" class="my-scroll">
+      <div style="max-height: 400px;" class="my-scroll d-xs-none">
         <mat-accordion>
   
           <mat-expansion-panel>

@@ -912,7 +912,16 @@ body .mat-pad-none {
   order: 1;
 }
 
+.d-xs-none {
+  display: none !important;
+}
+
 @media only screen and (min-width: 48em) {
+
+  .d-xs-none {
+    display: inherit !important;
+  }
+
   .container {
     width: 49rem;
   }
@@ -1141,6 +1150,7 @@ body .mat-pad-none {
     -ms-flex-order: 1;
     order: 1;
   }
+
 }
 
 @media only screen and (min-width: 64em) {

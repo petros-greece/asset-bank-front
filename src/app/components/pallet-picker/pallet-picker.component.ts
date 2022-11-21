@@ -47,5 +47,15 @@ export class PalletPickerComponent implements OnInit {
     this.onColorSelect.emit(cols);
   }
 
+  selectAll(){
+    this.colors.forEach((color:any) => {
+      color.s = 1;
+    });
+    let cols = this.colors.map((col:any)=>{
+      if( col.s ){ return col.c; }
+    }).filter((c:any)=>{return c;});
+    this.onColorSelect.emit(cols);
+  }
+
 }
 

@@ -143,4 +143,12 @@ export class GalleryComponent implements OnInit {
     this.onAddSelected.emit();
   }
 
+  selectAll(){
+    let srcs = this.assets.map((a:any)=>{
+      return a.src;
+    });
+    this.coreService.selectedAssets = (this.coreService.selectedAssets).concat(srcs);
+    //coreService.selectedAssets.push(asset.src)
+  }
+
 }

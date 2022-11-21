@@ -43,7 +43,13 @@ export class TreeComponent implements OnInit {
 
   ngOnInit(): void {  
     this.apiService.getData(`/tree/${this.apiService.user.id}`).subscribe((res)=>{
-      this.apiService.categories = JSON.parse(res.categories);
+      if(res && res.categories){
+        this.apiService.categories = JSON.parse(res.categories);
+      }
+      else{
+        //let cat = JSON.parse(JSON.stringify(this.newCategory));
+        this.apiService.categories = [];
+      }
     }); 
   }
 
