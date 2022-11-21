@@ -1,33 +1,127 @@
-<div class="row" style="margin: 0px;">
-  <div id="comic-canvas-container" class="col-sm-12 col-md-8 col-lg-9">
-    <div style="height: 80vh;" class="my-scroll">
-      <div style="transform-origin: left top" [style.transform]="'scale('+canvasScale+')'">
-        <canvas id="my-comic-canvas" style="border: 2px solid grey"></canvas>
+<div class="comic-canvas-container">
+
+  <div class="row" style="margin: 0px;">
+    
+    <div id="comic-canvas-container" class="col-xs-12 col-md-8 col-lg-9">
+      <div style="height: 98vh;" class="my-scroll">
+        <div style="transform-origin: left top" [style.transform]="'scale('+canvasScale+')'">
+          <canvas id="my-comic-canvas" style="border: 2px solid grey"></canvas>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="col-sm-12 col-md-4 col-lg-3">
-    <button mat-raised-button color="primary" (click)="canvasScale= canvasScale-.1">-</button>
-    <button mat-raised-button color="primary" (click)="canvasScale= canvasScale+.1">+</button>
-    <!-- <button mat-raised-button color="primary" (click)="renderComicCanvas(500, 1450)">text</button>
-    <button mat-raised-button color="primary" (click)="renderComicCanvas(650, 1850)">text</button> -->
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
-    <button mat-raised-button color="primary">text</button>
+    
+    <div class="col-xs-12 col-md-4 col-lg-3 mat-grey my-scroll" style="height: 97vh;">
 
-    <mat-slider thumbLabel [min]="0.1" [max]="2" [step]=".1" 
-      [(ngModel)]="imgScale" 
-      (change)="renderImages()">
-    </mat-slider>
+      <div class="mrgn-b-xs mrgn-t-md">
 
+        <button mat-raised-button color="primary" (click)="downloadImage('jpeg')">
+          JPEG<mat-icon>download</mat-icon>
+        </button>
+        <button mat-raised-button color="primary" (click)="downloadImage('png')">
+          PNG<mat-icon>download</mat-icon>
+        </button>
+
+      </div>
+
+      <div>
+  
+        <button mat-icon-button (click)="canvasScale= canvasScale+.1">
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+        <button mat-icon-button (click)="canvasScale= canvasScale-.1">
+          <mat-icon>zoom_out</mat-icon>
+        </button>
+
+      </div>
+
+      <app-picker-menu
+        [icon]="'format_paint'"
+        [color]="background" 
+        (onPickColor)="background = $event.color;renderImages();">
+      </app-picker-menu>
+   
+      <div>
+        Height
+        <mat-slider thumbLabel [min]="200" [max]="2000" [step]="1"
+          [(ngModel)]="height"
+          (change)="renderImages()">
+        </mat-slider>
+      </div>
+
+      <div>
+        Scale
+        <mat-slider thumbLabel [min]="0.1" [max]="2" [step]=".01" 
+          [(ngModel)]="imgScale" 
+          (change)="renderImages()">
+        </mat-slider>
+      </div>
+  
+      <div>
+        Inner Padding
+        <mat-slider thumbLabel [min]="0" [max]="50" [step]="1" 
+          [(ngModel)]="padding" 
+          (change)="renderImages()">
+        </mat-slider>
+      </div>
+  
+      <div>
+        Outer Padding
+        <mat-slider thumbLabel [min]="0" [max]="50" [step]="1" 
+          [(ngModel)]="outerPadding" 
+          (change)="renderImages()">
+        </mat-slider>
+      </div>
+
+
+      <div *ngIf="sortablejsOptions" [sortablejs]="images" [sortablejsOptions]="sortablejsOptions">
+  
+        <div 
+          class="image-block" 
+          *ngFor="let img of images;index as i"
+          [style.background]="img.id === selectedObjId ? 'red' : ''"
+          (click)="setActiveObject(i)">
+          {{ img ?  (img.id | onlyNumber) : '' }}
+        </div>
+  
+      </div>
+  
+      <button mat-raised-button color="primary" class="mrgn-t-sm" (click)="shuffleImages()">shuffle</button>
+  
+
+      <app-fabric
+        class="pos-rel"
+        [fabricCanvas]="canvas"
+        [view]="'comic'">
+      </app-fabric>
+
+
+     <div style="margin-top: 10px;opacity: 0">
+       
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+    
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button> 
+  
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button>
+        <button mat-raised-button color="primary" (click)="renderComicCanvas()">text</button> 
+      </div>
+  
+   
+  
+    </div> 
+  
   </div>
 </div>

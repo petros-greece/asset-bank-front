@@ -19,15 +19,19 @@
         Selected ({{coreService.selectedAssets.length}})
       </button>
       <mat-menu #selectedMenu="matMenu">
-        <button mat-menu-item (click)="openComicDialog()">
+        <button mat-menu-item (click)="openComicDialog()" *ngIf="addAction !== 'image'">
           Composition
         </button>
-        <button mat-menu-item (click)="openMiniTreeDialog()" *ngIf="!addToSelectedCat">
+        <button mat-menu-item (click)="openMiniTreeDialog()" *ngIf="!addAction">
           Add to category
         </button>
-        <button mat-menu-item (click)="addToSelectedCategory()" *ngIf="addToSelectedCat">
+        <button mat-menu-item (click)="addToSelectedCategory()" *ngIf="addAction === 'category'">
           Add to category {{ apiService.selectedCategory.title }}
         </button>
+        <button mat-menu-item (click)="addToImage()" *ngIf="addAction === 'image'">
+          Add to image
+        </button>
+
       </mat-menu>
     </div>
   </div>
@@ -41,7 +45,7 @@
       <div class="gallery-card-overlay">
         <div style="width: 100%">
           <!-- {{asset.id}} -->
-          <button mat-icon-button (click)="openEditAssetDialog(asset.src)">
+          <button mat-icon-button (click)="openEditAssetDialog(asset.src)" *ngIf="addAction !== 'image'">
             <mat-icon>edit</mat-icon>
           </button>
           <button mat-icon-button (click)="coreService.selectedAssets.push(asset.src)">

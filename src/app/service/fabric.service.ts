@@ -115,13 +115,18 @@ export class FabricService {
         image.onload = () => {
           let fabricImage:any = new fabric.Image(image, {});
           fabricImage.id = `image-${i}`;
-          images.push(fabricImage);
-          if(i === (links.length-1)){
-            observer.next(images);
+          images[i] = fabricImage; 
+          if(i === (links.length-1)){ 
+            setTimeout(()=>{
+              observer.next(images);
+            }, 500);
           }
         }
+        image.crossOrigin = 'anonymous';
         image.src = link;   
-      });    
+      });
+      
+
     });
 
   }

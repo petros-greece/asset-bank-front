@@ -22,8 +22,7 @@ export interface FabricOptionsI{
 export class AppFabricComponent implements OnInit {
   @Input()  fabricCanvas: any;
   @Input()  ctx: any;
-  @Output() onEmitCTX = new EventEmitter<any>();
-
+  @Input()  view: string = 'edit'; 
 
 
   svgFiles = [
@@ -35,7 +34,10 @@ export class AppFabricComponent implements OnInit {
     },  
     {
       name: 'superheroes'
-    }  
+    },
+    {
+      name: 'animals'
+    } 
   ];
   svgIcons: any;
 
@@ -175,14 +177,20 @@ export class AppFabricComponent implements OnInit {
   }
 
   duplicateSelection(){
-    let activeObject;
-    this.fabricCanvas.getActiveObject().clone((cloned:any)=>{
-      activeObject = cloned;
-    });
-    console.log(activeObject);
-    if(!activeObject){return}
-    this.fabricCanvas.add(activeObject);
-    this.fabricCanvas.renderAll();
+
+    var object = fabric.util.object.clone(this.fabricCanvas.getActiveObject());
+    object.set("top", object.top);
+    object.set("left", object.left);
+    this.fabricCanvas.add(object);
+
+    // let activeObject;
+    // this.fabricCanvas.getActiveObject().clone((cloned:any)=>{
+    //   activeObject = cloned;
+    // });
+    // console.log(activeObject);
+    // if(!activeObject){return}
+    // this.fabricCanvas.add(activeObject);
+    // this.fabricCanvas.renderAll();
   }
 
 

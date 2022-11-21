@@ -131,9 +131,31 @@ export class AppCanvasComponent implements OnInit {
   /** */
 
   initImageInfo(getFullInfo:boolean = false):Observable<any>{
+    if(this.image){
+      return new Observable((observer) => {
+          this.ctx.drawImage(
+            this.image,
+            0,
+            0,
+            this.image.width,
+            this.image.height
+          );
+  
+          setTimeout(()=>{ this.getImageData(); }, 10); 
+          
+          if(getFullInfo){
+            setTimeout(()=>{ this.info.averageRgb = this.getAverageRGB(); }, 10);
+            setTimeout(()=>{ this.info.colorObj = this.getColorsObj(); }, 20);
+          }
+          setTimeout(()=>{ observer.next(this.image) }, 30); 
+          
+      });
+    }
+
+
+
     return new Observable((observer) => {
       this.loadImage().subscribe((image)=>{
-
         this.ctx.drawImage(
           image,
           0,
@@ -725,8 +747,8 @@ export class AppCanvasComponent implements OnInit {
   }
 
   rotatingFrames = {
-    scaleFactor: .1,
-    degreesStop: 60,
+    scaleFactor: .25,
+    degreesStop: 360,
     degreesPlus: 1
   }
 
@@ -863,7 +885,7 @@ export class AppCanvasComponent implements OnInit {
 
   scissors(){
     //let data = JSON.parse(JSON.stringify(this.imageData.data));
-    let scale = 0;
+    let scale = 70;
     this.dummyCtx.drawImage(this.image, - scale,  - scale , this.width + 2*scale, this.height + 2*scale);
     let data = (this.dummyCtx.getImageData(0,0,this.width, this.height)).data;
 
@@ -887,17 +909,17 @@ export class AppCanvasComponent implements OnInit {
         b: this.imageData.data[i+2],
         a: this.imageData.data[i+3]
       };
-      if(point.x%60 > 30 && point.y%60 > 30 ){
+      if(point.x%60 > 10 && point.y%60 > 50 ){
       
-      this.imageData.data[i] = data[i]; 
-      this.imageData.data[i+1] = data[i+1];
-      this.imageData.data[i+2]= data[i+2]; 
-      //this.imageData.data[i+3] = 100;      
+        this.imageData.data[i] = 255 - data2[i]; 
+        this.imageData.data[i+1] = 255 - data2[i+1];
+        this.imageData.data[i+2]= 255 - data2[i+2]; 
+        //this.imageData.data[i+3] = 100;      
       }
       else{
-        this.imageData.data[i] = data2[i]; 
-        this.imageData.data[i+1] = data2[i+1];
-        this.imageData.data[i+2]= data2[i+2]; 
+        // this.imageData.data[i] = data2[i]; 
+        // this.imageData.data[i+1] = data2[i+1];
+        // this.imageData.data[i+2]= data2[i+2]; 
        // this.imageData.data[i+3] = data2[i+3];         
       }
            
@@ -1110,11 +1132,6 @@ export class AppCanvasComponent implements OnInit {
 
   /*** */
 
-  onEmitCTX(e:any){
-    this.ctxFabric = e.ctx;
-    this.fabricCanvas = e.canvas;
-  }
-
   mergeDataToDummy(){
     let canvasImgData = this.ctx.getImageData(0, 0, this.width, this.height);
     let canvasData = canvasImgData.data;
@@ -1150,7 +1167,7 @@ export class AppCanvasComponent implements OnInit {
     while ( (i +=  4) < len ) {
 
           if( data[i+3] ) {
-            console.log(1-(data[i+3]/255))
+            //console.log(1-(data[i+3]/255))
             let gravity = (data[i+3]/255);
             let avg1 =  this.imageData.data[i]*  (1-gravity) + data[i]* (gravity)   
             let avg2 =  this.imageData.data[i+1]*(1-gravity) + data[i+1]*(gravity) 
@@ -1162,20 +1179,36 @@ export class AppCanvasComponent implements OnInit {
             this.imageData.data[i + 2] = Math.round(avg3);
             this.imageData.data[i + 3] = 255//avg4;
           }
-          // else{
-          //   this.imageData.data[i] = data[i];
-          //   this.imageData.data[i + 1] = data[i+1];
-          //   this.imageData.data[i + 2] = data[i+2];
-          //   this.imageData.data[i + 3] = data[i+3];
-          // }
 
-        
-        // else{
-        //   console.log(data[i+4])
-        // }
     }
     this.ctx.putImageData(this.imageData, 0, 0);
     this.fabricCanvas.clear();
+    console.log(this.image)
+    
+    
+    this.canvas.toBlob((blob:any)=>{
+      this.coreService.toBase64(blob).subscribe((base64:any) => {
+
+        const image = new Image();
+        //image.crossOrigin = "Anonymous";
+        image.onload = () => {
+          this.width = image.width;
+          this.height = image.height;
+  
+          setTimeout(()=>{
+            //console.log(image)
+            this.image = image;
+          }, 0);
+          
+        };
+        image.src = base64;
+        image.crossOrigin = "Anonymous";
+
+
+      } );
+    })
+
+   // this.image = this.canvas.toDataURL();
   }
 
   uploadImageToCat(closeDialog: boolean = false){

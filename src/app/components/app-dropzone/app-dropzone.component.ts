@@ -54,7 +54,7 @@ export class AppDropzoneComponent implements OnInit {
       },
       error: (err: any) => {
         console.log(err)
-        this.coreService.giveSnackbar(err.error, {
+        this.coreService.giveSnackbar(err.message, {
           duration: 5000,
           verticalPosition: 'top'
         });        

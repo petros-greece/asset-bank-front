@@ -1,0 +1,26 @@
+.comic-canvas-container{
+//  width: 600px;
+  .image-block{
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 40px;
+    vertical-align: middle;
+    border: 2px solid grey;
+  }
+}
+
+
+@media only screen and (min-width: 48em) {
+
+}
+
+@media only screen and (min-width: 64em) {
+  
+}
+
+@media only screen and (min-width: 75em) {
+
+}

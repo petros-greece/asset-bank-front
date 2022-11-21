@@ -10,6 +10,14 @@ export class ApiPathPipe implements PipeTransform {
   };
 };
 
+@Pipe({ name: 'onlyNumber' })
+export class OnlyNumberPipe implements PipeTransform {
+  transform(val:string) {
+    return val.replace(/[^0-9]/g, '');   
+  };
+};
+
+
 @Pipe({ name: 'formatDate' })
 export class FormatDatePipe implements PipeTransform {
   transform(date: any) {

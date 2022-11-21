@@ -9,7 +9,7 @@ import { CoreService } from 'src/app/service/core.service';
 })
 export class GalleryComponent implements OnInit {
 
-  @Input() addToSelectedCat = false; 
+  @Input() addAction = ''; 
   @Output() onAddSelected = new EventEmitter<any>();
 
   @ViewChild('comicDialog', {static: true}) comicDialog: TemplateRef<any> | any;  
@@ -32,7 +32,7 @@ export class GalleryComponent implements OnInit {
     let selectedAssets = this.apiService.selectedCategory?.files;
     if(!selectedAssets || !selectedAssets.length){
       this.goToPage(0);
-      this.openComicDialog();
+      //this.openComicDialog();
     }
     else{
       this.assets = selectedAssets.map((asset:any)=>{ return { src: asset } });
@@ -66,6 +66,7 @@ export class GalleryComponent implements OnInit {
     this.coreService.openDialog({
       headerText: `Comic`,
       template: this.comicDialog,
+      cls: 'no-display'
     },{
       id: 'comicDialog'
     }); 
@@ -136,6 +137,10 @@ export class GalleryComponent implements OnInit {
     } 
     this.coreService.selectedAssets = [];
     this.coreService.closeAllDialogs();      
+  }
+
+  addToImage(){
+    this.onAddSelected.emit();
   }
 
 }
