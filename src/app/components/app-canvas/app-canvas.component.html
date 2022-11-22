@@ -13,7 +13,7 @@
           PNG<mat-icon>download</mat-icon>
         </button>
 
-        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();" class="d-xs-none">
+        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();" class="d-xs-none d-sm-inline-block">
           <mat-icon>refresh</mat-icon>
         </button>
 
@@ -209,6 +209,14 @@
             <ng-template *ngTemplateOutlet="holyLightTmpl"></ng-template>
           </mat-expansion-panel>
 
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Fluffy
+              </mat-panel-title>   
+            </mat-expansion-panel-header>  
+            <ng-template *ngTemplateOutlet="fluffyTmpl"></ng-template>
+          </mat-expansion-panel>
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
@@ -582,7 +590,12 @@
   </mat-slider>
 </ng-template>
 
-
+<ng-template #fluffyTmpl>
+  <mat-slider thumbLabel [min]="5" [max]="50" [step]="1" 
+    [(ngModel)]="fluffy.factor" 
+    (change)="giveFluffy()">
+  </mat-slider>
+</ng-template>
 
   <!-- <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
     Save World

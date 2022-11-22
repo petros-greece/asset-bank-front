@@ -55,6 +55,7 @@ export class AppCanvasComponent implements OnInit {
   cartoonColors = [];
   vinyl = {factor: 0.1};
   holyLight = {factor: 1};
+  fluffy = {factor: 5};
 
   info = {
     averageRgb: {r:0,g:0,b:0},
@@ -266,15 +267,34 @@ export class AppCanvasComponent implements OnInit {
   }
 
   lighten(){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
+    // let i = -4;
+    // let len = this.imageData.data.length;
+    // while ( (i +=  4) < len ) {
+    //   this.imageData.data[i] += 10// Math.floor(Math.round(Math.random()*256));
+    //   this.imageData.data[i + 1] += 10//Math.floor(Math.round(Math.random()*256));
+    //   this.imageData.data[i + 2] += 10// Math.floor(Math.round(Math.random()*256));
+    // }
+    // this.ctx.putImageData(this.imageData, 0, 0);
+  
+    this.doSomethingInLoop((i:number)=>{
       this.imageData.data[i] += 10// Math.floor(Math.round(Math.random()*256));
       this.imageData.data[i + 1] += 10//Math.floor(Math.round(Math.random()*256));
       this.imageData.data[i + 2] += 10// Math.floor(Math.round(Math.random()*256));
+    });
+
+  }
+
+
+  doSomethingInLoop(loopFN:Function){
+    let i = -4;
+    let len = this.imageData.data.length;
+    while ( (i +=  4) < len ) {
+      loopFN(i);
     }
     this.ctx.putImageData(this.imageData, 0, 0);    
   }
+
+
 
   brighten(){
     let i = -4;
@@ -394,10 +414,8 @@ export class AppCanvasComponent implements OnInit {
           y = i;
         }
     
-
       }
-      //this.getImageData();
-      //this.ctx.putImageData(this.imageData, 0, 0); 
+
     });  
   }
 
@@ -586,7 +604,7 @@ export class AppCanvasComponent implements OnInit {
         let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
   
         let newX = Math.round(point.x + (Math.cos(dirRadians)*this.bloom.factor));
-        let newY = Math.round(point.y + (Math.sin(dirRadians)*50));
+        let newY = Math.round(point.y + (Math.sin(dirRadians)*this.bloom.factor));
         let newI = (((newY-1)*this.width)+newX)*4;
 
         this.imageData.data[i] = data[newI];
@@ -770,6 +788,9 @@ export class AppCanvasComponent implements OnInit {
         this.imageData.data[i+2] = colsArr[minDiffIndex].b;
       }
       this.ctx.putImageData(this.imageData, 0, 0);
+      // this.runWithReInit = false;
+      // this.giveOutlines();
+
     });  
   }
 
@@ -811,13 +832,51 @@ export class AppCanvasComponent implements OnInit {
     });     
   }
 
+  giveFluffy(){
+    this.runWithReinit(()=>{
+      let i = -4;
+      let len = this.imageData.data.length;
+      let point, color;
+      while ( (i += 4) < len ) { 
+
+        point = {
+          x: (i / 4) % this.width,
+          y: Math.floor((i / 4) / this.width),
+        };
+
+        color = {
+          r: this.imageData.data[i],
+          g: this.imageData.data[i+1],
+          b: this.imageData.data[i+2],
+          a: this.imageData.data[i+3]
+        };
+
+        let rand = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);
+        let rand2 = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);     
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+        this.ctx.moveTo(point.x, point.y);
+        this.ctx.quadraticCurveTo(point.x - (rand/2), point.y - (rand2/2), point.x + rand2, point.y + rand);
+        this.ctx.stroke();
+
+      }
+    }); 
+    this.getImageData();
+  }
+
   /** TESTING  */
 
   scissors(){
+
     let i = -4;
     let len = this.imageData.data.length;
     let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
-    let point, color;
+    let data = JSON.parse(JSON.stringify(this.imageData.data));
+    let point, color, hypo, dirRadians;
+    let direction = 0;
+    let maxHypo = Math.round(Math.hypot(center.x - 0, center.y - 0));
+
+    let factor = 10;
     while ( (i += 4) < len ) { 
 
       point = {
@@ -832,12 +891,117 @@ export class AppCanvasComponent implements OnInit {
         a: this.imageData.data[i+3]
       };
 
-      //if(){}
+      hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
+      dirRadians = Math.atan2(center.y - point.y, center.x - point.x)//Math.sqrt(hypo);
+      let dirX = Math.cos(dirRadians)*10;
+      let dirY = Math.sin(dirRadians)*10;
+      let newX=0, newY=0;
 
-      let hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
+      //if(dirRadians*(180/Math.PI)){}
+
+      let dicrease = Math.sqrt(hypo/maxHypo);
+      newX = Math.round(point.x - (dirX*dicrease));
+      newY = Math.round(point.y - (dirY*dicrease));
+
+
+
+      // if(i<len/2){
+      //   newX = point.x + Math.round(dirX*dicrease);
+      //   newY = point.y + Math.round(dirY*dicrease);
+      // }
+      // else{
+      //   newX = point.x - Math.round(dirX*dicrease);
+      //   newY = point.y - Math.round(dirY*dicrease);
+      // }
+      let newI = (((newY-1)*this.width)+newX)*4;     
+      this.imageData.data[i] = data[newI];
+      this.imageData.data[i+1] = data[newI+1];
+      this.imageData.data[i+2] = data[newI+2];
+
+      // if(point.x < this.width/2 && point.y < this.height/2){
+      //   newX = point.x - Math.round(dirX*dicrease);
+      //   newY = point.y - Math.round(dirY*dicrease);
+      // }
+      // else if(point.x >= this.width/2 && point.y <= this.height/2){
+      //   newX = point.x + Math.round(dirX*dicrease);
+      //   newY = point.y - Math.round(dirY*dicrease);
+      // }
+      // else if(point.x < this.width/2 && point.y > this.height/2){
+      //   newX = point.x - Math.round(dirX*dicrease);
+      //   newY = point.y + Math.round(dirY*dicrease);
+      // }
+      // else if(point.x >= this.width/2 && point.y >= this.height/2){
+      //   newX = point.x + Math.round(dirX*dicrease);
+      //   newY = point.y + Math.round(dirY*dicrease);
+      // }
+
+
+
+      if(i<1000){
+        console.log(dirX, dirY)
+      }
+
+      //if( === 0){
+        
+        //direction +=1;
+      //}
+      // direction = (hypo*360)/maxHypo;
+      // let dirX = Math.cos(direction*(Math.PI/180));
+      // let dirY = Math.sin(direction*(Math.PI/180));
+      // let newX, newY;
+      // //if(i<(len/2)){
+
+      //   newX = Math.round(point.x + (dirX*(hypo/10)));
+      //   newY = Math.round(point.y + (dirY*(hypo/10)));
+      // // }
+
+      // else{
+      //   newX = Math.round(point.x - (dirX*(hypo/10)));
+      //   newY = Math.round(point.y - (dirY*(hypo/10)));        
+      // }
+      //let newI = (((newY-1)*this.width)+newX)*4;
+
+
+
+
+      // this.imageData.data[i] = data[newI];
+      // this.imageData.data[i+1] = data[newI+1];
+      // this.imageData.data[i+2] = data[newI+2];
+
+
+
+     
+
+      //if(i < len/2){
+        //let newX = Math.round(point.x + parseFloat((Math.cos(angle*Math.PI/180) * speed).toFixed(3)))
+        //let newY = Math.round(point.y + parseFloat((Math.sin(angle*Math.PI/180) * speed).toFixed(3)))
+
+        //let newX = Math.round(point.x + (Math.cos(10)));//point.x;//Math.round(point.x - (Math.cos(dirRadians)*Math.sqrt(hypo)));
+        //let newY = Math.round(point.y + (Math.sin(10)));
+        //let newI = (newX*newY*4)
+        //let newI = (((newY-1)*this.width)+newX)*4;
+      //}
+
+      // if( Math.round(hypo%10) > 5){
+      //     this.imageData.data[i] -= 55// - this.imageData.data[i];
+      //     this.imageData.data[i+1] -= 55 //- this.imageData.data[i+1];
+      //     this.imageData.data[i+2] -= 55 //- this.imageData.data[i+2];
+      // }
+
+      // let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
+  
+      // let newX = Math.round(point.x - (Math.cos(dirRadians)*(hypo)));
+      // let newY = Math.round(point.y - (Math.sin(dirRadians)*(hypo)));
+
+      // let newI = (((newY-1)*this.width)+newX)*4;
+
+      // this.imageData.data[i] = data[newI];
+      // this.imageData.data[i+1] = data[newI+1];
+      // this.imageData.data[i+2] = data[newI+2];
 
     }
-
+    //this.ctx.clearRect(0,0,1000,1000);
+    this.ctx.putImageData(this.imageData, 0, 0);  
   }
 
   scissors5(){

@@ -64,9 +64,11 @@
           <button mat-icon-button (click)="openEditAssetDialog(asset.src)" *ngIf="addAction !== 'image'">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button (click)="coreService.selectedAssets.push(asset.src)" class="d-xs-none">
+
+          <button mat-icon-button (click)="coreService.selectedAssets.push(asset.src)" class="d-xs-none d-sm-inline-block">
             <mat-icon>done</mat-icon>
           </button>
+
         </div>
       </div> 
       <div class="gallery-card-selected" 

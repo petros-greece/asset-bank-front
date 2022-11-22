@@ -40,7 +40,7 @@ export class GalleryComponent implements OnInit {
       this.pages = [0];    
     }
     //console.log(selectedAssets);
-
+this.openEditAssetDialog('U-1667746194.jpg')
     
   }
 
