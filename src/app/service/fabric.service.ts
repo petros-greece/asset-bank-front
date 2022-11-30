@@ -3,6 +3,7 @@ import { Observable, reduce } from 'rxjs';
 import { fabric } from 'fabric';
 import { ICanvasOptions, IImageOptions, IRectOptions, ITextboxOptions } from 'fabric/fabric-impl';
 import { ApiService } from './api.service';
+import { PointI } from '../components/app-canvas/app-canvas.component';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,19 @@ export class FabricService {
 
   constructor(private apiService: ApiService) { }
 
+
+  getPolyInfoFromObj(obj:any) : {poly: [[number, number]], minPoint: PointI, maxPoint: PointI}{
+    let path = obj.path ? obj.path : [];
+    let xx:any = [], yy:any = [], poly:any = [];
+    path.forEach((path:any) => {
+      xx.push(Math.round(path[1]));
+      yy.push(Math.round(path[2]));
+    });
+    xx.forEach((elem:any, ind:number) => { poly.push([xx[ind], yy[ind]]); });
+    let minPoint = { x: Math.min(...xx), y: Math.min(...yy) };  
+    let maxPoint = { x: Math.max(...xx), y: Math.max(...yy) };
+    return {poly: poly, minPoint:minPoint, maxPoint:maxPoint};
+  }
 
   giveFabricCanvas(name: string, opts: ICanvasOptions) : Observable<any>{
     return new Observable((observer)=>{
@@ -34,7 +48,6 @@ export class FabricService {
   addBrush(fabricCanvas:any, brushOpts:any){
     fabricCanvas.isDrawingMode = true;
     fabricCanvas.selection = false;
-
     let PencilBrush = new fabric.PencilBrush(fabricCanvas);
     PencilBrush.color = brushOpts.color;
     PencilBrush.width = brushOpts.width;
@@ -77,6 +90,34 @@ export class FabricService {
     var rect = new fabric.Polygon([{x: 10, y: 10}, {x: 100, y: 10}, {x: 80, y: 100}, {x: 10, y: 100}], {selectable: true}); 
     fabricCanvas.add(rect);
   }
+
+
+  addControl(fabricCanvas:any){
+
+    let rect = new fabric.Rect({width: 30, height:30, top:10, left: 90});
+
+    let control = new fabric.Control({
+      x: 0.5,
+      y: -0.5,
+      offsetY: 16,
+      cursorStyle: 'pointer',
+      render(ctx, left, top, styleOverride, fabricObject) {
+        ctx.fillRect(left, top, 100,100);
+        ctx.fill()
+      },
+      //mouseUpHandler: deleteObject,
+      //render: renderIcon,
+      //cornerSize: 24
+    });
+
+    rect.controls['ko'] = (control)
+    fabricCanvas.add(rect);
+    fabricCanvas.renderAll();
+
+   // fabricCanvas.add(control);
+   // fabricCanvas.renderAll();
+  }
+
   // this.ctx = this.fabricCanvas.getContext('2d');
 
   showImage(link: string, opts: IImageOptions = {}){
@@ -106,6 +147,28 @@ export class FabricService {
       });  
     });
   }
+
+  giveImgObj(dataUrl: any, fabricCanvas:any, startPoint:any){
+    fabric.Image.fromURL(dataUrl, function(img) {
+      img.left = startPoint.x;
+      img.top = startPoint.y;
+
+      let options = {
+        cropX: 0,
+        cropY: 0,
+        width: img.width,
+        height: img.height,
+      };
+      img.set(options);
+      fabricCanvas.add(img);
+      img.bringToFront();
+      fabricCanvas.setActiveObject(img);
+      fabricCanvas.renderAll();
+
+    });
+  }
+
+
 
   showImagesFromService(links:string[]) : Observable<any>{
     return new Observable((observer)=>{
@@ -293,10 +356,12 @@ export class FabricService {
         //canvas.add(object);
       });
       let obj = fabric.util.groupSVGElements(objects, {
-        name: 'svg-group'
+        name: 'svg-group',
       });
       obj.scaleX = opts.scale;
       obj.scaleY = opts.scale;
+      obj.left = opts.left;
+      obj.top = opts.top;
   
       canvas.add(obj).renderAll();
       

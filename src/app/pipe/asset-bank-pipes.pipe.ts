@@ -10,6 +10,15 @@ export class ApiPathPipe implements PipeTransform {
   };
 };
 
+@Pipe({ name: 'apiPathSm' })
+export class ApiPathSmPipe implements PipeTransform {
+  transform(val:string) {
+    let pathArr = val.split('.');
+    return `${pathArr[0]}-sm/${pathArr[1]}`;   
+  };
+};
+
+
 @Pipe({ name: 'onlyNumber' })
 export class OnlyNumberPipe implements PipeTransform {
   transform(val:string) {

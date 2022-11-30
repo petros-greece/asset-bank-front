@@ -1,0 +1,17 @@
+.my-gallery{
+  min-width: 300px;
+}
+
+@media only screen and (min-width: 48em) {
+  .my-gallery{
+    min-width: 40em;
+  }
+}
+
+@media only screen and (min-width: 64em) {
+  
+}
+
+@media only screen and (min-width: 75em) {
+
+}

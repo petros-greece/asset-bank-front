@@ -1,11 +1,12 @@
 import { NgModule } from "@angular/core";
 import { 
-  ApiPathPipe, OnlyNumberPipe 
+  ApiPathPipe,  ApiPathSmPipe, OnlyNumberPipe 
 } from "./asset-bank-pipes.pipe";
 
 const BankPipes = [
   ApiPathPipe,
-  OnlyNumberPipe 
+  ApiPathSmPipe,
+  OnlyNumberPipe, 
 ];
 
 @NgModule({

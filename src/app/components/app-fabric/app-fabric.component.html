@@ -4,7 +4,61 @@
       
     <div class="col" style="width: 100%">
 
-      <!--== BRUSH + GENERAL ===================-->
+      <!--== GENERAL ===================-->
+
+      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+            
+        <button 
+          mat-raised-button 
+          color="accent"
+          [matMenuTriggerFor]="galleryMenu" 
+          (click)="showGallery = true;">
+          <mat-icon>folder</mat-icon>
+        </button>
+        
+        <mat-menu #galleryMenu="matMenu" yPosition="above">
+          <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
+            <app-gallery (onAddSelected)="onAddSelected()" [addAction]="'image'"></app-gallery>
+          </div>
+        </mat-menu>
+
+        <button mat-raised-button color="accent"
+          (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='excludeCrop'">
+          <mat-icon svgIcon="lasso"></mat-icon>
+        </button>
+
+        <!-- <button mat-raised-button color="accent"
+          (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='crop'">
+          <mat-icon>crop_free</mat-icon>
+        </button> -->
+
+        <button mat-raised-button color="accent"
+          (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='selectAndRemovePart'">
+          <mat-icon>crop</mat-icon>
+        </button>
+
+        <!-- <button mat-raised-button color="accent"
+          (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='selectPart'">
+          <mat-icon>photo_size_select_large</mat-icon>
+        </button> -->
+
+        <button mat-raised-button color="accent"
+          (click)="duplicateSelection()">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+
+        <button mat-raised-button color="accent"
+          (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.selection = true;">
+          <mat-icon>touch_app</mat-icon>
+        </button>
+
+        <button mat-raised-button color="warn" (click)="removeSelection()">
+          <mat-icon>remove</mat-icon>
+        </button>
+
+      </div>
+
+      <!--== BRUSH ===================-->
 
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
           <app-picker-menu
@@ -27,24 +81,6 @@
             </mat-button-toggle>
           </mat-button-toggle-group>
    
-          <div class="align-right">
-
-            <button mat-raised-button color="accent"
-              (click)="duplicateSelection()">
-              <mat-icon>content_copy</mat-icon>
-            </button>
-
-            <button mat-raised-button color="accent"
-              (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.selection = true;">
-              <mat-icon>touch_app</mat-icon>
-            </button>
-
-            <button mat-raised-button color="warn" (click)="removeSelection()">
-              <mat-icon>remove</mat-icon>
-            </button>
-
-          </div>
-
       </div>
     
       <!--== TEXTBOXES ===================-->
@@ -102,55 +138,39 @@
         </app-picker-menu>
 
         <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth" (change)="changeActiveIcon()"> </mat-slider>
+       
+        <!--== ICONS SELECT ===================-->
 
-      </div>
-
-      <!--== GALLERY SELECT ===================-->
-
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+        <div *ngFor="let file of svgFiles">
+          <button 
+            mat-button 
+            [matMenuTriggerFor]="svgMenu" 
+            (click)="getSvgFile(file.name);">
+            {{file.name}}
+          </button>
           
-        <button 
-          mat-icon-button 
-          [matMenuTriggerFor]="galleryMenu" 
-          (click)="showGallery = true;">
-          <mat-icon>folder</mat-icon>
-        </button>
-        
-        <mat-menu #galleryMenu="matMenu">
-          <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
-            <app-gallery (onAddSelected)="onAddSelected()" [addAction]="'image'"></app-gallery>
-          </div>
-        </mat-menu>
-
-      <!--== ICONS SELECT ===================-->
-
-      <div *ngFor="let file of svgFiles">
-        <button 
-          mat-button 
-          [matMenuTriggerFor]="svgMenu" 
-          (click)="getSvgFile(file.name);">
-          {{file.name}}
-        </button>
-        
-        <mat-menu #svgMenu="matMenu">
-          <div (click)="$event.stopPropagation()" class="row pad-all-md" style="width: 300px;margin: -8px 0 -8px 0;background: #000">
-            <button 
-              mat-raised-button color="primary"  
-              *ngFor="let svg of svgIcons" 
-              (click)="giveSVGIcon(svg.svg)"
-              [style.fill]="icon.fill"
-              [style.stroke]="icon.stroke"
-              [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
-              class="svg-but">
-            </button>              
-          </div>
-        </mat-menu>
+          <mat-menu #svgMenu="matMenu" yPosition="above">
+            <div (click)="$event.stopPropagation()" class="row pad-all-md" style="width: 300px;margin: -8px 0 -8px 0;background: #000">
+              <button 
+                mat-raised-button color="primary"  
+                *ngFor="let svg of svgIcons" 
+                (click)="giveSVGIcon(svg.svg)"
+                [style.fill]="icon.fill"
+                [style.stroke]="icon.stroke"
+                [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+                class="svg-but">
+              </button>              
+            </div>
+          </mat-menu>
+        </div>
       </div>
 
+  
+      <!-- <div class="row middle-xs pad-l-sm mrgn-t-sm">
+               
 
 
-
-      </div>
+      </div> -->
 
       <div class="row end-xs mrgn-b-sm">
         <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">

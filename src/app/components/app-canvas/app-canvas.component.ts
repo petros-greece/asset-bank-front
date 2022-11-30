@@ -4,12 +4,28 @@ import { CoreService } from 'src/app/service/core.service';
 import { saveAs } from 'file-saver';
 import { ApiService } from 'src/app/service/api.service';
 import { FabricService } from 'src/app/service/fabric.service';
+import { CanvasService } from 'src/app/service/canvas.service';
+
+export interface PointI {
+  x: number;
+  y: number;
+};
+
+export interface ColorI{
+  r: number;
+  g: number;
+  b: number;
+  a?: number;
+}
+
+type MethodNameT = 'addConfusion' | 'makeMultiColor' | 'pixelateData' | 'pixelateCircleData' | 'blackNWhite' | 'giveNegative' | 'giveExposure' | 'givePolychromeNegative' | 'giveWhiteNoise' | 'giveParadise' | 'giveIntensity' | 'giveBloom' | 'giveOutlines' | 'giveWater' | 'giveFluffy' | 'giveSuck' | 'giveSpotlight' | 'giveCartoonColors' 
 
 @Component({
   selector: 'app-canvas',
   templateUrl: './app-canvas.component.html',
   styleUrls: ['./app-canvas.component.scss']
 })
+
 export class AppCanvasComponent implements OnInit {
  
   @Input() selectedFilePath: any;
@@ -18,9 +34,13 @@ export class AppCanvasComponent implements OnInit {
 
   @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
 
+  history: any = [];
+  historyCurrent: number = 0;
+
   canvas: any;
   ctx: any;
-  
+  hasEvents: boolean = false;
+
   fabricCanvas: any;
   ctxFabric: any;
 
@@ -29,7 +49,11 @@ export class AppCanvasComponent implements OnInit {
 
   width: number = 0;
   height: number = 0;
+  center: PointI = {x:0, y:0}
+  maxHypo: number = 0;
+
   image:any;
+  imageProto: any;
   imageData: any;
 
   canvasScale: number = 1;
@@ -42,7 +66,7 @@ export class AppCanvasComponent implements OnInit {
   bnw = { rgb: ['b', 'b', 'b'] };
   negative = { brightness: 255 };
   polychromeNegative = { middlePoint: 127, range: 100 };
-  exposure = { distance: 2 };
+  exposure = { distance: 1 };
   whiteNoise = { factor: 30 };
   paradise = {factor: .1};
   intensity = { factor: .1};
@@ -56,6 +80,13 @@ export class AppCanvasComponent implements OnInit {
   vinyl = {factor: 0.1};
   holyLight = {factor: 1};
   fluffy = {factor: 5};
+  suck = {factor: 10}
+  spotlight = { controlX: 100, controlY: 200, rangeX: 100, rangeY: 200 }
+  blinds = { depth: 1, freq: 100 }
+  tremolo = { period: .1, pitch: 10 }
+  ellipse = { rx: 0, ry: 0, }
+  brokenWall = { size: 50, dist: 100 }
+  klimt = {size: 5, randomness: 90}
 
   info = {
     averageRgb: {r:0,g:0,b:0},
@@ -67,42 +98,412 @@ export class AppCanvasComponent implements OnInit {
   constructor(
     public fabricService: FabricService,
     public coreService: CoreService, 
-    public apiService: ApiService
+    public apiService: ApiService,
+    public canvasService: CanvasService
   ) { 
 
   }
 
   ngOnInit(): void {
-
+    
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     
     this.initImageInfo(true).subscribe((image)=>{
       this.fabricService.giveFabricCanvas('fabricCanvas', {width: image.width, height: image.height }).subscribe((canvas)=>{
         this.fabricCanvas = canvas;
+        this.fabricCanvas.appStatus = 'appStatus';
         this.fabricCanvas.preserveObjectStacking = false;
         this.ctxFabric = this.fabricCanvas.getContext('2d');
         this.doScaleCanvas(image.width);
+        if(!this.hasEvents){
+          this.attachConstants();
+          this.attachFabricEvents();
+          this.hasEvents = true;
+          //this.fabricService.addControl(this.fabricCanvas)
+          //this.canvasService.init(this.canvas, this.ctx);
+          //this.canvasService.clearCanvas()
+        }
       });
     });
-    //console.log(this.apiService.selectedCategory);
+    console.log(this)
+    console.log(this.apiService.selectedCategory);
+  }
+
+  attachConstants(){
+    this.center = {
+      x: Math.round(this.width/2),
+      y: Math.round(this.height/2),        
+    }
+    this.ellipse = {
+      rx: Math.round(this.width/2),
+      ry: Math.round(this.height/2),   
+    } 
+    this.maxHypo = Math.round(Math.hypot(this.center.x - 0, this.center.y - 0));
+  }
+
+  addToHistory(){
+    let dataUrl = this.tempCanvasDataUrl(this.imageData, this.width, this.height);
+    this.history.push(dataUrl);
+    this.historyCurrent = this.history.length;
+  }
+
+  goToHistory(){
+    if(this.historyCurrent < 0){
+      this.historyCurrent = 0;
+      return;
+    }
+    let src = this.history[this.historyCurrent];
+    const image = new Image();
+    image.onload = () => {
+      this.ctx.clearRect(0,0,this.width, this.height);
+      this.ctx.drawImage(
+        image,
+        0,
+        0,
+        image.width,
+        image.height
+      );
+    
+    };
+    image.src = src;
+    image.crossOrigin = "Anonymous";
 
   }
 
+  inPolygon(point:PointI, vs:any) {
+
+    var x = point.x, y = point.y;
+    
+    var inside = false;
+    for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        var xi = vs[i][0], yi = vs[i][1];
+        var xj = vs[j][0], yj = vs[j][1];
+        
+        var intersect = ((yi > y) != (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    
+    return inside;
+  }
+
+  giveIndexFromPoint(point: PointI){
+    return (((point.y)*this.width)+point.x)*4 | 0;
+  }
 
   endpointToSrc(endpoint: string){
     let arr = this.selectedFilePath.split('/');
     return arr[arr.length-2]+'.'+arr[arr.length-1];
   }
 
-
-  removeAsset(){
-    let src = this.endpointToSrc(this.selectedFilePath);
-    let index = this.apiService.selectedCategory.files.indexOf(src);
-    this.apiService.selectedCategory.files.splice(index, 1);
-    this.coreService.closeDialogById('previewCanvasDialog');
-    this.onRemoveFile.emit(index);
+  rgbStrToObj(rgbStr: string) : ColorI{
+    let arr = (rgbStr.replace(/[a-z\(\)]/g, '')).split(',');
+    return {
+      r: Number(arr[0]),
+      g: Number(arr[1]),
+      b: Number(arr[2])
+    }
   }
+
+  objToRgbString(color: ColorI) : string{
+    color.a === undefined ? 1 : color.a;
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
+  }
+
+  getImageData(){
+    this.imageData = this.ctx.getImageData(0, 0, this.width, this.height);  
+  }
+
+  clearCanvas(){
+    this.ctx.clearRect(0,0,this.width,this.height)
+  }
+
+  tempCanvasDataUrl(data:any, width:number, height: number){
+    let canv:any = document.createElement('canvas');
+    canv.width = width;
+    canv.height = height;
+    canv.getContext('2d').putImageData(data, 0, 0);
+    setTimeout(() => {canv.remove()}, 5000);
+    return canv.toDataURL();    
+  }
+
+  runWithReinit( clbk: Function ){
+    this.addToHistory();
+    if(this.runWithReInit){
+      this.image = this.imageProto;
+      this.initImageInfo().subscribe(()=>{
+        setTimeout(clbk(), 1000)     
+      });
+    }
+    else{
+      clbk()
+      setTimeout( ()=>{this.assignCanvasToImage()}, 1000) 
+    }
+
+  }
+
+  /** */
+
+  doSomethingInLoop(loopFN:Function, putData:boolean = true, startP?: PointI, endP?:PointI, poly?:any){
+    if(poly){
+      this.doSomethingInLoopInPolygogPoints(loopFN, putData, startP, endP, poly);
+      return;
+    }
+    
+    if(startP && endP){
+      this.doSomethingInLoopBetweenPoints(loopFN, putData, startP, endP);
+      return;
+    }
+    let i = -4;
+    let len = this.imageData.data.length;
+    let point, color;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    while ( (i +=  4) < len ) {
+      point = {
+        x: (i / 4) % this.width,
+        y: Math.floor((i / 4) / this.width),
+      };
+      color = {
+        r: this.imageData.data[i],
+        g: this.imageData.data[i+1],
+        b: this.imageData.data[i+2],
+        a: this.imageData.data[i+3]
+      };
+      loopFN(i, point, color, center);
+    }
+    if(putData){
+      this.ctx.putImageData(this.imageData, 0, 0); 
+    }   
+  }
+
+  doSomethingInLoopBetween(loopFN:Function, startI: number, endI:number){
+    let i = startI - 4;
+    let point:PointI, color;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    while ( (i +=  4) <= endI ) {
+      point = {
+        x: (i / 4) % this.width,
+        y: Math.floor((i / 4) / this.width),
+      };
+      color = {
+        r: this.imageData.data[i],
+        g: this.imageData.data[i+1],
+        b: this.imageData.data[i+2],
+        a: this.imageData.data[i+3]
+      };
+      loopFN(i, point, color, center);
+    }
+    this.ctx.putImageData(this.imageData, 0, 0);    
+  }
+
+  doSomethingInLoopBetweenPoints(loopFN:Function, putData:boolean = true, startP?: PointI|any, endP?:PointI|any){
+    let start = startP ? this.giveIndexFromPoint(startP) : 0;
+    let end  = endP ? this.giveIndexFromPoint(endP) : this.giveIndexFromPoint({x:this.width, y:this.height});
+
+    let i = start - 4;
+    let point:PointI, color;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    while ( (i +=  4) <= end ) {
+      point = {
+        x: (i / 4) % this.width,
+        y: Math.floor((i / 4) / this.width),
+      };
+      color = {
+        r: this.imageData.data[i],
+        g: this.imageData.data[i+1],
+        b: this.imageData.data[i+2],
+        a: this.imageData.data[i+3]
+      };
+      if(point.x >= startP.x && point.x <= endP.x && point.y >= startP.y && point.y <= endP.y){
+        loopFN(i, point, color, center);
+      }
+    }
+    if(putData){
+      this.ctx.putImageData(this.imageData, 0, 0); 
+    }    
+  }
+
+  doSomethingInLoopInPolygogPoints(loopFN:Function, putData:boolean = true, startP?: PointI|any, endP?:PointI|any, poly?:any){
+    let start = startP ? this.giveIndexFromPoint(startP) : 0;
+    let end  = endP ? this.giveIndexFromPoint(endP) : this.giveIndexFromPoint({x:this.width, y:this.height});
+
+    let i = start - 4;
+    let point:PointI, color;
+    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
+    while ( (i +=  4) <= end ) {
+      point = {
+        x: (i / 4) % this.width,
+        y: Math.floor((i / 4) / this.width),
+      };
+      color = {
+        r: this.imageData.data[i],
+        g: this.imageData.data[i+1],
+        b: this.imageData.data[i+2],
+        a: this.imageData.data[i+3]
+      };
+      if(point.x >= startP.x && point.x <= endP.x && point.y >= startP.y && point.y <= endP.y){
+        if(this.inPolygon(point, poly)){
+          loopFN(i, point, color, center);
+        }
+      }
+    }
+    if(putData){
+      this.ctx.putImageData(this.imageData, 0, 0); 
+    }    
+  }
+
+
+  /** */
+
+  attachFabricEvents(){
+
+    let startPoint = {x:0, y: 0};
+    let endPoint = {x:0, y: 0};
+
+    this.fabricCanvas.on('mouse:down', (opt:any) => {
+      
+
+      //this.fabricService.addControl(this.fabricCanvas)
+
+      startPoint.x = Math.round(opt.pointer.x); 
+      startPoint.y = Math.round(opt.pointer.y);
+      
+      console.log('mouse:down', opt.pointer);
+
+      if(this.fabricCanvas.appStatus === 'colorpicker'){
+        let x = Math.round(opt.pointer.x); 
+        let y = Math.round(opt.pointer.y);
+        let i = (((y-1)*this.width)+x)*4;
+        let pixel = this.ctxFabric.getImageData(x,y,1,1);
+        let color;
+        if(pixel && pixel.data[3]){
+          color = pixel.data;
+        }
+        else{
+          pixel = this.ctx.getImageData(x,y,1,1);
+          color = pixel.data;
+        }
+      }
+    });
+
+    this.fabricCanvas.on('mouse:up', (opt:any) => {
+      endPoint.x = Math.round(opt.pointer.x); 
+      endPoint.y = Math.round(opt.pointer.y);
+    
+      if(this.fabricCanvas.appStatus === 'selectPart' || this.fabricCanvas.appStatus === 'selectAndRemovePart'){
+        let remove = this.fabricCanvas.appStatus === 'selectAndRemovePart' ? true : false;
+        let dataUrl = this.getDataUrlForArea(startPoint, endPoint, remove);
+        this.fabricService.giveImgObj(dataUrl, this.fabricCanvas, startPoint)
+        this.fabricCanvas.appStatus = '';    
+      }
+      else if(this.fabricCanvas.appStatus === 'lassoRectangeEffect'){
+        let startP = {
+          x: startPoint.x < endPoint.x ? startPoint.x : endPoint.x,
+          y: startPoint.y < endPoint.y ? startPoint.y : endPoint.y,
+        }
+        let endP = {
+          x: startPoint.x > endPoint.x ? startPoint.x : endPoint.x,
+          y: startPoint.y > endPoint.y ? startPoint.y : endPoint.y,
+        }
+        this.giveLassoEffect(this.fabricCanvas.effectMethod, startP, endP);
+      } 
+
+    });
+
+    this.fabricCanvas.on('path:created', (opt:any) => {
+      if(this.fabricCanvas.appStatus === 'crop' || this.fabricCanvas.appStatus === 'excludeCrop'){
+        let excludeCrop = this.fabricCanvas.appStatus === 'excludeCrop' ? true : false;
+        this.fabricCanvas.appStatus = ''; 
+        //this.mpla();
+        this.lassoCrop(excludeCrop);
+      }
+      else if(this.fabricCanvas.appStatus === 'lassoMethodEffect'){
+        this.giveLassoEffect(this.fabricCanvas.effectMethod);
+      }      
+    });
+ 
+    this.fabricCanvas.on('before:selection:cleared', (opt:any) => {
+      console.log('before:selection:cleared', opt);
+    });
+    
+    this.fabricCanvas.on('selection:created', (opt:any) => {
+      console.log('selection:created', opt);
+    });   
+
+  }
+
+  giveLassoEffect(methodName: MethodNameT, startPoint?:PointI, endPoint?:PointI){
+    if(!startPoint){
+      let len = this.fabricCanvas._objects.length;
+      let obj = this.fabricCanvas._objects[len-1];
+      let polyInfo = this.fabricService.getPolyInfoFromObj(obj);
+      let minPoint = polyInfo.minPoint;  
+      let maxPoint = polyInfo.maxPoint;
+      let poly = polyInfo.poly;
+      this[methodName](minPoint, maxPoint, poly);
+      this.fabricCanvas.remove(obj);  
+    } 
+    else{
+      this[methodName](startPoint, endPoint);
+    }
+  }
+
+  lassoCrop(excludeCropped:boolean=true){
+    let len = this.fabricCanvas._objects.length;
+    let obj = this.fabricCanvas._objects[len-1];
+    let polyInfo = this.fabricService.getPolyInfoFromObj(obj);
+    let minPoint = polyInfo.minPoint;  
+    let maxPoint = polyInfo.maxPoint;
+    let w = maxPoint.x-minPoint.x;
+    let h = maxPoint.y-minPoint.y;
+    let poly = polyInfo.poly;
+
+    //copy the polygon data to the dummy canvas
+    let imgData = this.dummyCtx.getImageData(0,0,this.width, this.height);
+    this.doSomethingInLoopInPolygogPoints((i:number, point:PointI, color: any)=>{    
+        imgData.data[i] = this.imageData.data[i];
+        imgData.data[i+1] = this.imageData.data[i+1];
+        imgData.data[i+2] = this.imageData.data[i+2];
+        imgData.data[i+3] = this.imageData.data[i+3];
+        if(excludeCropped){ this.imageData.data[i+3] = 0; }  
+    }, true, minPoint, maxPoint, poly);   
+    this.dummyCtx.putImageData(imgData,0,0);
+    let dummyData = this.dummyCtx.getImageData(minPoint.x, minPoint.y, w, h);
+    this.dummyCtx.clearRect(0,0,this.width,this.height);
+
+    //temp data to canvas
+    let dataUrl = this.tempCanvasDataUrl(dummyData, w, h);
+    this.fabricCanvas.isDrawingMode = false;
+    this.fabricCanvas.selection = true;
+    this.fabricService.giveImgObj(dataUrl, this.fabricCanvas, {x:minPoint.x, y:minPoint.y});
+    this.fabricCanvas.remove(obj);
+
+  }
+
+  getDataUrlForArea(startPoint: PointI, endPoint: PointI, remove:boolean){
+    let startX = (startPoint.x < endPoint.x) ? startPoint.x : endPoint.x;
+    let startY = (startPoint.y < endPoint.y) ? startPoint.y : endPoint.y;
+    let width = Math.abs(startPoint.x - endPoint.x);
+    let height = Math.abs(startPoint.y - endPoint.y);
+    let data = this.ctx.getImageData(startX, startY, width, height);
+
+    if(remove){
+      let endX = (startX + width);
+      let endY = startY+height-1;
+      this.doSomethingInLoopBetweenPoints((i:number, point:PointI)=>{
+          this.imageData.data[i+3] = 0;      
+        }, 
+        true,
+        {x: startX, y: startY}, 
+        {x: endX, y: endY}
+      );
+    }    
+    let dataUrl = this.tempCanvasDataUrl(data, width, height);
+    return dataUrl;
+  }
+
+  /** */
 
   doScaleCanvas(w: number = 100){
     setTimeout(()=>{
@@ -115,23 +516,12 @@ export class AppCanvasComponent implements OnInit {
     }, 20);
   }
 
-
-  /** */
-
   initImageInfo(getFullInfo:boolean = false):Observable<any>{
     this.ctx.clearRect(0,0,this.width, this.height);
     if(this.image){
       return new Observable((observer) => {
-          this.ctx.drawImage(
-            this.image,
-            0,
-            0,
-            this.image.width,
-            this.image.height
-          );
-  
-          setTimeout(()=>{ this.getImageData(); }, 10); 
-          
+          this.ctx.drawImage( this.image, 0, 0, this.image.width, this.image.height );
+          setTimeout(()=>{ this.getImageData(); }, 10);     
           if(getFullInfo){
             setTimeout(()=>{ this.info.averageRgb = this.getAverageRGB(); }, 10);
             setTimeout(()=>{ this.info.colorObj = this.getColorsObj(); }, 20);
@@ -143,22 +533,13 @@ export class AppCanvasComponent implements OnInit {
 
     return new Observable((observer) => {
       this.loadImage().subscribe((image)=>{
-        this.ctx.drawImage(
-          image,
-          0,
-          0,
-          image.width,
-          image.height
-        );
-
+        this.ctx.drawImage( image, 0, 0, image.width, image.height );
         setTimeout(()=>{ this.getImageData(); }, 10); 
-        
         if(getFullInfo){
           setTimeout(()=>{ this.info.averageRgb = this.getAverageRGB(); }, 10);
           setTimeout(()=>{ this.info.colorObj = this.getColorsObj(); }, 20);
         }
-        setTimeout(()=>{ observer.next(image) }, 30); 
-        
+        setTimeout(()=>{ observer.next(image) }, 30);     
        })
 
     });
@@ -166,10 +547,9 @@ export class AppCanvasComponent implements OnInit {
   }
   
   loadImage():Observable<any>{
-    //this.coreService.windowWidth
+    
     return new Observable((observer) => {
       const image = new Image();
-      //image.crossOrigin = "Anonymous";
       image.onload = () => {
         this.width = image.width;
         this.height = image.height;
@@ -177,6 +557,7 @@ export class AppCanvasComponent implements OnInit {
         setTimeout(()=>{
           //console.log(image)
           this.image = image;
+          this.imageProto = image;
           observer.next(image)
         }, 0);
         
@@ -186,20 +567,21 @@ export class AppCanvasComponent implements OnInit {
     });
   }
 
-  rgbStrToObj(rgbStr: string){
-    let arr = (rgbStr.replace(/[a-z\(\)]/g, '')).split(',');
-    return {
-      r: Number(arr[0]),
-      g: Number(arr[1]),
-      b: Number(arr[2])
-    }
+  refresh(){
+    this.historyCurrent = this.history.length;
+    this.loadImage().subscribe((image)=>{
+      this.ctx.drawImage( image, 0, 0, image.width, image.height );
+      setTimeout(()=>{ this.getImageData(); }, 10); 
+    })
   }
 
-  /** */
-
-  getImageData(){
-    this.imageData = this.ctx.getImageData(0, 0, this.width, this.height);  
+  pixelEquals(i: number, r:number, g:number, b:number){
+    this.imageData.data[i] = r;
+    this.imageData.data[i+1] = g;
+    this.imageData.data[i+2] = b;
   }
+
+  /** STATISTICS ****************************************************/
 
   getAverageRGB(blockSize = 5){
     let rgb = {r:0,g:0,b:0};
@@ -249,7 +631,10 @@ export class AppCanvasComponent implements OnInit {
     return sortable.filter((elem)=>{return elem;});
   }
 
+
+
   /** PIXEL MANIPULATION EFFECTS **************/
+
 
   replaceColor(color: any, replacer: any){
     let i = -4;
@@ -266,136 +651,84 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0)
   }
 
-  lighten(){
-    // let i = -4;
-    // let len = this.imageData.data.length;
-    // while ( (i +=  4) < len ) {
-    //   this.imageData.data[i] += 10// Math.floor(Math.round(Math.random()*256));
-    //   this.imageData.data[i + 1] += 10//Math.floor(Math.round(Math.random()*256));
-    //   this.imageData.data[i + 2] += 10// Math.floor(Math.round(Math.random()*256));
-    // }
-    // this.ctx.putImageData(this.imageData, 0, 0);
-  
-    this.doSomethingInLoop((i:number)=>{
-      this.imageData.data[i] += 10// Math.floor(Math.round(Math.random()*256));
-      this.imageData.data[i + 1] += 10//Math.floor(Math.round(Math.random()*256));
-      this.imageData.data[i + 2] += 10// Math.floor(Math.round(Math.random()*256));
-    });
-
-  }
-
-
-  doSomethingInLoop(loopFN:Function){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
-      loopFN(i);
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);    
-  }
-
-
-
-  brighten(){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
-      this.imageData.data[i] -= 10// Math.floor(Math.round(Math.random()*256));
-      this.imageData.data[i + 1] -= 10//Math.floor(Math.round(Math.random()*256));
-      this.imageData.data[i + 2] -= 10// Math.floor(Math.round(Math.random()*256));
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);  
-  }
-
-  addConfusion(){
+  addConfusion(startP?: PointI, endP?: PointI, poly?:any){
     this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      while ( (i +=  4) < len ) {
+      let start = this.confusion.start;
+      let randomness = this.confusion.randomness;
+      this.doSomethingInLoop((i:number)=>{
         if(this.confusion.colors[0]){
-          this.imageData.data[i] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+          this.imageData.data[i] = start + Math.floor(Math.round(Math.random()*randomness));
         }
         if(this.confusion.colors[1]){
-          this.imageData.data[i+1] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+          this.imageData.data[i+1] = start + Math.floor(Math.round(Math.random()*randomness));
         }
         if(this.confusion.colors[2]){
-          this.imageData.data[i+2] = this.confusion.start + Math.floor(Math.round(Math.random()*this.confusion.randomness));
+          this.imageData.data[i+2] = start + Math.floor(Math.round(Math.random()*randomness));
         }
-      }
-      this.ctx.putImageData(this.imageData, 0, 0); 
-    });   
+      }, true, startP, endP, poly);
+      //this.assignCanvasToImage();   
+    });
+   
   }
 
-  makeMultiColor(colors = [{r: 0, g: 0, b: 255, stop: 100}, {r: 0, g: 255, b: 0, stop: 300}, {r: 255, g: 0, b: 0, stop: 766}]){
-    let i = -4;
-    let len = this.imageData.data.length;
-    while ( (i +=  4) < len ) {
+  makeMultiColor(startP?: PointI, endP?: PointI, poly?:any){
+    
+    this.runWithReinit(()=>{
+      let colorStopsClone = JSON.parse(JSON.stringify(this.colorStops));
+      let colors = colorStopsClone.map((colorStop:any)=>{
+        let color = this.rgbStrToObj(colorStop.color);
+        return Object.assign(color, {stop: colorStop.stop});
+      });
+      colors[colors.length-1].stop = 800; 
+
+      this.doSomethingInLoop((i:number)=>{
         let sumColor = this.imageData.data[i] + this.imageData.data[i+1] + this.imageData.data[i+1];
-        let color = (colors.filter((color)=> color.stop > sumColor))[0];
+        let color = (colors.filter((col:any)=> col.stop > sumColor))[0];
           this.imageData.data[i] = color.r;
           this.imageData.data[i + 1] = color.g;
           this.imageData.data[i + 2] = color.b;
           //this.imageData.data[i + 3] = 255;
-    }
-    this.ctx.putImageData(this.imageData, 0, 0);
+      }, true, startP, endP, poly);      
+    });
+    
+
   } 
 
-  pixelateData(){
+  pixelateData(startP?: PointI, endP?: PointI, poly?:any){
     this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point;
-      let color;
       let y = 0;
-      while ( (i += 4) < len ) { 
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        }
-        if( (!(point.x%this.pixelate.factor*3)) && (!(point.y%this.pixelate.factor*3))){  
-          color = {
-            r: this.imageData.data[i],
-            g: this.imageData.data[i+1],
-            b: this.imageData.data[i+2],
-            a: this.imageData.data[i+3]
-          }
+      let factor = this.pixelate.factor;
+      let halfFactor = Math.round(factor/2)
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        if( (!(point.x%factor*3)) && (!(point.y%factor*3))){  
           if(this.pixelate.outline){
+            this.ctx.beginPath();
             this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-            this.ctx.strokeRect(point.x - Math.round(this.pixelate.factor/2), point.y - Math.round(this.pixelate.factor/2), this.pixelate.factor, this.pixelate.factor);
+            this.ctx.strokeRect(point.x - halfFactor, point.y - halfFactor, factor, factor);
+            this.ctx.stroke();
           }
           else{
+            this.ctx.beginPath();
             this.ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-            this.ctx.fillRect(point.x - Math.round(this.pixelate.factor/2), point.y - Math.round(this.pixelate.factor/2), this.pixelate.factor, this.pixelate.factor);
+            this.ctx.fillRect(point.x - halfFactor, point.y - halfFactor, factor, factor);
+            this.ctx.stroke();
           }
         }
         else{
           y = i;
-        }      
-      }
+        }          
+      }, false, startP, endP, poly);
+      this.getImageData();
+
     });   
   }
 
-  pixelateCircleData(){
+  pixelateCircleData(startP?: PointI, endP?: PointI, poly?:any){
     this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point;
-      let color;
       let factor = this.pixelate.circleFactor;
       let y = 0;
-      while ( (i += 4) < len ) { 
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        }
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
         if( (!(point.x%factor)) && (!(point.y%factor))){  
-          color = {
-            r: this.imageData.data[i],
-            g: this.imageData.data[i+1],
-            b: this.imageData.data[i+2],
-            a: this.imageData.data[i+3]
-          }
-
           if(this.pixelate.circleOutline){
             this.ctx.beginPath();
             this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
@@ -410,198 +743,104 @@ export class AppCanvasComponent implements OnInit {
           }
 
         }
-        else{
+        else{          
           y = i;
-        }
-    
-      }
-
+        }        
+      }, false, startP, endP, poly);
+      this.getImageData()
     });  
   }
 
-  blackNWhite(){
+  blackNWhite(startP?: PointI, endP?: PointI, poly?:any){
     this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let color;
-      while ( (i += 4) < len ) { 
-
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        }
-
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         this.imageData.data[i] = color[this.bnw.rgb[0]];
         this.imageData.data[i+1] = color[this.bnw.rgb[0]];
         this.imageData.data[i+2] = color[this.bnw.rgb[0]];
-        
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);
+      }, 
+      true, startP, endP, poly);
     });      
   }
 
-  giveNegative(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let color;
-
-      while ( (i += 4) < len ) { 
-
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        }
-
+  giveNegative(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{    
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         this.imageData.data[i] = this.negative.brightness - color.r;
         this.imageData.data[i+1] =  this.negative.brightness - color.g;
-        this.imageData.data[i+2] = this.negative.brightness - color.b;           
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);
+        this.imageData.data[i+2] = this.negative.brightness - color.b;  
+      }, true, startP, endP, poly);        
     });     
   }
 
-  giveExposure(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point:any;
-      let color;
-      while ( (i += 4) < len ) { 
-
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        }
-
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        }
-
-        if(this.exposure.distance > 0){
-          this.imageData.data[i] = Math.round(color.r*this.exposure.distance);
-          this.imageData.data[i+1] = Math.round(color.g*this.exposure.distance);
-          this.imageData.data[i+2] = Math.round(color.b*this.exposure.distance); 
-        } 
-        else{
-          this.imageData.data[i] = Math.round(color.r/Math.abs(this.exposure.distance));
-          this.imageData.data[i+1] = Math.round(color.g/Math.abs(this.exposure.distance));
-          this.imageData.data[i+2] = Math.round(color.b/Math.abs(this.exposure.distance));           
-        }
-            
-      }
-      this.ctx.putImageData(this.imageData, 0, 0); 
-    });   
+  giveExposure(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{      
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{     
+        this.imageData.data[i] = Math.round(color.r*this.exposure.distance);
+        this.imageData.data[i+1] = Math.round(color.g*this.exposure.distance);
+        this.imageData.data[i+2] = Math.round(color.b*this.exposure.distance);       
+      }, true, startP, endP, poly);        
+    }); 
   }
 
-  givePolychromeNegative(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
+  givePolychromeNegative(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
       let reverse = this.polychromeNegative.range;
-      let middlePoint = this.polychromeNegative.middlePoint;
-
-      while ( (i += 4) < len ) { 
-  
+      let middlePoint = this.polychromeNegative.middlePoint;   
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         this.imageData.data[i] > middlePoint ? 
         this.imageData.data[i]-=reverse : this.imageData.data[i]+=reverse;
         this.imageData.data[i+1] > middlePoint ? 
         this.imageData.data[i+1]-=reverse : this.imageData.data[i+1]+=reverse;
         this.imageData.data[i+2] > middlePoint ?
-        this.imageData.data[i+2]-=reverse : this.imageData.data[i+2]+=reverse;
-  
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);  
-       
-    });
+        this.imageData.data[i+2]-=reverse : this.imageData.data[i+2]+=reverse; 
+      }, true, startP, endP, poly);        
+    }); 
+
   }
 
-  giveWhiteNoise(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-
-      while ( (i += 4) < len ) { 
-          let rand = -this.whiteNoise.factor + Math.ceil(Math.random()*(2*this.whiteNoise.factor));
-          this.imageData.data[i]+=rand;
-          this.imageData.data[i+1]+=rand;
-          this.imageData.data[i+2]+=rand;       
-          
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);
-    });    
+  giveWhiteNoise(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{    
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
+        let rand = -this.whiteNoise.factor + Math.ceil(Math.random()*(2*this.whiteNoise.factor));
+        this.imageData.data[i]+=rand;
+        this.imageData.data[i+1]+=rand;
+        this.imageData.data[i+2]+=rand;   
+      }, true, startP, endP, poly);        
+    }); 
   }
 
-  giveParadise(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point;
-      let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
-  
+  giveParadise(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
       let factor = this.paradise.factor;
-  
-      while ( (i += 4) < len ) { 
-        
-        point = { x: (i / 4) % this.width, y: Math.floor((i / 4) / this.width) };
-  
-        let hypo = Math.hypot(center.x-point.x, center.y-point.y)
-          
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        let hypo = Math.hypot(center.x-point.x, center.y-point.y);    
         this.imageData.data[i]+=factor*hypo;
         this.imageData.data[i+1]+=factor*hypo;
-        this.imageData.data[i+2]+=factor*hypo;         
-            
-      }
-      this.ctx.putImageData(this.imageData, 0, 0); 
-    });   
-
+        this.imageData.data[i+2]+=factor*hypo;    
+      }, true, startP, endP, poly);        
+    }); 
   }
 
-  giveIntensity(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
+  giveIntensity(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
       let factor = this.intensity.factor;
-  
-      while ( (i += 4) < len ) { 
-        
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
         let diffR = this.imageData.data[i] - this.info.averageRgb.r;
         let diffG = this.imageData.data[i+1] - this.info.averageRgb.g;
         let diffB = this.imageData.data[i+2] - this.info.averageRgb.b;  
   
         this.imageData.data[i] +=diffR*factor;
         this.imageData.data[i+1] +=diffG*factor;
-        this.imageData.data[i+2] +=diffB*factor;
-     
-      }
-      this.ctx.putImageData(this.imageData, 0, 0); 
-      
-    });   
+        this.imageData.data[i+2] +=diffB*factor;   
+      }, true, startP, endP, poly);        
+    }); 
   }
 
-  giveBloom(){
-    this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point;
-      let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }  
+  giveBloom(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
       let data = JSON.parse(JSON.stringify(this.imageData.data));
-
-      while ( (i += 4) < len ) { 
-        
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        };
-  
-        let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
+        let dirRadians = Math.atan2(this.center.y - point.y, this.center.x - point.x);
   
         let newX = Math.round(point.x + (Math.cos(dirRadians)*this.bloom.factor));
         let newY = Math.round(point.y + (Math.sin(dirRadians)*this.bloom.factor));
@@ -609,42 +848,20 @@ export class AppCanvasComponent implements OnInit {
 
         this.imageData.data[i] = data[newI];
         this.imageData.data[i+1] = data[newI+1];
-        this.imageData.data[i+2] = data[newI+2];
-          
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);     
-    })
+        this.imageData.data[i+2] = data[newI+2];   
+      }, true, startP, endP, poly);        
+    }); 
   } 
 
-  giveOutlines(){
-    this.runWithReinit(()=>{
+  giveOutlines(startP?: PointI, endP?: PointI, poly?:any){
 
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point;
-      let color;
- 
+    this.runWithReinit(()=>{ 
       let data = JSON.parse(JSON.stringify(this.imageData.data));
       let factor = 50-this.outlines.factor;
-      let bg;
-      if(this.outlines.hasBg){
-        bg = this.rgbStrToObj(this.outlines.bgColor);
-      }
-
-      while ( (i += 4) < len ) { 
-        
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        };
-  
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        };
-  
+      let bg:any;
+      if(this.outlines.hasBg){ bg = this.rgbStrToObj(this.outlines.bgColor); }  
+      let wPixels = this.width*4;
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
         if(bg){
           this.imageData.data[i] = bg.r;
           this.imageData.data[i+1] = bg.g;
@@ -658,32 +875,24 @@ export class AppCanvasComponent implements OnInit {
           this.imageData.data[i+2] = 0;
         }
 
-        if( (Math.abs(color.r - data[i+(this.width*4)]) > factor) && (Math.abs(color.g - data[i+1+(this.width*4)]) > factor) &&
-            (Math.abs(color.b - data[i+2+(this.width*4)]) > factor) ){
+        if( (Math.abs(color.r - data[i+(wPixels)]) > factor) && (Math.abs(color.g - data[i+1+(wPixels)]) > factor) &&
+            (Math.abs(color.b - data[i+2+(wPixels)]) > factor) ){
           this.imageData.data[i] = 0;
           this.imageData.data[i+1] = 0;
           this.imageData.data[i+2] = 0;
-        }
-     
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);    
-    
-    });    
+        }           
+      }, true, startP, endP, poly);        
+    }); 
+   
   }
 
-  giveWater(){
-    this.runWithReinit(()=>{
-
-      let i = -4;
-      let len = this.imageData.data.length;
+  giveWater(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
       let data = JSON.parse(JSON.stringify(this.imageData.data));
       let counter = 0;
       let asc = false;
-  
       let factor = 84 + this.water.factor;
-  
-      while ( (i += 4) < len ) { 
-        
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
         if(counter > factor){ asc = false; }
         else if(counter < -factor){ asc = true; }
         if(asc){ counter+=1; }
@@ -693,10 +902,101 @@ export class AppCanvasComponent implements OnInit {
         this.imageData.data[i+1] = data[num + i + 1];
         this.imageData.data[i+2]= data[num + i + 2];
         this.imageData.data[i+3]= data[num + i + 3];
-                      
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);    
-  
+      }, true, startP, endP, poly);        
+    });
+  }
+
+  giveFluffy(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        let rand = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);
+        let rand2 = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);     
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
+        this.ctx.moveTo(point.x, point.y);
+        this.ctx.quadraticCurveTo(point.x - (rand/2), point.y - (rand2/2), point.x + rand2, point.y + rand);
+        this.ctx.stroke(); 
+      }, false, startP, endP, poly) 
+      this.getImageData();
+    })
+    
+  }
+
+  giveSuck(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
+      let data = JSON.parse(JSON.stringify(this.imageData.data));
+      let hypo, dirRadians;
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
+        dirRadians = Math.atan2(center.y - point.y, center.x - point.x)//Math.sqrt(hypo);
+        let dirX = Math.cos(dirRadians)*this.suck.factor;
+        let dirY = Math.sin(dirRadians)*this.suck.factor;
+        let newX=0, newY=0;
+        newX = Math.round(point.x - (dirX));
+        newY = Math.round(point.y - (dirY));
+
+        let newI = this.giveIndexFromPoint({x:newX, y:newY});   
+        
+        this.imageData.data[i] = data[newI];
+        this.imageData.data[i+1] = data[newI+1];
+        this.imageData.data[i+2] = data[newI+2]; 
+
+        if(point.x < this.suck.factor || this.width - point.x < this.suck.factor){
+          this.imageData.data[i+3] = 0;
+        }
+
+      }, true, startP, endP, poly);        
+    }); 
+  } 
+
+  giveSpotlight(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{ 
+      let polygon = [
+        [this.spotlight.controlX-this.spotlight.rangeX,0], 
+        [this.spotlight.controlX+this.spotlight.rangeX,0], 
+        [this.spotlight.controlY+this.spotlight.rangeY, this.height], 
+        [this.spotlight.controlY-this.spotlight.rangeY, this.height]
+      ]
+
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        if(this.inPolygon(point, polygon)){
+          this.imageData.data[i] += 30;
+          this.imageData.data[i+1] += 30;
+          this.imageData.data[i+2] += 30;       
+        }
+        else{
+          this.imageData.data[i] -= 60;
+          this.imageData.data[i+1] -= 60;
+          this.imageData.data[i+2] -= 60;         
+        }
+      }, true, startP, endP, poly);        
+    }); 
+      
+  }
+
+  giveCartoonColors(startP?: PointI, endP?: PointI, poly?:any){
+    this.runWithReinit(()=>{
+      let colsArr = this.cartoonColors.map((c:string)=>{ return this.rgbStrToObj(c); });
+      let colorsLen = this.cartoonColors.length;
+
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        let minDiffIndex = -1, minDiff = 765;
+        for(let j = 0; j < colorsLen; j+= 1){
+          let diff = Math.abs(color.r - colsArr[j].r) + Math.abs(color.g - colsArr[j].g) + Math.abs(color.b - colsArr[j].b);
+          if(diff < minDiff){
+            minDiffIndex = j;
+            minDiff = diff;
+            if(diff === 0){
+              break;
+            }
+          }
+        }
+
+        this.imageData.data[i] = colsArr[minDiffIndex].r;
+        this.imageData.data[i+1] = colsArr[minDiffIndex].g;
+        this.imageData.data[i+2] = colsArr[minDiffIndex].b;
+      }, true, startP, endP, poly);
+
     });
   }
 
@@ -704,10 +1004,10 @@ export class AppCanvasComponent implements OnInit {
 
   giveBlocks(){
     this.runWithReinit(()=>{
+      this.clearCanvas();
       let factor = 301 - this.blocks.factor;
       let ratio1 = factor*(this.width/this.height);
       let ratio2 = factor*(this.height/this.width);
-
       for( let y = 0; y < this.height; y+=ratio2 ){
         for( let x = 0; x < this.width; x+=ratio1 ){        
           this.ctx.drawImage(this.image, 0, 0, this.width, this.height, x, y, ratio1, ratio2);
@@ -744,7 +1044,7 @@ export class AppCanvasComponent implements OnInit {
           }
           this.ctx.save();
           this.ctx.translate(this.width/2, this.height/2);
-          this.ctx.rotate(degrees*Math.PI/180);
+          this.ctx.rotate(degrees*(Math.PI/180));
           this.ctx.drawImage(this.image, 
             0, 0, this.width, this.height, 
             -(this.width/2)+factor, -(this.height/2)+factor, this.width-(2*factor), this.height-(2*factor));
@@ -754,60 +1054,19 @@ export class AppCanvasComponent implements OnInit {
     });
   }
 
-  giveCartoonColors(){
-    this.runWithReinit(()=>{
-      let colsArr = this.cartoonColors.map((c:string)=>{
-        return this.rgbStrToObj(c);
-      });
-      let colorsLen = this.cartoonColors.length;
-      let i = -4;
-      let len = this.imageData.data.length;
-      let color;
-
-      while ( (i += 4) < len ) { 
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        };
-        let minDiffIndex = -1, minDiff = 765;
-        for(let j = 0; j < colorsLen; j+= 1){
-          let diff = Math.abs(color.r - colsArr[j].r) + Math.abs(color.g - colsArr[j].g) + Math.abs(color.b - colsArr[j].b);
-          if(diff < minDiff){
-            minDiffIndex = j;
-            minDiff = diff;
-            if(diff === 0){
-              break;
-            }
-          }
-        }
-
-        this.imageData.data[i] = colsArr[minDiffIndex].r;
-        this.imageData.data[i+1] = colsArr[minDiffIndex].g;
-        this.imageData.data[i+2] = colsArr[minDiffIndex].b;
-      }
-      this.ctx.putImageData(this.imageData, 0, 0);
-      // this.runWithReInit = false;
-      // this.giveOutlines();
-
-    });  
-  }
-
   giveVinyl(){
     this.runWithReinit(()=>{
       let degreesStop = 360;
       let degreesPlus = 1;
       for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
-
           this.ctx.save();
           this.ctx.translate(this.width/2, this.height/2);
           this.ctx.globalAlpha = this.vinyl.factor;
-          this.ctx.rotate(degrees*Math.PI/180);
+          this.ctx.rotate(degrees*(Math.PI/180));
           this.ctx.drawImage(this.image, 
             0, 0, this.width, this.height, 
-            -(this.width/2), -(this.height/2), this.width, this.height);
-          this.ctx.restore();       
+            -(this.width/2), -(this.height/2), this.width, this.height);      
+            this.ctx.restore();
       }
       this.getImageData();  
     });  
@@ -832,176 +1091,277 @@ export class AppCanvasComponent implements OnInit {
     });     
   }
 
-  giveFluffy(){
+  giveBlinds(){
     this.runWithReinit(()=>{
-      let i = -4;
-      let len = this.imageData.data.length;
-      let point, color;
-      while ( (i += 4) < len ) { 
+      let i=0;
 
-        point = {
-          x: (i / 4) % this.width,
-          y: Math.floor((i / 4) / this.width),
-        };
+      while(i < this.height){
+        this.ctx.clearRect(0,i+1,this.width, this.height);
+        let factor = (i%this.blinds.freq)*this.blinds.depth;
+  
+        this.ctx.drawImage(this.image,
+          0, i, this.width, this.height,
+          Math.round(factor/2), i, this.width-(factor), this.height);
+  
+        i+=1;
+       }
+      this.getImageData();         
+    });     
+  }
 
-        color = {
-          r: this.imageData.data[i],
-          g: this.imageData.data[i+1],
-          b: this.imageData.data[i+2],
-          a: this.imageData.data[i+3]
-        };
+  giveTremolo(){  
+    this.runWithReinit(()=>{
+      let i=0;     
+      while(i < this.height){
+       //this.ctx.clearRect(0,i+1,this.width, this.height);
+        let factor = Math.round(Math.cos(i*this.tremolo.period)*this.tremolo.pitch);        
+        this.ctx.drawImage(this.image,
+          0, i, this.width, this.height,
+          Math.round(factor/2), i, this.width, this.height);
+        i+=1;
+       }
+     
+      this.getImageData(); 
+      
+    });     
+  }
 
-        let rand = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);
-        let rand2 = -this.fluffy.factor + Math.ceil(Math.random()*2*this.fluffy.factor);     
-        this.ctx.beginPath();
-        this.ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${color.a})`;
-        this.ctx.moveTo(point.x, point.y);
-        this.ctx.quadraticCurveTo(point.x - (rand/2), point.y - (rand2/2), point.x + rand2, point.y + rand);
-        this.ctx.stroke();
-
+  giveEllipse(){ 
+    
+    this.runWithReinit(()=>{
+      
+      this.ctx.clearRect(0,0,this.width, this.height);
+      for (var i = (3/2)*Math.PI; i < (5/2)* Math.PI; i += 0.01 ) {
+          let xPos = this.center.x - (this.ellipse.rx * Math.cos(i));
+          let yPos = this.center.y + (this.ellipse.ry * Math.sin(i));
+      
+          this.ctx.clearRect(0,yPos,this.width, this.height);
+          this.ctx.drawImage(this.image,
+            0, yPos, this.width, this.height,  
+            xPos, 
+            yPos, 
+            (this.center.x-xPos)*2, 
+            this.height);
       }
-    }); 
-    this.getImageData();
+
+      this.getImageData(); 
+      
+    });     
+  }
+
+  giveBrokenWall(){ 
+    this.runWithReinit(()=>{
+   
+      let size = 100 - this.brokenWall.size;
+      let dist = this.brokenWall.dist;
+      let ii = Math.round(this.width/size);
+      let jj = Math.round(this.height/size);
+      let modII = Math.round((this.width%size)/2);
+      let modJJ = Math.round((this.height%size)/2);
+
+      this.clearCanvas();
+
+      for(let i = modII; i < this.width; i+=ii){
+        for(let j = modJJ; j < this.height; j+=jj){
+
+          let hypo = Math.round(Math.hypot(this.center.x-i, this.center.y-j));
+
+          let dirRadians = Math.atan2(this.center.y - j, this.center.x - i)
+          let dirX = Math.cos(dirRadians)*Math.sqrt(hypo/(this.maxHypo+dist))*dist;
+          let dirY = Math.sin(dirRadians)*Math.sqrt(hypo/(this.maxHypo+dist))*dist;
+ 
+          this.ctx.drawImage(this.image,
+            i, j, ii, jj,
+            i-dirX, j-dirY, ii, jj); 
+       
+
+          
+        }
+      }   
+      this.getImageData(); 
+      
+    });    
+  }
+
+  giveKlimt(){  
+    this.runWithReinit(()=>{
+   
+      let size = 51 - this.klimt.size;
+      let randomness = this.klimt.randomness;
+      let ii = Math.round(this.width/size);
+      let jj = Math.round(this.height/size);
+
+      this.clearCanvas();
+      this.ctx.drawImage(this.image,0,0,this.width,this.height); 
+
+      for(let i = 0; i < this.width; i+=ii){
+        for(let j = 0; j < this.height; j+=jj){
+            let ran = Math.ceil(Math.random()*(randomness));
+            this.ctx.save();
+            this.ctx.translate(i, j);
+            this.ctx.rotate(ran * (Math.PI / 180));
+            this.ctx.translate(-(i), -(j));
+            this.ctx.drawImage(this.image,
+              i, j, ii, jj,
+              i, j, ii, jj); 
+
+            this.ctx.restore();             
+        }
+      }   
+      this.getImageData(); 
+      
+    });   
   }
 
   /** TESTING  */
 
-  scissors(){
+  scissors(){  
+    this.runWithReinit(()=>{
+   
+      let size = 60;
+      let dist = this.brokenWall.dist;
+      let ii = Math.round(this.width/size);
+      let jj = Math.round(this.height/size);
+      let modII = Math.round((this.width%size)/2);
+      let modJJ = Math.round((this.height%size)/2);
 
-    let i = -4;
-    let len = this.imageData.data.length;
-    let center = {x: Math.round(this.width/2), y: Math.round(this.height/2) }
-    let data = JSON.parse(JSON.stringify(this.imageData.data));
-    let point, color, hypo, dirRadians;
-    let direction = 0;
-    let maxHypo = Math.round(Math.hypot(center.x - 0, center.y - 0));
-
-    let factor = 10;
-    while ( (i += 4) < len ) { 
-
-      point = {
-        x: (i / 4) % this.width,
-        y: Math.floor((i / 4) / this.width),
-      };
-
-      color = {
-        r: this.imageData.data[i],
-        g: this.imageData.data[i+1],
-        b: this.imageData.data[i+2],
-        a: this.imageData.data[i+3]
-      };
-
-      hypo = Math.round(Math.hypot(center.x-point.x, center.y-point.y));
-      dirRadians = Math.atan2(center.y - point.y, center.x - point.x)//Math.sqrt(hypo);
-      let dirX = Math.cos(dirRadians)*10;
-      let dirY = Math.sin(dirRadians)*10;
-      let newX=0, newY=0;
-
-      //if(dirRadians*(180/Math.PI)){}
-
-      let dicrease = Math.sqrt(hypo/maxHypo);
-      newX = Math.round(point.x - (dirX*dicrease));
-      newY = Math.round(point.y - (dirY*dicrease));
+      this.ctx.clearRect(0,0,this.width,this.height)
 
 
+      let rotate = 0;
 
-      // if(i<len/2){
-      //   newX = point.x + Math.round(dirX*dicrease);
-      //   newY = point.y + Math.round(dirY*dicrease);
-      // }
-      // else{
-      //   newX = point.x - Math.round(dirX*dicrease);
-      //   newY = point.y - Math.round(dirY*dicrease);
-      // }
-      let newI = (((newY-1)*this.width)+newX)*4;     
-      this.imageData.data[i] = data[newI];
-      this.imageData.data[i+1] = data[newI+1];
-      this.imageData.data[i+2] = data[newI+2];
+      for(let i = 0; i < this.width; i+=ii){
+        for(let j = 0; j < this.height; j+=jj){
 
-      // if(point.x < this.width/2 && point.y < this.height/2){
-      //   newX = point.x - Math.round(dirX*dicrease);
-      //   newY = point.y - Math.round(dirY*dicrease);
-      // }
-      // else if(point.x >= this.width/2 && point.y <= this.height/2){
-      //   newX = point.x + Math.round(dirX*dicrease);
-      //   newY = point.y - Math.round(dirY*dicrease);
-      // }
-      // else if(point.x < this.width/2 && point.y > this.height/2){
-      //   newX = point.x - Math.round(dirX*dicrease);
-      //   newY = point.y + Math.round(dirY*dicrease);
-      // }
-      // else if(point.x >= this.width/2 && point.y >= this.height/2){
-      //   newX = point.x + Math.round(dirX*dicrease);
-      //   newY = point.y + Math.round(dirY*dicrease);
-      // }
-
-
-
-      if(i<1000){
-        console.log(dirX, dirY)
-      }
-
-      //if( === 0){
-        
-        //direction +=1;
-      //}
-      // direction = (hypo*360)/maxHypo;
-      // let dirX = Math.cos(direction*(Math.PI/180));
-      // let dirY = Math.sin(direction*(Math.PI/180));
-      // let newX, newY;
-      // //if(i<(len/2)){
-
-      //   newX = Math.round(point.x + (dirX*(hypo/10)));
-      //   newY = Math.round(point.y + (dirY*(hypo/10)));
-      // // }
-
-      // else{
-      //   newX = Math.round(point.x - (dirX*(hypo/10)));
-      //   newY = Math.round(point.y - (dirY*(hypo/10)));        
-      // }
-      //let newI = (((newY-1)*this.width)+newX)*4;
-
-
-
-
-      // this.imageData.data[i] = data[newI];
-      // this.imageData.data[i+1] = data[newI+1];
-      // this.imageData.data[i+2] = data[newI+2];
-
-
-
-     
-
-      //if(i < len/2){
-        //let newX = Math.round(point.x + parseFloat((Math.cos(angle*Math.PI/180) * speed).toFixed(3)))
-        //let newY = Math.round(point.y + parseFloat((Math.sin(angle*Math.PI/180) * speed).toFixed(3)))
-
-        //let newX = Math.round(point.x + (Math.cos(10)));//point.x;//Math.round(point.x - (Math.cos(dirRadians)*Math.sqrt(hypo)));
-        //let newY = Math.round(point.y + (Math.sin(10)));
-        //let newI = (newX*newY*4)
-        //let newI = (((newY-1)*this.width)+newX)*4;
-      //}
-
-      // if( Math.round(hypo%10) > 5){
-      //     this.imageData.data[i] -= 55// - this.imageData.data[i];
-      //     this.imageData.data[i+1] -= 55 //- this.imageData.data[i+1];
-      //     this.imageData.data[i+2] -= 55 //- this.imageData.data[i+2];
-      // }
-
-      // let dirRadians = Math.atan2(center.y - point.y, center.x - point.x);
   
-      // let newX = Math.round(point.x - (Math.cos(dirRadians)*(hypo)));
-      // let newY = Math.round(point.y - (Math.sin(dirRadians)*(hypo)));
+          let ind = this.giveIndexFromPoint({x: i, y: j});
+          console.log(ind )
+          let color = {
+            r: this.imageData.data[ind],
+            g: this.imageData.data[ind+1],
+            b: this.imageData.data[ind+2],
+            a: this.imageData.data[ind+3]
+          }
+          let rgbStr = this.objToRgbString(color);
+          console.log(rgbStr)
+          this.ctx.beginPath()
+          this.ctx.fillStyle = rgbStr;
+          this.ctx.arc(i,j, jj, 0, 2 * Math.PI);
+          this.ctx.fill() 
 
-      // let newI = (((newY-1)*this.width)+newX)*4;
+        }
+      }
+       
+      this.getImageData(); 
+      
+    });  
+  }
 
-      // this.imageData.data[i] = data[newI];
-      // this.imageData.data[i+1] = data[newI+1];
-      // this.imageData.data[i+2] = data[newI+2];
+  scissorsrtrtr(){  
+    this.runWithReinit(()=>{
+   
+      let size = 100 - this.brokenWall.size;
+      let dist = this.brokenWall.dist;
+      let ii = Math.round(this.width/size);
+      let jj = Math.round(this.height/size);
+      let modII = Math.round((this.width%size)/2);
+      let modJJ = Math.round((this.height%size)/2);
 
-    }
-    //this.ctx.clearRect(0,0,1000,1000);
-    this.ctx.putImageData(this.imageData, 0, 0);  
+      this.ctx.clearRect(0,0,this.width,this.height)
+
+
+      let rotate = 0;
+
+      for(let i = 0; i < this.width; i+=ii){
+        for(let j = 0; j < this.height; j+=jj){
+
+          this.ctx.save();
+          let hypo = Math.round(Math.hypot(this.center.x - i, this.center.y-j));
+          let mpla = Math.sqrt(hypo);
+          let ana = this.maxHypo/hypo
+          let dirRadians = Math.atan2(this.center.y - j, this.center.x - i);
+          let dirX = Math.cos(dirRadians)*400;
+          let dirY = Math.sin(dirRadians)*40;
+          
+          let ran = Math.floor(Math.random()*360)
+
+          if(i<this.center.x){
+                    this.ctx.translate(this.center.x, this.center.y );
+                    this.ctx.rotate( dirRadians );
+                    this.ctx.translate(-(this.center.x), -(this.center.y) );
+                    this.ctx.drawImage(this.image,
+                      i, j, ii, jj,
+                      i, j, ii, jj); 
+            
+          }
+          else{
+            this.ctx.translate(this.center.x, this.center.y );
+            this.ctx.rotate( dirRadians + (90*Math.PI/2) );
+            this.ctx.translate(-(this.center.x), -(this.center.y) );
+            this.ctx.drawImage(this.image,
+              i, j, ii, jj,
+              i, j, ii, jj); 
+
+          }
+
+
+          this.ctx.restore();
+
+
+
+
+          rotate+=1;
+          
+        }
+      }   
+      this.getImageData(); 
+      
+    });  
+  }
+
+  scissorshjh(){  
+    this.runWithReinit(()=>{
+
+      let i=0; 
+      let randomRadius, randomX, randomY;
+
+      while(i < 1000){ 
+        randomRadius = Math.ceil(Math.random()*10);
+        randomX = Math.floor(Math.random()*this.width);
+        randomY = Math.floor(Math.random()*this.height);
+        this.dummyCtx.beginPath();
+        this.dummyCtx.arc(randomX, randomY, randomRadius, 0, 2 * Math.PI);
+        this.dummyCtx.fill();
+        i+=1;
+      }      
+      
+      let dummyData = this.dummyCtx.getImageData(0,0,this.width, this.height);
+      let arr:any = [];
+
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        if(dummyData.data[i+3]){
+          arr.push(i);
+        }
+        //let hypo = Math.hypot(center.x-point.x, center.y-point.y);    
+        // dummyData.data[i]+=factor*hypo;
+        // dummyData.data[i+1]+=factor*hypo;
+        // dummyData.data[i+2]+=factor*hypo;    
+      }); 
+      console.log(arr)
+      this.dummyCtx.clearRect(0,0,this.width, this.height)
+      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+        if(arr.includes(i)){
+
+          this.imageData.data[i+3]=0;
+        }
+        //this.imageData.data[i+1]+=factor*hypo;
+        //this.imageData.data[i+2]+=factor*hypo;       
+      }); 
+
+    
+      //this.getImageData(); 
+      
+    });     
   }
 
   scissors5(){
@@ -1164,29 +1524,6 @@ export class AppCanvasComponent implements OnInit {
 
   /** UI *******************/
 
-  runWithReinit( clbk: Function ){
-    if(this.runWithReInit){
-      this.initImageInfo().subscribe(()=>{
-        setTimeout(clbk(), 1000)     
-      });
-    }
-    else{
-      clbk();
-    }
-  }
-
-  makeUIMultiColor(){
-    this.runWithReinit(()=>{
-      let colorStopsClone = JSON.parse(JSON.stringify(this.colorStops));
-      let mapped = colorStopsClone.map((colorStop:any)=>{
-        let color = this.rgbStrToObj(colorStop.color);
-        return Object.assign(color, {stop: colorStop.stop});
-      });
-      mapped[mapped.length-1].stop = 800;
-      this.makeMultiColor(mapped);     
-    });
-  }
-
   replaceUIColor(e:string, index: number){
     //this.runWithReinit(()=>{
       let eventRGB = this.rgbStrToObj(e);
@@ -1196,6 +1533,35 @@ export class AppCanvasComponent implements OnInit {
   }
 
   /*** */
+
+  assignCanvasToImage(alsoToProto:boolean = false){
+    this.canvas.toBlob((blob:any)=>{
+      this.coreService.toBase64(blob).subscribe((base64:any) => {
+        const image = new Image();
+        image.onload = () => {
+          this.width = image.width;
+          this.height = image.height;
+  
+          setTimeout(()=>{
+            this.image = image;
+            if(alsoToProto){
+              this.imageProto = image;
+            }
+          }, 0);   
+        };
+        image.src = base64;
+        image.crossOrigin = "Anonymous";
+      } );
+    })
+  }
+
+  removeAsset(){
+    let src = this.endpointToSrc(this.selectedFilePath);
+    let index = this.apiService.selectedCategory.files.indexOf(src);
+    this.apiService.selectedCategory.files.splice(index, 1);
+    this.coreService.closeDialogById('previewCanvasDialog');
+    this.onRemoveFile.emit(index);
+  }
 
   mergeDataToDummy(){
     let canvasImgData = this.ctx.getImageData(0, 0, this.width, this.height);
@@ -1248,32 +1614,10 @@ export class AppCanvasComponent implements OnInit {
     }
     this.ctx.putImageData(this.imageData, 0, 0);
     this.fabricCanvas.clear();
-    console.log(this.image)
+    this.getImageData(); 
+    this.assignCanvasToImage(true);
+//this.canvas.toDataURL();
     
-    
-    this.canvas.toBlob((blob:any)=>{
-      this.coreService.toBase64(blob).subscribe((base64:any) => {
-
-        const image = new Image();
-        //image.crossOrigin = "Anonymous";
-        image.onload = () => {
-          this.width = image.width;
-          this.height = image.height;
-  
-          setTimeout(()=>{
-            //console.log(image)
-            this.image = image;
-          }, 0);
-          
-        };
-        image.src = base64;
-        image.crossOrigin = "Anonymous";
-
-
-      } );
-    })
-
-   // this.image = this.canvas.toDataURL();
   }
 
   uploadImageToCat(closeDialog: boolean = false){

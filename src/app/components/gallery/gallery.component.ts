@@ -24,9 +24,13 @@ export class GalleryComponent implements OnInit {
 
   selectedFilePath: any;
 
+  sortablejsOptions:any;
+
   constructor(
     public coreService: CoreService,
-    public apiService: ApiService) { }
+    public apiService: ApiService) {
+
+    }
 
   ngOnInit(): void {
     let selectedAssets = this.apiService.selectedCategory?.files;
@@ -37,10 +41,21 @@ export class GalleryComponent implements OnInit {
     else{
       this.assets = selectedAssets.map((asset:any)=>{ return { src: asset } });
       this.total = selectedAssets.length;
-      this.pages = [0];    
+      this.pages = [0];
+      this.sortablejsOptions = {
+        onUpdate: (event: any) => {
+            if(this.apiService.selectedCategory?.files){
+              this.apiService.selectedCategory.files = this.assets.map((asset:any)=>{ return asset.src });
+            }
+          }
+        };    
     }
     //console.log(selectedAssets);
-this.openEditAssetDialog('U-1667746194.jpg')
+    if(!this.coreService.isProd){
+      this.openEditAssetDialog('U-1669365209.jpg')
+    }
+
+
     
   }
 

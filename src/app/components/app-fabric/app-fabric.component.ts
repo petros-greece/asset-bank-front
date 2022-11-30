@@ -21,23 +21,17 @@ export interface FabricOptionsI{
 
 export class AppFabricComponent implements OnInit {
   @Input()  fabricCanvas: any;
+  @Input()  ctxFabric: any;
   @Input()  ctx: any;
   @Input()  view: string = 'edit'; 
 
 
   svgFiles = [
-    {
-      name: 'textbox',
-    },
-    {
-      name: 'christmas',
-    },  
-    {
-      name: 'superheroes'
-    },
-    {
-      name: 'animals'
-    } 
+    { name: 'textbox', },
+    { name: 'christmas', },  
+    { name: 'superheroes' },
+    { name: 'animals' },
+    { name: 'face-emotions' } 
   ];
   svgIcons: any;
 
@@ -79,7 +73,7 @@ export class AppFabricComponent implements OnInit {
   ngOnInit(): void {
   
 
-    
+
     // this.fabricCanvas.on('before:path:created', (opt:any) => {
     //   console.log(opt, this.fabricCanvas);
     // });
@@ -114,12 +108,14 @@ export class AppFabricComponent implements OnInit {
         stroke: this.icon.stroke,
         strokeWidth: this.icon.strokeWidth,
         scale: this.icon.scale,
+        left: (this.fabricCanvas.width/2)-25,
+        top: (this.fabricCanvas.height/2)-25
       }); 
   }
 
   changeActiveIcon(){
     let activeObject = this.fabricCanvas.getActiveObject();
-    console.log(activeObject);
+    //console.log(activeObject);
     if(!activeObject || (!activeObject.fromSVG && activeObject.name !== 'svg-group') ){return}
     if(activeObject._objects){
       activeObject._objects.forEach((obj:any) => {
@@ -138,7 +134,7 @@ export class AppFabricComponent implements OnInit {
 
   changeActiveText(){
     let activeObject = this.fabricCanvas.getActiveObject();
-    console.log(activeObject);
+    //console.log(activeObject);
     if(!activeObject || (activeObject.name !== 'my-textbox') ){return}
     // if(activeObject._objects){
     //   activeObject._objects.forEach((obj:any) => {
@@ -177,8 +173,13 @@ export class AppFabricComponent implements OnInit {
   }
 
   duplicateSelection(){
+    let activeObj = this.fabricCanvas.getActiveObject();
+    if(!activeObj){
+      this.coreService.giveSnackbar('Select an object first!');
+      return;
+    }
 
-    var object = fabric.util.object.clone(this.fabricCanvas.getActiveObject());
+    var object = fabric.util.object.clone(activeObj);
     object.set("top", object.top);
     object.set("left", object.left);
     this.fabricCanvas.add(object);
@@ -194,13 +195,5 @@ export class AppFabricComponent implements OnInit {
   }
 
 
-
-
-
-
-
-
-
- 
 
 }

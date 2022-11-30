@@ -1,10 +1,10 @@
-<div class="container-fluid" style="min-width: 50vw;" class="mat-grey pad-all-xs pad-b-lg">
+<div class="container-fluid" style="min-width: 50vw;height: 95vh;" class="mat-grey pad-all-xs pad-b-lg">
 
   <div class="row" style="margin: 0">
 
     <div class="col-xs-12 col-md-3 col-lg-4">
       
-      <div class="mrgn-b-xs">
+      <div class="row around-xs">
 
         <button mat-raised-button color="primary" (click)="downloadImage('jpeg')">
           JPEG<mat-icon>download</mat-icon>
@@ -12,224 +12,115 @@
         <button mat-raised-button color="primary" (click)="downloadImage('png')">
           PNG<mat-icon>download</mat-icon>
         </button>
-
-        <button mat-icon-button color="primary" (click)="initImageInfo().subscribe();" class="d-xs-none d-sm-inline-block">
+        <!--fabricCanvas.clear()-->
+        <button mat-mini-fab color="primary" (click)="refresh()" class="d-xs-none d-sm-inline-block">
           <mat-icon>refresh</mat-icon>
         </button>
+     
+        <button 
+          mat-mini-fab 
+          color="primary" 
+          [disabled]="!history.length || !historyCurrent"
+          (click)="historyCurrent = historyCurrent - 1; goToHistory()">
+          <mat-icon>west</mat-icon>
+        </button>
+        <button 
+        mat-mini-fab
+          color="primary" 
+          [disabled]="!history.length || historyCurrent === history.length"
+          (click)="historyCurrent = historyCurrent + 1; goToHistory()">
+          <mat-icon>east</mat-icon>
+        </button>
+  
 
       </div>
 
-      <ng-template *ngTemplateOutlet="brightnessTmpl"></ng-template>
+      <!-- <ng-template *ngTemplateOutlet="brightnessTmpl"></ng-template> -->
 
-      <mat-checkbox [(ngModel)]="runWithReInit" class="d-xs-none">
+      <mat-checkbox [(ngModel)]="runWithReInit" class="mrgn-all-sm d-xs-none">
         Restart On Effect Change
       </mat-checkbox>
-      <!-- runWithReinit( clbk: Function ){ -->
 
-      <div style="max-height: 400px;" class="my-scroll d-xs-none">
+      <!--== ACCORDEON =====================================================-->
+
+      <div style="max-height: 400px;" class="my-scroll my-accordion d-xs-none">
         <mat-accordion>
   
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Confusion
-              </mat-panel-title>  
-            </mat-expansion-panel-header>   
-            <ng-template *ngTemplateOutlet="confusionTmpl"></ng-template>
-          </mat-expansion-panel>
-    
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                White Noise
-              </mat-panel-title>  
-            </mat-expansion-panel-header>   
-            <ng-template *ngTemplateOutlet="whiteNoiseTmpl"></ng-template>
-          </mat-expansion-panel>
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Color Stops
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="colorStopsTmpl"></ng-template>
-          </mat-expansion-panel>        
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Pixelate
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="pixelateTmpl"></ng-template>
-          </mat-expansion-panel> 
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Mosaic
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="pixelateCircleTmpl"></ng-template>
-          </mat-expansion-panel>
-          
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                BNW
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="bnwTmpl"></ng-template>
-          </mat-expansion-panel>  
-    
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Negatives
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="negativeTmpl"></ng-template>
-          </mat-expansion-panel> 
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Polychrome Negative
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="polychromeNegativeTmpl"></ng-template>
-          </mat-expansion-panel> 
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Paradise
-              </mat-panel-title>  
-            </mat-expansion-panel-header>   
-            <ng-template *ngTemplateOutlet="paradiseTmpl"></ng-template>
-          </mat-expansion-panel>
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Exposure
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="exposureTmpl"></ng-template>
-          </mat-expansion-panel>  
-        
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Intensity
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="intensityTmpl"></ng-template>
-          </mat-expansion-panel>
-  
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Bloom
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="bloomTmpl"></ng-template>
-          </mat-expansion-panel>
-          
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Outlines
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="outlinesTmpl"></ng-template>
+          <mat-expansion-panel 
+            *ngFor="let tmplObj of [
+              {tmpl: confusionTmpl, head: 'Confusion', method: 'addConfusion'}, 
+              {tmpl: whiteNoiseTmpl, head: 'White Noise', method: 'giveWhiteNoise'},
+              {tmpl: colorStopsTmpl, head: 'Color Stops', method: 'makeMultiColor'},
+              {tmpl: negativeTmpl, head: 'Negatives', method: 'giveNegative'}, 
+              {tmpl: pixelateTmpl, head: 'Pixelate', method: 'pixelateData'},              
+              {tmpl: pixelateCircleTmpl, head: 'Mosaic', method: 'pixelateCircleData'}, 
+              {tmpl: bnwTmpl, head: ' BNW', method: 'blackNWhite'},
+              {tmpl: polychromeNegativeTmpl, head: 'Polychrome Negative', method: 'givePolychromeNegative'},
+              {tmpl: paradiseTmpl, head: 'Paradise', method: 'giveParadise'},
+              {tmpl: exposureTmpl, head: 'Exposure', method: 'giveExposure'},
+              {tmpl: intensityTmpl, head: 'Intensity', method: 'giveIntensity'},
+              {tmpl: bloomTmpl, head: 'Bloom', method: 'giveBloom'},
+              {tmpl: outlinesTmpl, head: 'Outlines', method: 'giveOutlines'},
+              {tmpl: waterTmpl, head: 'Water', method: 'giveWater'}, 
+              {tmpl: blocksTmpl, head: 'Blocks', method: ''}, 
+              {tmpl: framesTmpl, head: 'Frames', method: ''}, 
+              {tmpl: rotatingFramesTmpl, head: 'Rotating Frames', method: ''}, 
+              {tmpl: cartoonColorsTmpl, head: 'Cartoonize', method: 'giveCartoonColors'}, 
+              {tmpl: vinylTmpl, head: 'Vinyl', method: ''}, 
+              {tmpl: holyLightTmpl, head: 'Holy Light', method: ''}, 
+              {tmpl: fluffyTmpl, head: 'Fluffy', method: 'giveFluffy'}, 
+              {tmpl: spotlightTmpl, head: 'Spotlight', method: 'giveSpotlight'}, 
+              {tmpl: blindsTmpl, head: 'Blinds', method: ''}, 
+              {tmpl: ellipseTmpl, head: 'Ellipse', method: ''},   
+              {tmpl: tremoloTmpl, head: 'Tremolo', method: ''},   
+              {tmpl: brokenWallTmpl, head: 'Broken Wall', method: ''},     
+              {tmpl: suckTmpl, head: 'Suck', method: 'giveSuck'}, 
+              {tmpl: klimtTmpl, head: 'Klimt', method: ''},               
+              {tmpl: topColorsTmpl, head: 'Top Colors ('+info.colorCount+')'},                         
+            ]">
+              <mat-expansion-panel-header>  
+                <mat-panel-title>
+                  {{tmplObj.head}}
+                </mat-panel-title>  
+              </mat-expansion-panel-header>   
+              <ng-template *ngTemplateOutlet="tmplObj.tmpl"></ng-template>
+              
+              <div class="end-xs">
+                <button 
+                  (click)="fabricCanvas.isDrawingMode = false;
+                          fabricCanvas.selection = true;
+                          fabricCanvas.appStatus = 'lassoRectangeEffect';
+                          fabricCanvas.effectMethod = tmplObj.method"
+                  mat-icon-button 
+                  color="accent" 
+                  *ngIf="tmplObj.method">
+                  <mat-icon>crop</mat-icon>
+                </button>
+
+                <button 
+                  (click)="fabricCanvas.isDrawingMode = true;
+                          fabricCanvas.selection = false;
+                          fabricCanvas.appStatus = 'lassoMethodEffect';
+                          fabricCanvas.effectMethod = tmplObj.method"
+                  mat-icon-button 
+                  color="accent" 
+                  *ngIf="tmplObj.method">
+                  <mat-icon svgIcon="lasso"></mat-icon>
+                </button>
+                
+              </div> 
           </mat-expansion-panel>
 
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Water
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="waterTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Blocks
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="blocksTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Frames
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="framesTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Rotating Frames
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="rotatingFramesTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Cartoonize
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="cartoonColorsTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Vinyl
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="vinylTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Holy Light
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="holyLightTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Fluffy
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="fluffyTmpl"></ng-template>
-          </mat-expansion-panel>
-
-          <mat-expansion-panel>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Top Colors ({{info.colorCount}})
-              </mat-panel-title>   
-            </mat-expansion-panel-header>  
-            <ng-template *ngTemplateOutlet="topColorsTmpl"></ng-template>
-          </mat-expansion-panel>
-  
         </mat-accordion>      
       </div>
- 
+
+      <div *ngIf="!coreService.isProd">
+
+         <ng-template *ngTemplateOutlet="klimtTmpl"></ng-template> 
+        @todo colopicker
+      </div>
+
+
       <div class="mrgn-t-md">
         <button *ngIf="!coreService.isProd" mat-raised-button color="accent" (click)="scissors()">scissors()</button> 
   
@@ -291,13 +182,20 @@
         </div>
                 
       </div>
-
+<!-- 
+      <button mat-icon-button>
+        <mat-icon>edit</mat-icon>
+      </button>
+       -->
       <app-fabric
         class="pos-rel"
         [style.top]="(canvasScale < 1) ? (-(height-(height*canvasScale))+'px') : '0px'" 
         [fabricCanvas]="fabricCanvas"
-        [ctx]="ctxFabric">
+        [ctxFabric]="ctxFabric"
+        [ctx]="ctx">
       </app-fabric>
+
+
 
     </div>
     
@@ -305,7 +203,7 @@
 
 </div> 
  
-
+<!--== TEMPLATES =====================================================================================================-->
 
 <ng-template #confusionTmpl>
   <div>
@@ -361,20 +259,20 @@
   </button>
 
   <div>
-    <button mat-raised-button color="accent" (click)="makeUIMultiColor()">
+    <button mat-raised-button color="accent" (click)="makeMultiColor()">
       Apply Stops
     </button>
   </div>
 </ng-template>
 
 <ng-template #brightnessTmpl>
-  <button mat-icon-button (click)="lighten()">
+  <!-- <button mat-icon-button (click)="lighten()">
     <mat-icon>wb_sunny</mat-icon>
   </button>
   
   <button mat-icon-button (click)="brighten()">
     <mat-icon>nightlight_round</mat-icon>
-  </button>    
+  </button>     -->
 </ng-template>
 
 <ng-template #pixelateTmpl>
@@ -423,24 +321,6 @@
       </mat-option>
       </mat-select>
     </mat-form-field>
-    <!-- <mat-form-field style="width: 40px;">
-      <mat-label>Slot2</mat-label>
-      <mat-select [(ngModel)]="bnw.rgb[1]" (selectionChange)="blackNWhite()">
-        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
-          {{rgb}}
-      </mat-option>
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field style="width: 40px;">
-      <mat-label>Slot3</mat-label>
-      <mat-select [(ngModel)]="bnw.rgb[2]" (selectionChange)="blackNWhite()">
-        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
-          {{rgb}}
-      </mat-option>
-      </mat-select>
-    </mat-form-field>   -->
-  
-
 
   </div>
   
@@ -456,7 +336,7 @@
 
 <ng-template #exposureTmpl>
 
-  <mat-slider thumbLabel [min]="-10" [max]="10" [step]=".1" 
+  <mat-slider thumbLabel [min]="0.1" [max]="2" [step]=".1" 
     [(ngModel)]="exposure.distance" 
     (change)="giveExposure()">
   </mat-slider>
@@ -595,6 +475,155 @@
     [(ngModel)]="fluffy.factor" 
     (change)="giveFluffy()">
   </mat-slider>
+</ng-template>
+
+<ng-template #suckTmpl>
+  <mat-slider thumbLabel [min]="10" [max]="100" [step]="1" 
+    [(ngModel)]="suck.factor" 
+    (change)="giveSuck()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #spotlightTmpl>
+
+  <div>
+    Control X
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="spotlight.controlX" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Control Y
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="spotlight.controlY" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Range X
+    <mat-slider thumbLabel [min]="0" [max]="width/2" [step]="1" 
+      [(ngModel)]="spotlight.rangeX" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Range Y
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="spotlight.rangeY" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #blindsTmpl>
+
+  <div>
+    Frequency
+    <mat-slider thumbLabel [min]="10" [max]="(width/3)" [step]="1" 
+      [(ngModel)]="blinds.freq" 
+      (change)="giveBlinds()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Depth
+    <mat-slider thumbLabel [min]="0.1" [max]="1.5" [step]="0.01" 
+      [(ngModel)]="blinds.depth" 
+      (change)="giveBlinds()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #tremoloTmpl>
+
+  <div>
+    Period
+    <mat-slider thumbLabel [min]="0.01" [max]=".2" [step]="0.01" 
+      [(ngModel)]="tremolo.period" 
+      (change)="giveTremolo()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Pitch
+    <mat-slider thumbLabel [min]="10" [max]="100" [step]="1" 
+      [(ngModel)]="tremolo.pitch" 
+      (change)="giveTremolo()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #ellipseTmpl>
+
+  <div>
+    Radius X
+    <mat-slider thumbLabel [min]="width*.25" [max]="width*.75" [step]="1" 
+      [(ngModel)]="ellipse.rx" 
+      (change)="giveEllipse()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Radius Y
+    <mat-slider thumbLabel [min]="height*.25" [max]="height*.75" [step]="1" 
+      [(ngModel)]="ellipse.ry" 
+      (change)="giveEllipse()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #brokenWallTmpl>
+
+  <div>
+    Size
+    <mat-slider thumbLabel [min]="1" [max]="96" [step]="1" 
+      [(ngModel)]="brokenWall.size" 
+      (change)="giveBrokenWall()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Distance
+    <mat-slider thumbLabel [min]="10" [max]="200" [step]="1" 
+      [(ngModel)]="brokenWall.dist" 
+      (change)="giveBrokenWall()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #klimtTmpl>
+
+  <div>
+    Size
+    <mat-slider thumbLabel [min]="1" [max]="40" [step]="1" 
+      [(ngModel)]="klimt.size" 
+      (change)="giveKlimt()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Randomness
+    <mat-slider thumbLabel [min]="40" [max]="200" [step]="1" 
+      [(ngModel)]="klimt.randomness" 
+      (change)="giveKlimt()">
+    </mat-slider>
+  </div>
+
+
 </ng-template>
 
   <!-- <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">

@@ -101,7 +101,7 @@ export class ComicComponent implements OnInit {
   }
 
   transform1(coords: any, img: any){
-    let imgRight = coords.x + (img.width*this.imgScale) + this.outerPadding;
+    let imgRight = coords.x + (img.width*this.imgScale) + Math.round(this.outerPadding/2);
 
     //if is not the first in the row and will exceed the limits
     if( coords.x && (imgRight > this.width) ){

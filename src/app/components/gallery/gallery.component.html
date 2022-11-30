@@ -1,9 +1,9 @@
-<div align="center"> 
+<div align="center" class="my-gallery"> 
 
   <!--== PAGINATIO AND SELECTED MENU ==============================================-->
 
   <div class="row mrgn-t-sm" style="margin: 0">
-    <div class="col-xs-12 col-sm-9 start-xs" style="white-space: nowrap; overflow-x: scroll;">
+    <div class="col-xs-12 col-sm-8 start-xs" style="white-space: nowrap; overflow-x: auto;">
       <button 
         *ngFor="let p of pages;index as i"
         mat-raised-button 
@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <div class="d-xs-none col-sm-3 end-xs">
+    <div class="d-xs-none col-sm-4 end-xs">
       
       <button mat-button [matMenuTriggerFor]="selectedMenu" *ngIf="!coreService.selectedAssets.length" (click)="selectAll()">
         Selected All
@@ -54,7 +54,7 @@
 
   <!--== CARDS ==============================================-->
 
-  <div class="row around-xs" style="margin: 0" [sortablejs]="assets">
+  <div class="row around-xs" style="margin: 0" [sortablejs]="assets" [sortablejsOptions]="sortablejsOptions">
     <div *ngFor="let asset of assets;index as i" 
       class="pad-all-sm mrgn-all-sm gallery-card">
       <!-- {{asset|json}} -->
@@ -82,7 +82,7 @@
       </div>
 
       <div class="bg-image-contain" style="width: 150px;height: 150px;" 
-        [style.backgroundImage]="'url('+apiService.imgPath+(asset.src | apiPath) +')'">
+        [style.backgroundImage]="'url('+apiService.imgPath+(asset.src | apiPathSm) +')'">
       </div>
     </div>
   </div>
