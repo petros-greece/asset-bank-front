@@ -5,6 +5,8 @@ import { saveAs } from 'file-saver';
 import { ApiService } from 'src/app/service/api.service';
 import { FabricService } from 'src/app/service/fabric.service';
 import { CanvasService } from 'src/app/service/canvas.service';
+import {COMMA, ENTER} from '@angular/cdk/keycodes';
+import {MatChipInputEvent} from '@angular/material/chips'
 
 export interface PointI {
   x: number;
@@ -18,7 +20,9 @@ export interface ColorI{
   a?: number;
 }
 
-type MethodNameT = 'addConfusion' | 'makeMultiColor' | 'pixelateData' | 'pixelateCircleData' | 'blackNWhite' | 'giveNegative' | 'giveExposure' | 'givePolychromeNegative' | 'giveWhiteNoise' | 'giveParadise' | 'giveIntensity' | 'giveBloom' | 'giveOutlines' | 'giveWater' | 'giveFluffy' | 'giveSuck' | 'giveSpotlight' | 'giveCartoonColors' 
+type MethodNameT = 'addConfusion' | 'makeMultiColor' | 'pixelateData' | 'pixelateCircleData' | 'blackNWhite' | 'giveNegative' | 
+'giveExposure' | 'givePolychromeNegative' | 'giveWhiteNoise' | 'giveParadise' | 'giveIntensity' | 'giveBloom' | 'giveOutlines' | 
+'giveWater' | 'giveFluffy' | 'giveSuck' | 'giveSpotlight' | 'giveCartoonColors' 
 
 @Component({
   selector: 'app-canvas',
@@ -28,11 +32,14 @@ type MethodNameT = 'addConfusion' | 'makeMultiColor' | 'pixelateData' | 'pixelat
 
 export class AppCanvasComponent implements OnInit {
  
-  @Input() selectedFilePath: any;
+  @Input() selectedFile: any;
   @Output() onRemoveFile = new EventEmitter<any>();
   @Output() onAddFile = new EventEmitter<any>();
 
   @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+  readonly separatorKeysCodes = [ENTER, COMMA] as const;
+
+  showTags: boolean = false;
 
   history: any = [];
   historyCurrent: number = 0;
@@ -76,7 +83,7 @@ export class AppCanvasComponent implements OnInit {
   blocks = { factor: 50 };
   frames = { factor: 10, stop: 300 }
   rotatingFrames = { scaleFactor: .25, degreesStop: 360, degreesPlus: 1 };
-  cartoonColors = [];
+  cartoonColors:string[] = [];
   vinyl = {factor: 0.1};
   holyLight = {factor: 1};
   fluffy = {factor: 5};
@@ -120,14 +127,22 @@ export class AppCanvasComponent implements OnInit {
           this.attachConstants();
           this.attachFabricEvents();
           this.hasEvents = true;
-          //this.fabricService.addControl(this.fabricCanvas)
-          //this.canvasService.init(this.canvas, this.ctx);
-          //this.canvasService.clearCanvas()
+          if(!this.selectedFile.tags){
+            this.apiService.getData(`/assetRow/${this.apiService.user.id}/${this.selectedFile.src}`).subscribe({
+              next: (data)=>{
+                this.selectedFile.tags = JSON.parse(data.tags);
+              }
+            });
+          }
+          else{
+            this.selectedFile.tags = JSON.parse(this.selectedFile.tags);
+          }
+          this.showTags = true;
         }
       });
     });
-    console.log(this)
-    console.log(this.apiService.selectedCategory);
+    // console.log(this)
+    // console.log(this.apiService.selectedCategory);
   }
 
   attachConstants(){
@@ -164,7 +179,7 @@ export class AppCanvasComponent implements OnInit {
         image.width,
         image.height
       );
-    
+      this.getImageData();
     };
     image.src = src;
     image.crossOrigin = "Anonymous";
@@ -192,8 +207,8 @@ export class AppCanvasComponent implements OnInit {
     return (((point.y)*this.width)+point.x)*4 | 0;
   }
 
-  endpointToSrc(endpoint: string){
-    let arr = this.selectedFilePath.split('/');
+  endpointToSrc(){
+    let arr = this.selectedFile.path.split('/');
     return arr[arr.length-2]+'.'+arr[arr.length-1];
   }
 
@@ -369,7 +384,7 @@ export class AppCanvasComponent implements OnInit {
       startPoint.x = Math.round(opt.pointer.x); 
       startPoint.y = Math.round(opt.pointer.y);
       
-      console.log('mouse:down', opt.pointer);
+      //console.log('mouse:down', opt.pointer);
 
       if(this.fabricCanvas.appStatus === 'colorpicker'){
         let x = Math.round(opt.pointer.x); 
@@ -562,7 +577,7 @@ export class AppCanvasComponent implements OnInit {
         }, 0);
         
       };
-      image.src = this.selectedFilePath;
+      image.src = this.selectedFile.path;
       image.crossOrigin = "Anonymous";
     });
   }
@@ -631,10 +646,7 @@ export class AppCanvasComponent implements OnInit {
     return sortable.filter((elem)=>{return elem;});
   }
 
-
-
   /** PIXEL MANIPULATION EFFECTS **************/
-
 
   replaceColor(color: any, replacer: any){
     let i = -4;
@@ -1213,9 +1225,44 @@ export class AppCanvasComponent implements OnInit {
     });   
   }
 
+  pourPaint = {
+    color: 'red',
+    range: 10,
+    density: 10
+  }
+
+  givePourPaint(){ 
+    
+    this.runWithReinit(()=>{
+      
+      let i=0; 
+      let randomRadius, randomX, randomY;
+
+      let factor = Math.round((this.width*this.height)/10000);
+      this.ctx.save();
+      this.ctx.fillStyle = this.pourPaint.color;
+      let max = this.pourPaint.density * factor;
+      while(i < max){ 
+        randomRadius = Math.ceil(Math.random()*this.pourPaint.range);
+        randomX = Math.floor(Math.random()*this.width);
+        randomY = Math.floor(Math.random()*this.height);
+        this.ctx.beginPath();
+        this.ctx.arc(randomX, randomY, randomRadius, 0, 2 * Math.PI);
+        this.ctx.fill();
+        i+=1;
+      }      
+      this.ctx.restore();
+      this.getImageData()
+      
+    });     
+  }
+
   /** TESTING  */
 
-  scissors(){  
+  scissorsfgfgfgf(){ 
+    
+
+
     this.runWithReinit(()=>{
    
       let size = 60;
@@ -1244,9 +1291,9 @@ export class AppCanvasComponent implements OnInit {
           }
           let rgbStr = this.objToRgbString(color);
           console.log(rgbStr)
-          this.ctx.beginPath()
+          this.ctx.beginPath();
           this.ctx.fillStyle = rgbStr;
-          this.ctx.arc(i,j, jj, 0, 2 * Math.PI);
+          this.ctx.arc(i,j, jj-5, 0, 2 * Math.PI);
           this.ctx.fill() 
 
         }
@@ -1319,22 +1366,13 @@ export class AppCanvasComponent implements OnInit {
     });  
   }
 
-  scissorshjh(){  
+
+
+  scissors(){  
     this.runWithReinit(()=>{
 
-      let i=0; 
-      let randomRadius, randomX, randomY;
 
-      while(i < 1000){ 
-        randomRadius = Math.ceil(Math.random()*10);
-        randomX = Math.floor(Math.random()*this.width);
-        randomY = Math.floor(Math.random()*this.height);
-        this.dummyCtx.beginPath();
-        this.dummyCtx.arc(randomX, randomY, randomRadius, 0, 2 * Math.PI);
-        this.dummyCtx.fill();
-        i+=1;
-      }      
-      
+      return;
       let dummyData = this.dummyCtx.getImageData(0,0,this.width, this.height);
       let arr:any = [];
 
@@ -1517,10 +1555,172 @@ export class AppCanvasComponent implements OnInit {
     this.ctx.putImageData(this.imageData, 0, 0);    
   }
 
-  giveRandom(){
-   
+
+  giveRandomStops(){
+    let ran = Math.ceil(Math.random()*5);
+    let stop = 50;
+    let colorStops = [];
+    for( let i = 0; i < ran; i+=1 ){
+      let r = Math.floor(Math.random()*255);
+      let g = Math.floor(Math.random()*255);
+      let b = Math.floor(Math.random()*255);
+      let colorStop = {color: `rgb(${r},${g},${b})`, stop: stop};
+      colorStops.push(colorStop);
+      stop+= Math.floor(Math.random()*(765/ran));
+    }
+    return colorStops;
   }
 
+  giveRandomCartoonColors(){
+    let ran = 2 + Math.floor(Math.random()*10);
+    let cartoonColors = [];
+    for( let i = 0; i < ran; i+=1 ){
+      let r = Math.floor(Math.random()*255);
+      let g = Math.floor(Math.random()*255);
+      let b = Math.floor(Math.random()*255);
+      cartoonColors.push(`rgb(${r},${g},${b})`);  
+    }
+    return cartoonColors;
+  }
+
+  giveRandomConfig(){
+    let rgbArrs = [ [1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1] ];
+    this.colorStops = this.giveRandomStops();
+    this.cartoonColors = this.giveRandomCartoonColors();
+    this.confusion = { 
+      colors: rgbArrs[Math.floor(Math.random()*5)], 
+      start: Math.floor(Math.random()*50), 
+      randomness: Math.floor(Math.random()*200) 
+    };
+    this.pixelate = { 
+      factor: 2 + Math.floor(Math.random()*13), 
+      outline: Math.random() > .5 ? false : true, 
+      circleFactor: 2 + Math.floor(Math.random()*13), 
+      circleOutline: Math.random() > .5 ? false : true 
+    };
+    this.bnw = { rgb: ['b', 'b', 'b'] };
+    this.negative = { 
+      brightness: Math.floor(Math.random()*255) 
+    }
+    this.polychromeNegative = { 
+      middlePoint: 40 + Math.floor(Math.random()*185), 
+      range: 40 + Math.floor(Math.random()*185) 
+    };
+    this.exposure = { 
+      distance: .1 + (Math.random()*1.9)
+    };
+    this.whiteNoise = { 
+      factor: 10 + Math.floor(Math.random()*240)
+    };
+    this.paradise = {
+      factor: Math.random()
+    };
+    this.intensity = { 
+      factor: Math.random()
+    };
+    this.bloom = { factor: Math.ceil(Math.random()*200), };
+    this.outlines = { 
+      factor: Math.ceil(Math.random()*49), 
+      bgColor: 'rgba(255,255,255,1)', 
+      hasBg: Math.random() > .5 ? false : true
+    };
+    this.water = { 
+      factor: Math.ceil(Math.random()*5) 
+    }
+    this.blocks = { 
+      factor: 20 + Math.floor(Math.random()*260)
+    };
+    this.frames = { 
+      factor: Math.ceil(Math.random()*79), 
+      stop: Math.floor(Math.random()*(this.width*.7)) 
+    }
+    this.rotatingFrames = { 
+      scaleFactor: Math.random()*2, 
+      degreesStop: Math.floor(Math.random()*360), 
+      degreesPlus: Math.ceil(Math.random()*14) 
+    }
+    this.cartoonColors = [];
+    this.vinyl = {
+      factor: 0.1 + Math.floor(Math.random()*0.2)
+    }
+    this.holyLight = {
+      factor: 1 + Math.floor(Math.random()*9)
+    }
+    this.fluffy = {
+      factor: 5 + Math.floor(Math.random()*45)
+    }
+    this.suck = {
+      factor: 10 + Math.floor(Math.random()*90)
+    }
+    this.spotlight = { 
+      controlX: Math.floor(Math.random()*(this.width)), 
+      controlY: Math.floor(Math.random()*(this.width)), 
+      rangeX: Math.floor(Math.random()*(this.width/2)), 
+      rangeY: Math.floor(Math.random()*(this.width)) 
+    }
+    this.blinds = { 
+      depth: .1+Math.random()*1.4, 
+      freq: Math.floor(Math.random()*(this.width/3)) 
+    }
+    this.tremolo = { 
+      period: Math.random()*.2, 
+      pitch: Math.floor(Math.random()*100) 
+    }
+    this.ellipse = { 
+      rx: Math.floor(this.width/4) + Math.floor(Math.random()*(this.width/3)), 
+      ry: Math.floor(this.height/4) + Math.floor(Math.random()*(this.height/3)), 
+    }
+    this.brokenWall = { 
+      size: Math.floor(Math.random()*100), 
+      dist: Math.floor(Math.random()*200) 
+    }
+    this.klimt = {
+      size: Math.floor(Math.random()*40), 
+      randomness: Math.floor(Math.random()*200)
+    }   
+  }
+
+  giveRandomMethod(){
+    let num = Math.ceil(Math.random()*28);
+    switch(num){
+      case 1: this.addConfusion();break;
+      case 2: this.makeMultiColor();break;
+      case 3: this.pixelateData();break;
+      case 4: this.pixelateCircleData();break;
+      case 5: this.blackNWhite();break;
+      case 6: this.giveNegative();break;
+      case 7: this.giveExposure();break;
+      case 8: this.givePolychromeNegative();break;
+      case 9: this.giveWhiteNoise();break;
+      case 10: this.giveParadise();break;
+      case 11: this.giveIntensity();break;
+      case 12: this.giveBloom();break;
+      case 13: this.giveOutlines();break;
+      case 14: this.giveWater();break;
+      case 15: this.giveFluffy();break;
+      case 16: this.giveSuck();break;
+      case 17: this.giveSpotlight();break;
+      case 18: this.giveCartoonColors();break;
+      case 19: this.giveBlocks();break;
+      case 20: this.giveFrames();break;
+      case 21: this.giveRotatingFrames();break;
+      case 22: this.giveVinyl();break;
+      case 23: this.giveHolyLight();break;
+      case 24: this.giveBlinds();break;
+      case 25: this.giveTremolo();break;
+      case 26: this.giveEllipse();break;	
+      case 27: this.giveBrokenWall();break;
+      case 28: this.giveKlimt();break;	
+    }
+  }
+
+  giveRandomLoop(){
+    setInterval(()=>{
+      this.runWithReInit = Math.random() > .7 ? true : false;
+      this.giveRandomConfig();
+      this.giveRandomMethod();
+    }, 2000);
+  }
 
   /** UI *******************/
 
@@ -1556,7 +1756,7 @@ export class AppCanvasComponent implements OnInit {
   }
 
   removeAsset(){
-    let src = this.endpointToSrc(this.selectedFilePath);
+    let src = this.endpointToSrc();
     let index = this.apiService.selectedCategory.files.indexOf(src);
     this.apiService.selectedCategory.files.splice(index, 1);
     this.coreService.closeDialogById('previewCanvasDialog');
@@ -1616,8 +1816,7 @@ export class AppCanvasComponent implements OnInit {
     this.fabricCanvas.clear();
     this.getImageData(); 
     this.assignCanvasToImage(true);
-//this.canvas.toDataURL();
-    
+    //this.canvas.toDataURL();   
   }
 
   uploadImageToCat(closeDialog: boolean = false){
@@ -1672,6 +1871,28 @@ export class AppCanvasComponent implements OnInit {
     this.dummyCanvas.toBlob((blob:any)=>{
       saveAs(blob, `siteland-asset-bank.${type}`);
     })
+  }
+
+  
+  addTag(event: MatChipInputEvent): void {
+    const value = (event.value || '').trim();
+    if (value) { this.selectedFile.tags.push(value); }
+    event.chipInput!.clear();
+  }
+
+  removeTag(tag:string): void {
+    const index = this.selectedFile.tags.indexOf(tag);
+    if (index >= 0) { this.selectedFile.tags.splice(index, 1); }
+  }
+
+  saveTags(){
+
+    this.apiService.postAuthData('/assetTags', {
+        accountId: this.apiService.user.id, 
+        tags: this.selectedFile.tags, src: this.selectedFile.src}).subscribe({
+        error: (e)=>{ this.coreService.giveSnackbar(e.message) }
+    })
+
   }
 
   

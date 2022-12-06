@@ -44,7 +44,15 @@
         Height
         <mat-slider thumbLabel [min]="200" [max]="2000" [step]="1"
           [(ngModel)]="height"
-          (change)="renderImages()">
+          (change)="canvas.setHeight(height)">
+        </mat-slider>
+      </div>
+
+      <div>
+        Width
+        <mat-slider thumbLabel [min]="200" [max]="2000" [step]="1"
+          [(ngModel)]="width"
+          (change)="canvas.setWidth(width)">
         </mat-slider>
       </div>
 
@@ -87,10 +95,10 @@
   
       <button mat-raised-button color="primary" class="mrgn-t-sm" (click)="shuffleImages()">shuffle</button>
   
-
       <app-fabric
         class="pos-rel"
         [fabricCanvas]="canvas"
+        [images]="images"
         [view]="'comic'">
       </app-fabric>
 
@@ -98,7 +106,6 @@
         Add to Category
         <mat-icon>save</mat-icon>
       </button> 
-
 
      <div style="margin-top: 10px;opacity: 0">
        

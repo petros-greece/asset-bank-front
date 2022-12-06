@@ -3,9 +3,10 @@ import { CoreService } from 'src/app/service/core.service';
 import { saveAs } from 'file-saver';
 import { ApiService, CategoryI } from 'src/app/service/api.service';
 import {MatAccordion} from '@angular/material/expansion';
-import { ApiPathPipe } from 'src/app/pipe/asset-bank-pipes.pipe';
 import {CdkDragDrop, moveItemInArray, transferArrayItem} from '@angular/cdk/drag-drop';
-
+import { Observable } from 'rxjs';
+import {map, startWith} from 'rxjs/operators';
+import {FormControl} from '@angular/forms';
 
 @Component({
   selector: 'app-tree',
@@ -21,6 +22,10 @@ export class TreeComponent implements OnInit {
   @ViewChild('dropZoneDialog', {static: true}) dropZoneDialog: TemplateRef<any> | any;
 
   treeVersions: any;
+  titles: string[] = [];
+  filteredTitles: Observable<string[]>;
+  titleCtrl = new FormControl('');
+
   openAll: boolean = false;
   edit = false;
 
@@ -39,18 +44,29 @@ export class TreeComponent implements OnInit {
     public apiService: ApiService,
     public coreService: CoreService
     ) {
+      this.filteredTitles = this.titleCtrl.valueChanges.pipe(
+        startWith(''),
+        map(state => (state ? this.filterTitles(state) : this.titles.slice())),
+      );
   }
 
-  ngOnInit(): void {  
+  ngOnInit(): void {
+
     this.apiService.getData(`/tree/${this.apiService.user.id}`).subscribe((res)=>{
       if(res && res.categories){
         this.apiService.categories = JSON.parse(res.categories);
+        this.getTreeTitlesRecursive(JSON.parse(res.categories));
       }
       else{
-        //let cat = JSON.parse(JSON.stringify(this.newCategory));
         this.apiService.categories = [];
       }
     }); 
+  }
+
+
+  private filterTitles(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this.titles.filter(title => title.toLowerCase().includes(filterValue));
   }
 
   drop(e:any, categories: any){
@@ -230,8 +246,8 @@ export class TreeComponent implements OnInit {
 
   /** */
 
-  openGalleryCategoryDialog(category:CategoryI, e: Event){
-    e.stopPropagation();
+  openGalleryCategoryDialog(category:CategoryI, e?: Event){
+    if(e){e.stopPropagation();}
     if(!category?.files?.length){
       this.openDropZoneDialog(category);
       return;
@@ -254,7 +270,34 @@ export class TreeComponent implements OnInit {
     }); 
   }
 
+  /** */
 
+  getTreeTitlesRecursive(obj:any) {
+    for (var key in obj) {
+      if(key === 'title'){
+        this.titles.push(obj[key])
+      }
+      if (obj[key] !== null && typeof obj[key] === "object") {
+        this.getTreeTitlesRecursive(obj[key]);
+      }
+    }
+  }
+
+  getCategoryByTitle(obj:any, title: string) {
+    for (var key in obj) {
+      if(key === 'title' && obj[key] === title){
+        this.openGalleryCategoryDialog(obj)
+        this.titleCtrl.setValue('')
+        return; 
+      }
+      if (obj[key] !== null && typeof obj[key] === "object") {
+        this.getCategoryByTitle(obj[key], title);
+      }
+    }
+  }
+
+
+//str.match(/"title":"([a-z 0-9]+)"/gi).map((r)=>{return r.replace(/"title":"([a-z 0-9]+)"/i, '$1')})
 
 }
 

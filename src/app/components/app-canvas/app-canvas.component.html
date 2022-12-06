@@ -1,6 +1,6 @@
 <div class="container-fluid" style="min-width: 50vw;height: 95vh;" class="mat-grey pad-all-xs pad-b-lg">
 
-  <div class="row" style="margin: 0">
+  <div class="row mat-grey" style="margin: 0">
 
     <div class="col-xs-12 col-md-3 col-lg-4">
       
@@ -25,7 +25,7 @@
           <mat-icon>west</mat-icon>
         </button>
         <button 
-        mat-mini-fab
+          mat-mini-fab
           color="primary" 
           [disabled]="!history.length || historyCurrent === history.length"
           (click)="historyCurrent = historyCurrent + 1; goToHistory()">
@@ -75,7 +75,8 @@
               {tmpl: tremoloTmpl, head: 'Tremolo', method: ''},   
               {tmpl: brokenWallTmpl, head: 'Broken Wall', method: ''},     
               {tmpl: suckTmpl, head: 'Suck', method: 'giveSuck'}, 
-              {tmpl: klimtTmpl, head: 'Klimt', method: ''},               
+              {tmpl: klimtTmpl, head: 'Klimt', method: ''}, 
+              {tmpl: pourPaintTmpl, head: 'Pour Paint', method: ''},               
               {tmpl: topColorsTmpl, head: 'Top Colors ('+info.colorCount+')'},                         
             ]">
               <mat-expansion-panel-header>  
@@ -114,55 +115,38 @@
         </mat-accordion>      
       </div>
 
-      <div *ngIf="!coreService.isProd">
-
+      <!-- <div *ngIf="!coreService.isProd">
          <ng-template *ngTemplateOutlet="klimtTmpl"></ng-template> 
         @todo colopicker
-      </div>
+      </div> -->
 
+      <button *ngIf="!coreService.isProd" mat-raised-button color="accent" (click)="scissors()">scissors()</button>
 
-      <div class="mrgn-t-md">
-        <button *ngIf="!coreService.isProd" mat-raised-button color="accent" (click)="scissors()">scissors()</button> 
-  
-        <button mat-raised-button color="accent" (click)="mergeDataWithFabric()">
-          Merge Data
-        </button> 
-      </div>
+      <div *ngIf="showTags" class="mrgn-t-sm">
+        <mat-form-field class="example-chip-list" appearance="fill">
+          <mat-label>Image Tags</mat-label>
+          <mat-chip-list #chipList aria-label="Fruit selection">
+            <mat-chip *ngFor="let tag of selectedFile.tags" (removed)="removeTag(tag)">
+              {{tag}}
+              <button matChipRemove>
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+            <input placeholder="Add Tag..."
+                   [matChipInputFor]="chipList"
+                   [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                   [matChipInputAddOnBlur]="true"
+                   (matChipInputTokenEnd)="addTag($event)">
+          </mat-chip-list>
+        </mat-form-field>
 
-      <div *ngIf="apiService.selectedCategory">
-        
-        <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
-      
-        <div class="row around-xs">
-          <button mat-raised-button color="primary" (click)="uploadImageToCat()">
-            Add To {{apiService.selectedCategory?.title}}
-          </button>
-          <button mat-raised-button color="primary" (click)="uploadImageToCat(true)">
-            Add and close
-          </button>
-        </div>
-  
-        <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
-  
-        <div class="row around-xs">
-          <button mat-raised-button color="warn" (click)="removeAsset()" class="mrgn-b-md">
-            Remove From {{apiService.selectedCategory?.title}}
-          </button>       
-        </div>
+        <button mat-icon-button (click)="saveTags()">
+          <mat-icon>save</mat-icon>
+        </button>
 
       </div>
 
-      <div *ngIf="!apiService.selectedCategory">
-        
-        <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
-      
-        <div class="row around-xs">
-          <button mat-raised-button color="warn" (click)="uploadImage()">
-            Upload Image
-          </button>       
-        </div>
 
-      </div>
 
     </div>
      
@@ -182,7 +166,7 @@
         </div>
                 
       </div>
-<!-- 
+      <!-- 
       <button mat-icon-button>
         <mat-icon>edit</mat-icon>
       </button>
@@ -193,13 +177,43 @@
         [fabricCanvas]="fabricCanvas"
         [ctxFabric]="ctxFabric"
         [ctx]="ctx">
+    
+        <button mat-raised-button color="accent" (click)="mergeDataWithFabric()">
+          Merge Layers
+        </button> 
+       
+
       </app-fabric>
 
 
 
     </div>
     
+
+
   </div> 
+
+  <div class="row center-xs pad-all-md space-between" *ngIf="apiService.selectedCategory">
+    
+    <button mat-raised-button color="primary" (click)="uploadImageToCat()">
+      Add To {{apiService.selectedCategory?.title}}
+    </button>
+
+    <button mat-raised-button color="primary" (click)="uploadImageToCat(true)">
+      Add and close
+    </button>
+
+    <button mat-raised-button color="warn" (click)="removeAsset()">
+      Remove From {{apiService.selectedCategory?.title}}
+    </button>  
+
+  </div>
+
+  <div class="row center-xs pad-all-md space-between" *ngIf="!apiService.selectedCategory">
+    <button mat-raised-button color="primary" (click)="uploadImage()">
+      Upload Image
+    </button>  
+  </div>
 
 </div> 
  
@@ -525,7 +539,7 @@
 
   <div>
     Frequency
-    <mat-slider thumbLabel [min]="10" [max]="(width/3)" [step]="1" 
+    <mat-slider thumbLabel [min]="10" [max]="(width/3) | roundNum" [step]="1" 
       [(ngModel)]="blinds.freq" 
       (change)="giveBlinds()">
     </mat-slider>
@@ -626,18 +640,50 @@
 
 </ng-template>
 
-  <!-- <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
+<ng-template #pourPaintTmpl>
+  
+  <app-picker-menu
+    label="Color" 
+    [color]="pourPaint.color" 
+    (onPickColor)="pourPaint.color = $event.color;">
+  </app-picker-menu>
+
+  <div>
+    Range
+    <mat-slider thumbLabel [min]="1" [max]="20" [step]="1" 
+      [(ngModel)]="pourPaint.range" 
+      (change)="givePourPaint()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Density
+    <mat-slider thumbLabel [min]="1" [max]="60" [step]="1" 
+      [(ngModel)]="pourPaint.density" 
+      (change)="givePourPaint()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+  <!-- 
+  <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
     Save World
     <mat-icon>save</mat-icon>
-  </button> -->
+  </button> 
+  -->
 
-  <!-- <mat-menu #menu="matMenu" (menuOpened)="true" [overlapTrigger]="false">
+  <!-- 
+  <mat-menu #menu="matMenu" (menuOpened)="true" [overlapTrigger]="false">
     <div (click)="$event.stopPropagation()" class="pad-all-md">
       <button class="pos-abs" mat-raised-button color="primary" (click)="getImageData()">text</button>                 
     </div>
-  </mat-menu> -->
+  </mat-menu> 
+  -->
 
-  <!-- <canvas id="canvas" [width]="width" [height]="height"></canvas> -->
+  <!-- 
+    <canvas id="canvas" [width]="width" [height]="height"></canvas> 
+  -->
 
 
 

@@ -32,6 +32,7 @@ export class ApiService {
     }
   ];
   selectedCategory: any;
+  tags:any;
 
 	constructor(
     public http: HttpClient,

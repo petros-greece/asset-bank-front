@@ -10,8 +10,9 @@
   <mat-icon>{{icon}}</mat-icon>
 </button> 
 
-  <mat-menu #menu="matMenu">
-  <div (click)="$event.stopPropagation()">
+<mat-menu #menu="matMenu">
+
+  <div (click)="$event.stopPropagation()" class="pad-all-sm">
       <input type="hidden"
       colorPicker="undefined"
       [cpCmykEnabled]="true"
@@ -20,5 +21,8 @@
       [cpToggle]="true"
       [cpDisableInput]="true"
       (colorPickerChange)="onColorChange($event);"/>
+
+    <ng-content></ng-content>
   </div>
+
 </mat-menu>

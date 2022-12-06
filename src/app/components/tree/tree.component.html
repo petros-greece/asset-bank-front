@@ -10,6 +10,23 @@
       <mat-icon>{{openAll ? 'unfold_less' : 'unfold_more'}}</mat-icon>
     </button>
     
+    <form style="display: inline-block" class="">
+      <mat-form-field appearance="fill">
+        <mat-label>Search Category</mat-label>
+        <input type="text"
+                aria-label="Search Category"
+                matInput
+                [matAutocomplete]="auto"
+                [formControl]="titleCtrl">
+        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+          <mat-option *ngFor="let title of filteredTitles | async" [value]="title" 
+          (click)="getCategoryByTitle(apiService.categories, title);">
+            {{title}}
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </form>
+
     <button mat-raised-button color="primary" (click)="addNewCategory()" class="mrgn-l-sm">
       Add Category
     </button>
@@ -30,6 +47,11 @@
       Gallery
     </button>
 
+
+
+
+
+
   </div>
 
   <ng-container *ngTemplateOutlet="categoryTree; context: { $implicit: {cats: apiService.categories, parent: {}} }"></ng-container>
@@ -43,15 +65,15 @@
 
 <!--== TREEE =====================-->
 
-<ng-template  #categoryTree let-categories>
+<ng-template #categoryTree let-categories>
 
   <mat-accordion displayMode="flat" class="categories-accordeon" multi="true" cdkDropList (cdkDropListDropped)="drop($event, categories)">
     <mat-expansion-panel cdkDrag
       *ngFor="let category of categories.cats;index as i"
       [hideToggle]="!category.childsNum"
       [disabled]="!category.childsNum"
+      [expanded]="openAll && category.childsNum !== 0"
       togglePosition="before">
-      
       
       <mat-expansion-panel-header style="overflow: visible;">
         <mat-panel-title style="overflow: visible;">
@@ -133,15 +155,15 @@
           </div>
           
         </mat-panel-title>
-    </mat-expansion-panel-header>
+      </mat-expansion-panel-header>
 
-    <mat-panel-description>	
-      <mat-progress-bar mode="indeterminate" *ngIf="!category.childs"></mat-progress-bar>
-    </mat-panel-description>
-    <ng-container *ngIf="category.childs">
-      <ng-container *ngTemplateOutlet=" categoryTree; context: { $implicit: {cats: category.childs, parent: category} }">
+      <mat-panel-description>	
+        <mat-progress-bar mode="indeterminate" *ngIf="!category.childs"></mat-progress-bar>
+      </mat-panel-description>
+      <ng-container *ngIf="category.childs && category.childs.length">
+        <ng-container *ngTemplateOutlet="categoryTree; context: { $implicit: {cats: category.childs, parent: category} }">
+        </ng-container>
       </ng-container>
-    </ng-container>
     </mat-expansion-panel>
 
   </mat-accordion>

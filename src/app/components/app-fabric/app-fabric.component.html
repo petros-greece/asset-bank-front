@@ -56,121 +56,164 @@
           <mat-icon>remove</mat-icon>
         </button>
 
+        <div class="col-xs end-xs">
+          <ng-content></ng-content>
+        </div>
+
       </div>
 
-      <!--== BRUSH ===================-->
+      <!--== TOOLS ===================-->
 
       <div class="row middle-xs pad-l-sm mrgn-t-sm">
+
+        <!--== BRUSH ===================-->
+
+        <div class="col pad-all-xs">
+          Brush
           <app-picker-menu
             (click)="fabricService.addBrush(fabricCanvas, brush);"
             [icon]="'brush'" 
             [color]="brush.color" 
             (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);">
-          </app-picker-menu>
-          <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
-          
-          <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
-            <mat-button-toggle value="butt">
-              <mat-icon>rectangle</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="round">
-              <mat-icon>lens</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="square">
-              <mat-icon>square</mat-icon>
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-   
-      </div>
-    
-      <!--== TEXTBOXES ===================-->
 
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
-        <!-- <b>Ballon Text</b> -->
-        
-        <app-picker-menu
-          [icon]="'text_fields'" 
-          [color]="textbox.stroke" 
-          (onPickColor)="textbox.stroke = $event.color;changeActiveText()">
-        </app-picker-menu>
-    
-        <app-picker-menu
-          [icon]="'format_paint'" 
-          [color]="textbox.backgroundColor" 
-          (onPickColor)="textbox.backgroundColor = $event.color;changeActiveText()">
-        </app-picker-menu>
-    
-        <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize" (change)="changeActiveText()"></mat-slider>
-    
-        <mat-form-field style="width: 100px;margin: 0 7px 0 7px">
-          <mat-label>Font</mat-label>
-          <mat-select [(ngModel)]="textbox.fontFamily" (selectionChange)="changeActiveText()">
-            <mat-option *ngFor="let font of fonts" [value]="font">
-              {{font}}
-          </mat-option>
-          </mat-select>
-        </mat-form-field>
+            <div class="col">
+              <div style="z-index: 9999">
+                Line Width
+                <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
+              </div>
+            
+              <div>
+                Line Miter
+                <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
+                  <mat-button-toggle value="butt">
+                    <mat-icon>rectangle</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="round">
+                    <mat-icon>lens</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="square">
+                    <mat-icon>square</mat-icon>
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
 
-        <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
-          <mat-icon>notes</mat-icon>
-        </button>
-    
-        <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
-          <mat-icon>comment</mat-icon>
-        </button>
-      
-      </div>
-
-      <!--== ICONS PANEL ===================-->
-
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
-
-        <app-picker-menu
-          icon="border_color" 
-          [color]="icon.stroke" 
-          (onPickColor)="icon.stroke = $event.color;changeActiveIcon()">
-        </app-picker-menu>
-
-        <app-picker-menu
-          icon="format_paint" 
-          [color]="icon.fill" 
-          (onPickColor)="icon.fill = $event.color;changeActiveIcon()">
-        </app-picker-menu>
-
-        <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth" (change)="changeActiveIcon()"> </mat-slider>
-       
-        <!--== ICONS SELECT ===================-->
-
-        <div *ngFor="let file of svgFiles">
-          <button 
-            mat-button 
-            [matMenuTriggerFor]="svgMenu" 
-            (click)="getSvgFile(file.name);">
-            {{file.name}}
-          </button>
-          
-          <mat-menu #svgMenu="matMenu" yPosition="above">
-            <div (click)="$event.stopPropagation()" class="row pad-all-md" style="width: 300px;margin: -8px 0 -8px 0;background: #000">
-              <button 
-                mat-raised-button color="primary"  
-                *ngFor="let svg of svgIcons" 
-                (click)="giveSVGIcon(svg.svg)"
-                [style.fill]="icon.fill"
-                [style.stroke]="icon.stroke"
-                [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
-                class="svg-but">
-              </button>              
             </div>
-          </mat-menu>
+
+          </app-picker-menu>
         </div>
+
+        <!--== TEXTBOXES ===================-->
+
+        <div class="col pad-all-xs" style="background: rgba(150,150,150,.5)">
+          Textbox
+
+          <div>
+            <app-picker-menu
+              [icon]="'text_fields'" 
+              [color]="textbox.stroke" 
+              (onPickColor)="textbox.stroke = $event.color;changeActiveText()">
+  
+            <div class="col">
+              <div style="z-index: 9999">
+                Font Size
+                <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize" (change)="changeActiveText()"></mat-slider>          
+              </div>
+  
+              <mat-form-field style="width: 100px;margin: 0 7px 0 7px">
+                <mat-label>Font</mat-label>
+                <mat-select [(ngModel)]="textbox.fontFamily" (selectionChange)="changeActiveText()">
+                  <mat-option *ngFor="let font of fonts" [value]="font">
+                    {{font}}
+                </mat-option>
+                </mat-select>
+              </mat-form-field>
+  
+            </div>
+  
+  
+            </app-picker-menu>
+      
+            <app-picker-menu
+              [icon]="'format_paint'" 
+              [color]="textbox.backgroundColor" 
+              (onPickColor)="textbox.backgroundColor = $event.color;changeActiveText()">
+            </app-picker-menu>
+        
+            <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
+              <mat-icon>notes</mat-icon>
+            </button>
+        
+            <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
+              <mat-icon>comment</mat-icon>
+            </button>
+
+          </div>
+
+        </div>
+        
+        <!--== ICONS PANEL ===================-->
+
+        <div class="col pad-all-xs">
+          Icons
+          <div>
+            <app-picker-menu
+              icon="border_color" 
+              [color]="icon.stroke" 
+              (onPickColor)="icon.stroke = $event.color;changeActiveIcon()">
+              <div class="col">
+  
+                <div style="z-index: 9999">
+                  Stroke Width         
+                  <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth" (change)="changeActiveIcon()"></mat-slider>
+                </div>
+              </div>
+  
+            </app-picker-menu>
+  
+            <app-picker-menu
+              icon="format_paint" 
+              [color]="icon.fill" 
+              (onPickColor)="icon.fill = $event.color;changeActiveIcon()">
+            </app-picker-menu> 
+            
+            <button mat-raised-button color="accent" [matMenuTriggerFor]="iconsMenu">
+              <mat-icon>image</mat-icon>
+            </button>
+
+            <mat-menu #iconsMenu="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+              <div (click)="$event.stopPropagation()">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
+                      {{file.name}}
+                    </button>        
+                  </div>
+                  <div class="col-xs-8">
+                    <div class="row">
+
+                      <button 
+                        mat-raised-button color="primary"  
+                        *ngFor="let svg of svgIcons" 
+                        (click)="giveSVGIcon(svg.svg)"
+                        [style.fill]="icon.fill"
+                        [style.stroke]="icon.stroke"
+                        [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+                        class="svg-but">
+                      </button>  
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-menu>
+
+
+          </div>
+        
+        </div>
+
       </div>
 
-  
-      <!-- <div class="row middle-xs pad-l-sm mrgn-t-sm">
-               
-
-
-      </div> -->
+      <!--== DELETE ===================-->
 
       <div class="row end-xs mrgn-b-sm">
         <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">
@@ -192,6 +235,20 @@
 
       <div>
 
+        <button 
+          mat-raised-button 
+          color="accent"
+          [matMenuTriggerFor]="galleryMenu" 
+          (click)="showGallery = true;">
+          <mat-icon>folder</mat-icon>
+        </button>
+        
+        <mat-menu #galleryMenu="matMenu" yPosition="above">
+          <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
+            <app-gallery (onAddSelected)="onAddSelected()" [addAction]="'image'"></app-gallery>
+          </div>
+        </mat-menu>
+
         <button mat-raised-button color="accent"
           (click)="duplicateSelection()">
           <mat-icon>content_copy</mat-icon>
@@ -208,144 +265,157 @@
 
       </div>
 
-
-
       <!--== BRUSH ===================-->
 
       <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
 
       <div class="middle-xs pad-l-sm">
+        <!--== BRUSH ===================-->
+
+        <div class="col pad-all-xs">
+          Brush
           <app-picker-menu
             (click)="fabricService.addBrush(fabricCanvas, brush);"
             [icon]="'brush'" 
             [color]="brush.color" 
             (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);">
+
+            <div class="col">
+              <div style="z-index: 9999">
+                Line Width
+                <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
+              </div>
+            
+              <div>
+                Line Miter
+                <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
+                  <mat-button-toggle value="butt">
+                    <mat-icon>rectangle</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="round">
+                    <mat-icon>lens</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="square">
+                    <mat-icon>square</mat-icon>
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+
+            </div>
+
           </app-picker-menu>
-          <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
-          
-          <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
-            <mat-button-toggle value="butt">
-              <mat-icon>rectangle</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="round">
-              <mat-icon>lens</mat-icon>
-            </mat-button-toggle>
-            <mat-button-toggle value="square">
-              <mat-icon>square</mat-icon>
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-   
-      </div>
-    
-      <!--== TEXTBOXES ===================-->
+        </div>
 
-      <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
+        <!--== TEXTBOXES ===================-->
 
-      <div class="middle-xs pad-l-sm">
-        <!-- <b>Ballon Text</b> -->
-        
-        <app-picker-menu
-          [icon]="'text_fields'" 
-          [color]="textbox.stroke" 
-          (onPickColor)="textbox.stroke = $event.color;changeActiveText()">
-        </app-picker-menu>
-    
-        <app-picker-menu
-          [icon]="'format_paint'" 
-          [color]="textbox.backgroundColor" 
-          (onPickColor)="textbox.backgroundColor = $event.color;changeActiveText()">
-        </app-picker-menu>
-    
-        <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize" (change)="changeActiveText()"></mat-slider>
-    
-        <mat-form-field style="width: 100px;margin: 0 7px 0 7px">
-          <mat-label>Font</mat-label>
-          <mat-select [(ngModel)]="textbox.fontFamily" (selectionChange)="changeActiveText()">
-            <mat-option *ngFor="let font of fonts" [value]="font">
-              {{font}}
-          </mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="col pad-all-xs" style="background: rgba(150,150,150,.5)">
+          Textbox
 
-        <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
-          <mat-icon>notes</mat-icon>
-        </button>
-    
-        <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
-          <mat-icon>comment</mat-icon>
-        </button>
+          <div>
+            <app-picker-menu
+              [icon]="'text_fields'" 
+              [color]="textbox.stroke" 
+              (onPickColor)="textbox.stroke = $event.color;changeActiveText()">
+  
+            <div class="col">
+              <div style="z-index: 9999">
+                Font Size
+                <mat-slider thumbLabel step="1" min="5" max="50" [(ngModel)]="textbox.fontSize" (change)="changeActiveText()"></mat-slider>          
+              </div>
+  
+              <mat-form-field style="width: 100px;margin: 0 7px 0 7px">
+                <mat-label>Font</mat-label>
+                <mat-select [(ngModel)]="textbox.fontFamily" (selectionChange)="changeActiveText()">
+                  <mat-option *ngFor="let font of fonts" [value]="font">
+                    {{font}}
+                </mat-option>
+                </mat-select>
+              </mat-form-field>
+  
+            </div>
+  
+  
+            </app-picker-menu>
       
-      </div>
-
-      <!--== ICONS PANEL ===================-->
-
-      <mat-divider class="mrgn-t-md mrgn-b-md"></mat-divider>
-
-      <div class="middle-xs pad-l-sm">
-
-        <app-picker-menu
-          icon="border_color" 
-          [color]="icon.stroke" 
-          (onPickColor)="icon.stroke = $event.color;changeActiveIcon()">
-        </app-picker-menu>
-
-        <app-picker-menu
-          icon="format_paint" 
-          [color]="icon.fill" 
-          (onPickColor)="icon.fill = $event.color;changeActiveIcon()">
-        </app-picker-menu>
-
-        <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth" (change)="changeActiveIcon()"> </mat-slider>
-
-      </div>
-
-      <!--== GALLERY SELECT ===================-->
-
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
-          
-        <button 
-          mat-icon-button 
-          [matMenuTriggerFor]="galleryMenu" 
-          (click)="showGallery = true;">
-          <mat-icon>folder</mat-icon>
-        </button>
+            <app-picker-menu
+              [icon]="'format_paint'" 
+              [color]="textbox.backgroundColor" 
+              (onPickColor)="textbox.backgroundColor = $event.color;changeActiveText()">
+            </app-picker-menu>
         
-        <mat-menu #galleryMenu="matMenu">
-          <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
-            <app-gallery (onAddSelected)="onAddSelected()" [addAction]="'image'"></app-gallery>
-          </div>
-        </mat-menu>
-
-      <!--== ICONS SELECT ===================-->
-
-      <div *ngFor="let file of svgFiles">
-        <button 
-          mat-button 
-          [matMenuTriggerFor]="svgMenu" 
-          (click)="getSvgFile(file.name);">
-          {{file.name}}
-        </button>
+            <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
+              <mat-icon>notes</mat-icon>
+            </button>
         
-        <mat-menu #svgMenu="matMenu">
-          <div (click)="$event.stopPropagation()" class="row pad-all-md" style="width: 300px;margin: -8px 0 -8px 0;background: #000">
-            <button 
-              mat-raised-button color="primary"  
-              *ngFor="let svg of svgIcons" 
-              (click)="giveSVGIcon(svg.svg)"
-              [style.fill]="icon.fill"
-              [style.stroke]="icon.stroke"
-              [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
-              class="svg-but">
-            </button>              
+            <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
+              <mat-icon>comment</mat-icon>
+            </button>
+
           </div>
-        </mat-menu>
+
+        </div>
+
+        <!--== ICONS PANEL ===================-->
+
+        <div class="col pad-all-xs">
+          Icons
+          <div>
+            <app-picker-menu
+              icon="border_color" 
+              [color]="icon.stroke" 
+              (onPickColor)="icon.stroke = $event.color;changeActiveIcon()">
+              <div class="col">
+  
+                <div style="z-index: 9999">
+                  Stroke Width         
+                  <mat-slider thumbLabel step="0.1" min="0.2" max="5" [(ngModel)]="icon.strokeWidth" (change)="changeActiveIcon()"></mat-slider>
+                </div>
+              </div>
+  
+            </app-picker-menu>
+  
+            <app-picker-menu
+              icon="format_paint" 
+              [color]="icon.fill" 
+              (onPickColor)="icon.fill = $event.color;changeActiveIcon()">
+            </app-picker-menu> 
+            
+            <button mat-raised-button color="accent" [matMenuTriggerFor]="iconsMenu">
+              <mat-icon>image</mat-icon>
+            </button>
+
+            <mat-menu #iconsMenu="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+              <div (click)="$event.stopPropagation()">
+                <div class="row">
+                  <div class="col-xs-4">
+                    <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
+                      {{file.name}}
+                    </button>        
+                  </div>
+                  <div class="col-xs-8">
+                    <div class="row">
+
+                      <button 
+                        mat-raised-button color="primary"  
+                        *ngFor="let svg of svgIcons" 
+                        (click)="giveSVGIcon(svg.svg)"
+                        [style.fill]="icon.fill"
+                        [style.stroke]="icon.stroke"
+                        [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+                        class="svg-but">
+                      </button>  
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-menu>
+
+
+          </div>
+        
+        </div>
+
       </div>
-
-
-
-
-      </div>
-
 
     </div>
 

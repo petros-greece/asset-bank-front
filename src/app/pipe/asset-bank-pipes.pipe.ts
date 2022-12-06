@@ -26,6 +26,14 @@ export class OnlyNumberPipe implements PipeTransform {
   };
 };
 
+@Pipe({ name: 'roundNum' })
+export class RoundNumPipe implements PipeTransform {
+  transform(val:number) {
+    return Math.round(val);   
+  };
+};
+
+
 
 @Pipe({ name: 'formatDate' })
 export class FormatDatePipe implements PipeTransform {

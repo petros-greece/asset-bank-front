@@ -24,6 +24,7 @@ export class AppFabricComponent implements OnInit {
   @Input()  ctxFabric: any;
   @Input()  ctx: any;
   @Input()  view: string = 'edit'; 
+  @Input()  images: any[] = [];  
 
 
   svgFiles = [
@@ -31,7 +32,8 @@ export class AppFabricComponent implements OnInit {
     { name: 'christmas', },  
     { name: 'superheroes' },
     { name: 'animals' },
-    { name: 'face-emotions' } 
+    { name: 'face-emotions' },
+    { name: 'instruments' },     
   ];
   svgIcons: any;
 
@@ -178,20 +180,43 @@ export class AppFabricComponent implements OnInit {
       this.coreService.giveSnackbar('Select an object first!');
       return;
     }
+    if(activeObj._objects){
+      this.coreService.giveSnackbar('Can only clone one object at the time!');
+      return; 
+    //   let object;
+    //   activeObj._objects.forEach((obj:any) => {
+    //     object = fabric.util.object.clone(obj);
+    //     object.set("top", object.top);
+    //     object.set("left", object.left);
+    //     object.set("width", object.width);
+    //     object.set("height", object.height);       
+    //     object.set("scaleX", object.scaleX);
+    //     object.set("scaleY", object.scaleY); 
+    //     //object.set("cacheKey", `texture${this.images.length}`);  
+    //     object.set("id", `image-${this.images.length}`);     
+    //     this.fabricCanvas.add(object);
+    //     this.images.push(object);      
+    //   });
+    }
+    else{
+      let clonedObj:any;
+      this.fabricCanvas.getActiveObject().clone((clonedObj:any)=>{
+        clonedObj.clone((cloned:any)=>{
+          this.fabricCanvas.discardActiveObject();
+          //object.set("cacheKey", `texture${this.images.length}`);  
+          cloned.set("id", `image-${this.images.length}`);     
+          this.fabricCanvas.add(cloned);
+          this.fabricCanvas.setActiveObject(cloned);
+          this.fabricCanvas.requestRenderAll();
+          this.images.push(cloned);
+        })
+      })
 
-    var object = fabric.util.object.clone(activeObj);
-    object.set("top", object.top);
-    object.set("left", object.left);
-    this.fabricCanvas.add(object);
 
-    // let activeObject;
-    // this.fabricCanvas.getActiveObject().clone((cloned:any)=>{
-    //   activeObject = cloned;
-    // });
-    // console.log(activeObject);
-    // if(!activeObject){return}
-    // this.fabricCanvas.add(activeObject);
-    // this.fabricCanvas.renderAll();
+
+             
+    }
+
   }
 
 

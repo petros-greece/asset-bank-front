@@ -1,6 +1,9 @@
 import { Component, OnInit, ViewChild, TemplateRef, EventEmitter, Output, Input } from '@angular/core';
 import { ApiService } from 'src/app/service/api.service';
 import { CoreService } from 'src/app/service/core.service';
+import {map, startWith} from 'rxjs/operators';
+import {FormControl} from '@angular/forms';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-gallery',
@@ -22,17 +25,37 @@ export class GalleryComponent implements OnInit {
   pageSize: number = 10;
   pages:number[] = [];
 
-  selectedFilePath: any;
+  filteredTags: any;
+  tagCtrl = new FormControl('');
+  selectedTags:string[] = [];
+
+  selectedFile: any = {};
 
   sortablejsOptions:any;
 
   constructor(
     public coreService: CoreService,
     public apiService: ApiService) {
-
+     
     }
 
   ngOnInit(): void {
+    if(!this.apiService.tags){
+      this.apiService.getData(`/tagsForAccount/${this.apiService.user.id}`).subscribe((tags)=>{
+        this.apiService.tags = tags;
+        this.filteredTags = this.tagCtrl.valueChanges.pipe(
+          startWith(''),
+          map(state => (state ? this.filterTags(state) : this.apiService.tags.slice())),
+        );
+      });
+    }
+    else{
+      this.filteredTags = this.tagCtrl.valueChanges.pipe(
+        startWith(''),
+        map(state => (state ? this.filterTags(state) : this.apiService.tags.slice())),
+      );      
+    }
+ 
     let selectedAssets = this.apiService.selectedCategory?.files;
     if(!selectedAssets || !selectedAssets.length){
       this.goToPage(0);
@@ -52,11 +75,17 @@ export class GalleryComponent implements OnInit {
     }
     //console.log(selectedAssets);
     if(!this.coreService.isProd){
-      this.openEditAssetDialog('U-1669365209.jpg')
+      this.openEditAssetDialog({src: 'U-1669365209.jpg'})
     }
 
 
+
     
+  }
+
+  private filterTags(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this.apiService.tags.filter((t:string) => t.toLowerCase().includes(filterValue));
   }
 
   goToPage(i:number){
@@ -87,8 +116,9 @@ export class GalleryComponent implements OnInit {
     }); 
   }
 
-  openEditAssetDialog(src: string){
-    this.selectedFilePath = this.apiService.srcApiPath(src);
+  openEditAssetDialog(asset:any){
+    this.selectedFile = asset;
+    this.selectedFile.path = this.apiService.srcApiPath(asset.src);
     //console.log(category);
     this.coreService.openDialog({
       headerText: ``,
@@ -164,6 +194,30 @@ export class GalleryComponent implements OnInit {
     });
     this.coreService.selectedAssets = (this.coreService.selectedAssets).concat(srcs);
     //coreService.selectedAssets.push(asset.src)
+  }
+
+  getAssetsForTags(removed:boolean = false){
+
+    if(!removed){
+      this.selectedTags.push(this.tagCtrl.value);
+      this.selectedTags = this.coreService.arrayUnique(this.selectedTags);
+    }
+    let tags = this.selectedTags.join(',');
+    if(!this.selectedTags.length){
+      this.goToPage(0); 
+      return;
+    }
+    this.apiService.getData(`/assetsForTags/${this.apiService.user.id}/${tags}`).subscribe({
+      next: (resp:any) => {
+        this.assets = resp;
+        this.tagCtrl.setValue('')
+        //console.log(this.assets)
+      },
+      error: (e)=>{
+        console.log(e);
+        this.coreService.giveSnackbar('Login First!', {});
+      }
+    });
   }
 
 }

@@ -159,14 +159,11 @@ export class ComicComponent implements OnInit {
     this.canvas.renderAll();
   }
 
-
   downloadImage(type: string){
     this.canvas.getElement().toBlob((blob:any)=>{
       saveAs(blob, `siteland-asset-bank.${type}`);
     })
   }
-
-
 
   openMiniTreeDialog(){
     this.coreService.openDialog({
@@ -176,8 +173,6 @@ export class ComicComponent implements OnInit {
       id: 'miniTreeDialog'
     }); 
   }
-
-
 
   onSelectCategory(category: any){
     
@@ -210,7 +205,6 @@ export class ComicComponent implements OnInit {
     });
 
   }
-
 
   saveTree(){
     this.apiService.postAuthData('/tree', {

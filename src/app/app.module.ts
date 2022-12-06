@@ -5,11 +5,10 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppCanvasComponent } from './components/app-canvas/app-canvas.component';
 
-
 import { NgxDropzoneModule } from 'ngx-dropzone';
 import { AppDropzoneComponent } from './components/app-dropzone/app-dropzone.component';
 import { MaterialModule } from './material/material.module';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DialogModule } from './dialog/dialog.module';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { PickerMenuComponent } from './components/picker-menu/picker-menu.component';
@@ -54,6 +53,7 @@ import { MiniTreeComponent } from './components/mini-tree/mini-tree.component';
     MaterialModule,
     DialogModule,
     FormsModule,
+    ReactiveFormsModule,
     ColorPickerModule,
     HttpClientModule,
     SortablejsModule.forRoot({ animation: 150 }),

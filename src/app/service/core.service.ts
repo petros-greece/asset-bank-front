@@ -32,8 +32,10 @@ export class CoreService {
     private matDialog : MatDialog,
     ){
       this.isProd = (window.location.href.indexOf('localhost') > 0) ? false : true;
+      if(this.isProd){ window.console.log = function () { }; }
       this.windowWidth = window.innerWidth;
       this.isMobile = (window.innerWidth < 880) ? true : false;
+      console.log('Core constructor', `Width ${this.windowWidth}`, `Is mobile ${this.isMobile}`);
 	  }
  
   /** DIALOGS ****************************************************************************/
@@ -189,6 +191,17 @@ export class CoreService {
     }
   
     return array;
+  }
+
+  arrayUnique(array: any[]) : any[]{
+    var a = array.concat();
+    for(var i=0; i<a.length; ++i) {
+      for(var j=i+1; j<a.length; ++j) {
+        if(a[i] === a[j])
+            a.splice(j--, 1);
+      }
+    }
+    return a;
   }
 
 }
