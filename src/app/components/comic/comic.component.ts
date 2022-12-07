@@ -132,13 +132,14 @@ export class ComicComponent implements OnInit {
   renderImages(){
     this.canvas.clear();
     this.canvas.backgroundColor = this.background;
-    this.canvas.setHeight(this.height);
-
+   
     let coords = {x:this.outerPadding, y: this.outerPadding, maxH: 0};
     this.images.forEach((img:any) => {
       this.transform1(coords, img);
     });
-
+    this.height = coords.y+coords.maxH+ this.padding;
+    this.canvas.setHeight(this.height);
+    //this.canvas.setWidth(coords.x);
     this.canvas.preserveObjectStacking = false;
     this.canvas.selectable = true;
     this.canvas.renderAll();
