@@ -45,14 +45,15 @@ export class GalleryComponent implements OnInit {
         this.apiService.tags = tags;
         this.filteredTags = this.tagCtrl.valueChanges.pipe(
           startWith(''),
-          map(state => (state ? this.filterTags(state) : this.apiService.tags.slice())),
+          map(state => ( state ? this.filterTags(state) : this.apiService.tags )),
         );
       });
     }
     else{
+      this.apiService.tags = [];
       this.filteredTags = this.tagCtrl.valueChanges.pipe(
         startWith(''),
-        map(state => (state ? this.filterTags(state) : this.apiService.tags.slice())),
+        map(state => ( state ? this.filterTags(state) : this.apiService.tags )),
       );      
     }
  
@@ -75,7 +76,7 @@ export class GalleryComponent implements OnInit {
     }
     //console.log(selectedAssets);
     if(!this.coreService.isProd){
-      this.openEditAssetDialog({src: 'U-1669365209.jpg'})
+      //this.openEditAssetDialog({src: 'U-1669365209.jpg'})
     }
 
 
@@ -93,7 +94,7 @@ export class GalleryComponent implements OnInit {
     this.apiService.getAssets(this.pageSize, this.page*this.pageSize).subscribe({
       next: (resp:any) => {
         this.assets = resp.assets;
-        this.total = resp.total;
+        this.total = 300//resp.total;
         this.pages = Array.from(Array(Math.floor((this.total-1)/this.pageSize)).keys());
         //console.log(this.assets)
       },

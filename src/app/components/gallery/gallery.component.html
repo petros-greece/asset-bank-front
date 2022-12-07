@@ -2,8 +2,8 @@
 
   <!--== PAGINATIO AND SELECTED MENU ==============================================-->
 
-  <div class="row mrgn-t-sm" style="margin: 0">
-    <div class="col-xs-12 col-sm-8 start-xs" style="white-space: nowrap; overflow-x: auto;">
+  <div class="row mrgn-t-sm pad-all-sm" style="margin: 0">
+    <div class="col-xs-12 col-sm-5 col-md-6 start-xs my-scroll" style="white-space: nowrap; overflow-x: auto;">
       <button 
         *ngFor="let p of pages;index as i"
         mat-raised-button 
@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <div class="d-xs-none col-sm-4 end-xs">
+    <div class="d-xs-none col-sm-7 col-md-6 end-xs">
   
       <!--DUMMY SO THE FOCUS DOES NOT GO TO THE FORM AUTOCOMPLETE-->
       <input type="text" style="opacity: 0;width: 1px" aria-label="Search Tags">
