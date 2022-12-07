@@ -37,6 +37,7 @@ export class TreeComponent implements OnInit {
     files: []
   };
 
+  gallerySpecificForCat:boolean = true;
 
   selectedFilePath: any;
   
@@ -193,6 +194,7 @@ export class TreeComponent implements OnInit {
   }
 
   openGalleryFromDropZoneDialog(){
+    this.gallerySpecificForCat = false;
     this.coreService.openDialog({
       headerText: `Gallery`,
       template: this.galleryDropZoneDialog,
@@ -252,6 +254,7 @@ export class TreeComponent implements OnInit {
       this.openDropZoneDialog(category);
       return;
     }
+    this.gallerySpecificForCat = true;
     this.apiService.selectedCategory = category;
     //console.log(category);
     this.coreService.openDialog({

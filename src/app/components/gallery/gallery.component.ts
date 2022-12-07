@@ -13,6 +13,7 @@ import { Observable } from 'rxjs';
 export class GalleryComponent implements OnInit {
 
   @Input() addAction = ''; 
+  @Input() specificForCat = false; 
   @Output() onAddSelected = new EventEmitter<any>();
 
   @ViewChild('comicDialog', {static: true}) comicDialog: TemplateRef<any> | any;  
@@ -42,18 +43,23 @@ export class GalleryComponent implements OnInit {
   ngOnInit(): void {
     if(!this.apiService.tags){
       this.apiService.getData(`/tagsForAccount/${this.apiService.user.id}`).subscribe((tags)=>{
-        this.apiService.tags = tags;
+        if(this.coreService.isProd){
+          this.apiService.tags = Object.values(tags)
+        }
+        else{
+          this.apiService.tags = tags;
+        }
+
         this.filteredTags = this.tagCtrl.valueChanges.pipe(
           startWith(''),
-          map(state => ( state ? this.filterTags(state) : this.apiService.tags )),
+          map(state => ( state ? this.filterTags(state) : this.apiService.tags.slice() )),
         );
       });
     }
     else{
-      this.apiService.tags = [];
       this.filteredTags = this.tagCtrl.valueChanges.pipe(
         startWith(''),
-        map(state => ( state ? this.filterTags(state) : this.apiService.tags )),
+        map(state => ( state ? this.filterTags(state) : this.apiService.tags.slice() )),
       );      
     }
  
@@ -94,7 +100,7 @@ export class GalleryComponent implements OnInit {
     this.apiService.getAssets(this.pageSize, this.page*this.pageSize).subscribe({
       next: (resp:any) => {
         this.assets = resp.assets;
-        this.total = 300//resp.total;
+        this.total = resp.total;
         this.pages = Array.from(Array(Math.floor((this.total-1)/this.pageSize)).keys());
         //console.log(this.assets)
       },
