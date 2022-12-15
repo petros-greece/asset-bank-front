@@ -17,7 +17,7 @@ export class GalleryComponent implements OnInit {
   @Output() onAddSelected = new EventEmitter<any>();
 
   @ViewChild('comicDialog', {static: true}) comicDialog: TemplateRef<any> | any;  
-  @ViewChild('editAssetDialog', {static: true}) editAssetDialog: TemplateRef<any> | any; 
+  @ViewChild('imageEditorDialog', {static: true}) imageEditorDialog: TemplateRef<any> | any; 
   @ViewChild('miniTreeDialog', {static: true}) miniTreeDialog: TemplateRef<any> | any;
 
   assets:any[]  = [];
@@ -82,11 +82,11 @@ export class GalleryComponent implements OnInit {
     }
     //console.log(selectedAssets);
     if(!this.coreService.isProd){
-      //this.openEditAssetDialog({src: 'U-1669365209.jpg'})
+      this.openimageEditorDialog({src: 'U-1669365209.jpg'})
     }
 
-
-
+    
+    // U-1670679020
     
   }
 
@@ -123,16 +123,17 @@ export class GalleryComponent implements OnInit {
     }); 
   }
 
-  openEditAssetDialog(asset:any){
+  openimageEditorDialog(asset:any){
     this.selectedFile = asset;
     this.selectedFile.path = this.apiService.srcApiPath(asset.src);
     //console.log(category);
     this.coreService.openDialog({
       headerText: ``,
-      template: this.editAssetDialog,
-      cls: 'no-display'
+      template: this.imageEditorDialog,
+      cls: 'no-display',
+      showClose: false
     },{
-      id: 'previewCanvasDialog'
+      id: 'imageEditorDialog'
     }); 
   }
 

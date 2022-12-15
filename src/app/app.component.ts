@@ -23,7 +23,9 @@ export class AppComponent implements OnInit{
     
     console.log('App constructor', this.apiService.token);
     this.matIconRegistry.addSvgIcon( "lasso", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/laso.svg") );
-
+    this.matIconRegistry.addSvgIcon( "colorpicker", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/colorpicker.svg") );
+    this.matIconRegistry.addSvgIcon( "polygon", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/polygon.svg") );
+    this.matIconRegistry.addSvgIcon( "random", this.domSanitizer.bypassSecurityTrustResourceUrl("./assets/icons/random.svg") );
   }
 
   ngOnInit(): void {
@@ -31,6 +33,6 @@ export class AppComponent implements OnInit{
     this.apiService.checkAccessToken();
   }
 
-
+  addOrUpdateConfigEditorSettings(){}
 
 }

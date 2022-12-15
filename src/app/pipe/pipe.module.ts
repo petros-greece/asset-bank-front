@@ -1,14 +1,15 @@
 import { NgModule } from "@angular/core";
 import { 
   ApiPathPipe,  ApiPathSmPipe, OnlyNumberPipe,
-  RoundNumPipe 
+  RoundNumPipe, SortObjArrPipe
 } from "./asset-bank-pipes.pipe";
 
 const BankPipes = [
   ApiPathPipe,
   ApiPathSmPipe,
   OnlyNumberPipe, 
-  RoundNumPipe
+  RoundNumPipe,
+  SortObjArrPipe
 ];
 
 @NgModule({

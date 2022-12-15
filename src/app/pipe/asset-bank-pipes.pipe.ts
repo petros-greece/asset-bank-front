@@ -1,7 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
-
 @Pipe({ name: 'apiPath' })
 export class ApiPathPipe implements PipeTransform {
   transform(val:string) {
@@ -18,7 +17,6 @@ export class ApiPathSmPipe implements PipeTransform {
   };
 };
 
-
 @Pipe({ name: 'onlyNumber' })
 export class OnlyNumberPipe implements PipeTransform {
   transform(val:string) {
@@ -32,6 +30,21 @@ export class RoundNumPipe implements PipeTransform {
     return Math.round(val);   
   };
 };
+
+@Pipe({ name: 'sortObjArr' })
+export class SortObjArrPipe implements PipeTransform {
+  transform(arr:any[], prop:string) {
+    const arrClone = JSON.parse(JSON.stringify(arr));
+    const data = arrClone.sort((a:any,b:any)=>{return a[prop].localeCompare(b[prop])}); 
+    return data;
+  };
+};
+
+
+
+
+
+
 
 
 

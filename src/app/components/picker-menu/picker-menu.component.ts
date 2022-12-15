@@ -10,6 +10,8 @@ export class PickerMenuComponent implements OnInit {
   @Input()   label: string = ''; 
   @Input()   icon: string = ''; 
   @Input()   color: string = 'red';
+  @Input()   iconNoBg: string = ''; 
+  
   @Output() onPickColor = new EventEmitter<any>();
 
   constructor() { }

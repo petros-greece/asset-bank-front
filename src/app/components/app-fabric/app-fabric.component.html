@@ -1,15 +1,15 @@
 <div>
 
-  <div class="row fabric-colors-con" *ngIf="view === 'edit'">
+  <div class="row fabric-colors-con mat-grey-800" *ngIf="view === 'edit'">
       
     <div class="col" style="width: 100%">
 
       <!--== GENERAL ===================-->
 
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+      <div class="row middle-xs pad-l-sm mrgn-t-sm" style="margin: 0px;">
             
         <button 
-          mat-raised-button 
+          mat-icon-button 
           color="accent"
           [matMenuTriggerFor]="galleryMenu" 
           (click)="showGallery = true;">
@@ -22,17 +22,17 @@
           </div>
         </mat-menu>
 
-        <button mat-raised-button color="accent"
+        <button mat-icon-button color="accent"
           (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='excludeCrop'">
           <mat-icon svgIcon="lasso"></mat-icon>
         </button>
 
-        <!-- <button mat-raised-button color="accent"
+        <button mat-icon-button color="accent"
           (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='crop'">
           <mat-icon>crop_free</mat-icon>
-        </button> -->
+        </button>
 
-        <button mat-raised-button color="accent"
+        <button mat-icon-button color="accent"
           (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='selectAndRemovePart'">
           <mat-icon>crop</mat-icon>
         </button>
@@ -42,17 +42,22 @@
           <mat-icon>photo_size_select_large</mat-icon>
         </button> -->
 
-        <button mat-raised-button color="accent"
+        <button mat-icon-button color="accent"
           (click)="duplicateSelection()">
           <mat-icon>content_copy</mat-icon>
         </button>
 
-        <button mat-raised-button color="accent"
+        <button mat-icon-button color="accent"
           (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.selection = true;">
           <mat-icon>touch_app</mat-icon>
         </button>
 
-        <button mat-raised-button color="warn" (click)="removeSelection()">
+        <button mat-icon-button color="accent"
+          (click)="fabricCanvas.discardActiveObject().renderAll();">
+          <mat-icon>remove_done</mat-icon>
+        </button>
+        
+        <button mat-icon-button color="warn" (click)="removeSelection()">
           <mat-icon>remove</mat-icon>
         </button>
 
@@ -64,27 +69,31 @@
 
       <!--== TOOLS ===================-->
 
-      <div class="row middle-xs pad-l-sm mrgn-t-sm">
+      <div class="row middle-xs pad-l-sm mrgn-t-sm" style="margin: 0px;">
 
         <!--== BRUSH ===================-->
 
         <div class="col pad-all-xs">
           Brush
           <app-picker-menu
-            (click)="fabricService.addBrush(fabricCanvas, brush);"
+            (click)="fabricCanvas.appStatus = '';fabricService.addBrush(fabricCanvas, brush);"
             [icon]="'brush'" 
             [color]="brush.color" 
-            (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);">
+            (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);changeActiveBrush()">
 
             <div class="col">
               <div style="z-index: 9999">
                 Line Width
-                <mat-slider thumbLabel step="1" min="1" max="50" [(ngModel)]="brush.width" (change)="fabricService.addBrush(fabricCanvas, brush);"></mat-slider>
+                <mat-slider 
+                  thumbLabel step="1" min="1" max="50" 
+                  [(ngModel)]="brush.width" 
+                  (change)="fabricService.addBrush(fabricCanvas, brush);changeActiveBrush()"></mat-slider>
               </div>
             
               <div>
                 Line Miter
-                <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" (change)="fabricService.addBrush(fabricCanvas, brush);" aria-label="Select an option">
+                <mat-button-toggle-group [(ngModel)]="brush.strokeLineCap" 
+                (change)="fabricService.addBrush(fabricCanvas, brush);changeActiveBrush()" aria-label="Select an option">
                   <mat-button-toggle value="butt">
                     <mat-icon>rectangle</mat-icon>
                   </mat-button-toggle>
@@ -97,6 +106,11 @@
                 </mat-button-toggle-group>
               </div>
 
+              <button mat-icon-button color="accent"
+                (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.appStatus='colorpicker-brush'">
+                <mat-icon svgIcon="colorpicker"></mat-icon>
+              </button>
+
             </div>
 
           </app-picker-menu>
@@ -104,7 +118,7 @@
 
         <!--== TEXTBOXES ===================-->
 
-        <div class="col pad-all-xs" style="background: rgba(150,150,150,.5)">
+        <div class="col pad-all-xs">
           Textbox
 
           <div>
@@ -137,13 +151,17 @@
               [icon]="'format_paint'" 
               [color]="textbox.backgroundColor" 
               (onPickColor)="textbox.backgroundColor = $event.color;changeActiveText()">
+              <button mat-icon-button color="accent"
+                (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.appStatus='colorpicker-textbox'">
+                <mat-icon svgIcon="colorpicker"></mat-icon>
+              </button>
             </app-picker-menu>
         
-            <button mat-raised-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
+            <button mat-icon-button color="accent" (click)="fabricService.addTextBox(fabricCanvas, textbox)">
               <mat-icon>notes</mat-icon>
             </button>
         
-            <button mat-raised-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
+            <button mat-icon-button color="accent" (click)="fabricService.speechBubble(fabricCanvas, textbox);">
               <mat-icon>comment</mat-icon>
             </button>
 
@@ -174,9 +192,13 @@
               icon="format_paint" 
               [color]="icon.fill" 
               (onPickColor)="icon.fill = $event.color;changeActiveIcon()">
+              <button mat-icon-button color="accent"
+                (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.appStatus='colorpicker-icon'">
+                <mat-icon svgIcon="colorpicker"></mat-icon>
+              </button>
             </app-picker-menu> 
             
-            <button mat-raised-button color="accent" [matMenuTriggerFor]="iconsMenu">
+            <button mat-icon-button color="accent" [matMenuTriggerFor]="iconsMenu">
               <mat-icon>image</mat-icon>
             </button>
 
@@ -215,7 +237,7 @@
 
       <!--== DELETE ===================-->
 
-      <div class="row end-xs mrgn-b-sm">
+      <div class="row end-xs mrgn-b-sm pad-r-sm">
         <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">
           <mat-icon>delete</mat-icon>
         </button>

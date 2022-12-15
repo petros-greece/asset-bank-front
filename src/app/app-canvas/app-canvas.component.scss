@@ -1,0 +1,37 @@
+.my-accordion{
+  mat-panel-title{
+    white-space: nowrap;
+  }
+}
+
+.history-card-overlay{
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  width: 100%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  pointer-events: all;
+  cursor: pointer;
+}
+.history-card-overlay:hover  {
+  background: rgba(255,255,255,.9);
+  opacity: 1;
+  pointer-events: all;
+}
+.sequence-effects-con{
+  font-size: 10px;
+  height: 300px;
+  overflow-x: hidden;
+  border: 1px dotted grey;
+  border-radius: 4px;
+  button{
+    font-size: 12px;
+  }
+}

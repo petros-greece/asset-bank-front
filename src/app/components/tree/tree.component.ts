@@ -208,10 +208,10 @@ export class TreeComponent implements OnInit {
     this.coreService.toBase64(e).subscribe(base64 => this.selectedFilePath = base64 ) 
     // this.coreService.openDialog({
     //   headerText: `Preview Image`,
-    //   template: this.editAssetDialog, 
+    //   template: this.imageEditorDialog, 
     // },
     // {
-    //   id: 'previewCanvasDialog'
+    //   id: 'imageEditorDialog'
     // });
   }
 

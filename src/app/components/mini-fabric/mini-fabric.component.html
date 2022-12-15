@@ -1,0 +1,70 @@
+<div class="col-xs inline-block">
+
+  <div class="row around-xs">
+
+    <canvas id="miniFabricCanvas" style="border: 1px dotted grey;"></canvas>
+  </div>
+
+  <div class="row around-xs">
+    
+    <button mat-icon-button color="accent" (click)="addRect()">
+      <mat-icon>rectangle</mat-icon>
+    </button>
+  
+    <button mat-icon-button color="accent" (click)="addCircle()">
+      <mat-icon>circle</mat-icon>
+    </button>
+  
+    <button mat-icon-button color="accent" (click)="addEditablePolygon()">
+      <mat-icon svgIcon="polygon"></mat-icon>
+    </button>
+  
+    <button mat-icon-button color="accent" [matMenuTriggerFor]="iconsMenuMini">
+      <mat-icon>image</mat-icon>
+    </button>
+
+    <app-picker-menu 
+      [iconNoBg]="'brush'" 
+      (onPickColor)="colorChange($event.color);">
+    </app-picker-menu> 
+
+    <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">
+      <mat-icon>remove</mat-icon>
+    </button>
+  </div>
+  
+  <div class="row around-xs">
+    <div (click)="emitPath()">
+      <ng-content></ng-content>
+    </div>
+  </div>
+
+</div>
+
+<!--== MENU ========-->
+
+<mat-menu #iconsMenuMini="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+  <div (click)="$event.stopPropagation()">
+    <div class="row">
+      <div class="col-xs-4">
+        <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
+          {{file.name}}
+        </button>        
+      </div>
+      <div class="col-xs-8">
+        <div class="row">
+
+          <button 
+            mat-raised-button color="primary"  
+            *ngFor="let svg of svgIcons" 
+            (click)="addSVGIcon(svg.svg)"
+            [style.fill]="'red'"
+            [style.stroke]="'#000'"
+            [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+            class="svg-but">
+          </button>  
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-menu>

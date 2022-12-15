@@ -1,0 +1,1119 @@
+<div class="pos-rel">
+
+  <!-- <speech-recognition (onListen)="onListen($event)"></speech-recognition> -->
+
+
+  <mat-icon mat-dialog-close class="my-close-dialog"
+    (click)="saveUIToStorage();coreService.closeDialogById('imageEditorDialog')">
+    cancel
+  </mat-icon>
+
+  <ng-template *ngTemplateOutlet="editorSettingsTmpl"></ng-template> 
+
+
+  <div class="container-fluid" style="min-width: 50vw;height: 95vh;" class="mat-grey pad-all-xs pad-b-lg">
+
+    <div class="row mat-grey" style="margin: 0">
+
+      <!--== CONFIG =====================================================================================================-->
+
+      <div class="col-xs-12 col-md-3 col-lg-4">
+        
+        <!-- <ng-template *ngTemplateOutlet="brightnessTmpl"></ng-template> -->
+        <div class="row around-xs">
+          <mat-checkbox [(ngModel)]="applyEffectWithReInit" class="mrgn-all-sm d-xs-none">
+            Restart On Effect Change 
+          </mat-checkbox>
+          <button mat-icon-button color="primary" (click)="refresh()" class="d-xs-none d-sm-inline-block">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+
+        <!--== ACCORDEON =====================================================-->
+
+        <div 
+        [style.height]="UI.effects.height + 'px'" 
+        class="my-scroll-dark my-scroll-big my-accordion d-xs-none">
+          
+          <mat-accordion>
+    
+            <mat-expansion-panel 
+              *ngFor="let effect of effects;index as i">
+                <mat-expansion-panel-header>  
+                  <mat-panel-title>
+                    {{effect.head}}
+                  </mat-panel-title>  
+                </mat-expansion-panel-header>   
+                <ng-template *ngTemplateOutlet="effect.tmpl"></ng-template>
+                
+                <div class="end-xs" *ngIf="!effect.noParamsMethod">
+                  <button 
+                    (click)="fabricCanvas.isDrawingMode = false;
+                            fabricCanvas.selection = true;
+                            fabricCanvas.appStatus = 'lassoRectangeEffect';
+                            fabricCanvas.effectMethod = effect.method"
+                    mat-icon-button 
+                    color="accent">
+                    <mat-icon>crop</mat-icon>
+                  </button>
+
+                  <button 
+                    (click)="fabricCanvas.isDrawingMode = true;
+                            fabricCanvas.selection = false;
+                            fabricCanvas.appStatus = 'lassoMethodEffect';
+                            fabricCanvas.effectMethod = effect.method"
+                    mat-icon-button 
+                    color="accent">
+                    <mat-icon svgIcon="lasso"></mat-icon>
+                  </button>
+                  
+                </div> 
+            </mat-expansion-panel>
+
+            <mat-expansion-panel>
+                <mat-expansion-panel-header>  
+                  <mat-panel-title>
+                    {{'Top Colors ('+this.info.colorCount+')'}}
+                  </mat-panel-title>  
+                </mat-expansion-panel-header>   
+                <ng-template *ngTemplateOutlet="topColorsTmpl"></ng-template>
+            </mat-expansion-panel>      
+
+          </mat-accordion> 
+          
+        </div>
+
+        <!--== SEQUENCE =====================================================-->
+
+        <div class="mrgn-t-xs">
+
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>  
+              <mat-panel-title>
+                Effects Sequence
+              </mat-panel-title>  
+            </mat-expansion-panel-header>   
+            <ng-template *ngTemplateOutlet="sequenceTmpl"></ng-template>  
+          </mat-expansion-panel>
+
+        </div>
+
+        <!--== PATTERNS =====================================================-->
+
+        <div class="mrgn-t-xs">
+
+          <mat-expansion-panel [(expanded)]="UI.patterns.expanded">
+            <mat-expansion-panel-header>  
+              <mat-panel-title>
+                Patterns
+              </mat-panel-title>  
+            </mat-expansion-panel-header>   
+            <ng-template *ngTemplateOutlet="patternsTmpl"></ng-template> 
+          </mat-expansion-panel>
+          
+
+        </div>
+
+        <!--== TEST =====================================================-->
+
+        <div *ngIf="!coreService.isProd">
+          R<mat-slider thumbLabel [min]="360" [max]="720" [(ngModel)]="scissorsTest.reverse"></mat-slider>
+          SF<mat-slider thumbLabel [min]="0.1" [max]="5" [step]=".1" [(ngModel)]="scissorsTest.sumFactor"></mat-slider>        
+          <button  mat-raised-button color="accent" (click)="scissors()">scissors()</button>
+          @todo min max config and save state
+        </div>
+
+        <!--== TAGS =====================================================-->
+
+        <div *ngIf="showTags" class="mrgn-t-lg">
+          <mat-form-field class="example-chip-list" appearance="fill">
+            <mat-label>Image Tags</mat-label>
+            <mat-chip-list #chipList aria-label="Fruit selection">
+              <mat-chip *ngFor="let tag of selectedFile.tags" (removed)="removeTag(tag)">
+                {{tag}}
+                <button matChipRemove>
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip>
+              <input placeholder="Add Tag..."
+                    [matChipInputFor]="chipList"
+                    [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                    [matChipInputAddOnBlur]="true"
+                    (matChipInputTokenEnd)="addTag($event)">
+            </mat-chip-list>
+          </mat-form-field>
+
+          <button mat-icon-button (click)="saveTags()">
+            <mat-icon>save</mat-icon>
+          </button>
+
+        </div>
+
+      </div>
+      
+      <!--==  CANVAS AND FABRIC =====================================================================================================-->
+
+      <div class="col-xs-12 col-md-9 col-lg-8"
+        [style.height]="(height*canvasScale)+200+'px'" 
+        [style.background]="'rgb('+info.averageRgb.r+','+info.averageRgb.g+','+info.averageRgb.b+')'">
+        
+        <div 
+          id="canvas-container"
+          style="position: relative;transform-origin: left top;" 
+          [style.transform]="'scale('+canvasScale+')'">
+        
+          <div [style.height]="height+'px'" ></div>
+
+          <canvas style="position: absolute;top: 0;left: 0;z-index: -1" id="dummy-canvas" [width]="width" [height]="height"></canvas>
+          <canvas style="position: absolute;top: 0;left: 0;" id="canvas" [width]="width" [height]="height"></canvas>
+          <div style="position: absolute;top: 0;left: 0;">
+            <canvas id="fabricCanvas" [width]="width" [height]="height"></canvas>
+          </div>
+                  
+        </div>
+
+        <app-fabric
+          class="pos-rel"
+          [style.top]="(canvasScale < 1) ? (-(height-(height*canvasScale))+'px') : '0px'" 
+          [fabricCanvas]="fabricCanvas"
+          [ctxFabric]="ctxFabric"
+          [ctx]="ctx">
+      
+          <button mat-raised-button color="accent" (click)="mergeDataWithFabric()">
+            Merge Layers
+          </button> 
+        </app-fabric>
+
+      </div>
+      
+
+
+    </div> 
+
+    <div class="row center-xs pad-all-md space-between" *ngIf="apiService.selectedCategory">
+      
+      <button mat-raised-button color="primary" (click)="downloadImage('jpeg')">
+        JPEG<mat-icon>download</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="downloadImage('png')">
+        PNG<mat-icon>download</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="uploadImageToCat()">
+        Add To {{apiService.selectedCategory?.title}}
+      </button>
+      <button mat-raised-button color="primary" (click)="uploadImageToCat(true)">
+        Add and close
+      </button>
+      <button mat-raised-button color="warn" (click)="removeAsset()">
+        Remove From {{apiService.selectedCategory?.title}}
+      </button>  
+
+    </div>
+
+    <div class="row center-xs pad-all-md space-between" *ngIf="!apiService.selectedCategory">
+
+      <button mat-raised-button color="primary" (click)="downloadImage('jpeg')">
+        JPEG<mat-icon>download</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="downloadImage('png')">
+        PNG<mat-icon>download</mat-icon>
+      </button>
+
+      <button mat-raised-button color="primary" (click)="uploadImage()">
+        Upload Image
+      </button>  
+    </div>
+
+  </div> 
+  
+  <!--==  HISTORY =====================================================================================================-->
+
+
+  <div style="width: 100%; position: fixed; bottom: 0px; left: 0px; z-index: 9999;overflow-y: hidden;" class="my-scroll-dark mat-grey-900" *ngIf="history.length">
+    
+    <button mat-button (click)="historyShow = !historyShow">
+      <mat-icon>{{ !historyShow ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+
+    <div class="row" style="flex-wrap: nowrap;" *ngIf="historyShow">
+
+      <div *ngIf="historySelected.length" style="position: absolute;top: 4px;left: 7px;">
+        <button  
+          (click)="addBlocksFromHistory()"
+          mat-raised-button color="accent">
+          Add Selected ({{historySelected.length}})
+        </button>
+        <button mat-raised-button color="warn" (click)="historySelected = []" class="mrgn-l-sm">
+          <mat-icon>remove</mat-icon>
+        </button>   
+      </div>
+
+      <div *ngIf="!historySelected.length" style="position: absolute;top: 4px;left: 7px;">
+        <button 
+          (click)="selectAllFromHistory()"
+          mat-raised-button color="accent">
+          Selected All
+        </button>
+        <button mat-button color="warn" (click)="history = []" class="mrgn-l-sm">
+          Clear
+        </button>   
+      </div>
+
+    </div>
+
+    <div class="row" style="flex-wrap: nowrap;" *ngIf="historyShow">
+
+      <div *ngFor="let item of history;index as i" class="mrgn-all-xs" style="display: flex;position: relative;">
+        
+        <!-- <img [src]="item" width="100" (click)="historySelected.push(i)"> -->
+        <!-- *ngIf="historySelected.includes(i)" -->
+        <!-- (click)="historySelected.splice(historySelected.indexOf(i), 1)" -->
+        <img [src]="item" width="100">
+
+        <div class="history-card-overlay">
+            <button mat-icon-button color="accent" (click)="historySelected.push(i)">
+              <mat-icon>check</mat-icon>
+            </button>  
+            <button mat-icon-button color="accent" (click)="goToHistory(i)">
+              <mat-icon>visibility</mat-icon>
+            </button>         
+        </div>
+
+        <div class="history-card-overlay" style="opacity: 1" *ngIf="historySelected.includes(i)">
+          <button mat-icon-button class="mat-green" (click)="historySelected.splice(historySelected.indexOf(i), 1)">
+            <mat-icon>check</mat-icon>
+          </button> 
+        </div>     
+
+      </div>  
+
+    </div>
+
+  </div>
+
+
+</div>
+
+<!--== TEMPLATES =====================================================================================================-->
+
+<ng-template #confusionTmpl>
+  <div>
+    <div>
+      <mat-checkbox [(ngModel)]="config.confusion.colors[0]" value="1">R</mat-checkbox>
+      <mat-checkbox [(ngModel)]="config.confusion.colors[1]" value="1" class="mrgn-l-sm">G</mat-checkbox>
+      <mat-checkbox [(ngModel)]="config.confusion.colors[2]" value="1" class="mrgn-l-sm">B</mat-checkbox>
+    </div>
+  
+    <div>
+      Start
+      <mat-slider thumbLabel [min]="0" [max]="200" [(ngModel)]="config.confusion.start">
+      </mat-slider>
+    </div>
+  
+    <div>
+      Randomness
+      <mat-slider thumbLabel [min]="0" [max]="50" [(ngModel)]="config.confusion.randomness"></mat-slider>
+    </div>
+  
+    <button mat-raised-button color="accent" (click)="giveConfusion()">
+      Add confusion
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #topColorsTmpl>
+  <span *ngFor="let color of info.colors;index as i">
+    <app-picker-menu
+      label="{{i+1}}" 
+      [color]="'rgb('+color[0]+')'" 
+      (onPickColor)="replaceUIColor($event.color, i)">
+    </app-picker-menu>
+  </span> 
+</ng-template>
+
+<ng-template #colorStopsTmpl>
+  <div *ngFor="let colorStop of config.colorStops;index as i">
+    <app-picker-menu
+      label="{{i+1}}" 
+      [color]="colorStop.color" 
+      (onPickColor)="colorStop.color = $event.color">
+    </app-picker-menu>
+    <mat-slider [min]="100" [max]="800" [(ngModel)]="colorStop.stop"></mat-slider>
+    <button mat-icon-button (click)="config.colorStops.splice(i, 1)">
+      <mat-icon>remove_circle</mat-icon>
+    </button>
+  </div>
+
+
+  <button mat-icon-button (click)="config.colorStops.push({color: 'rgb(0,0,0)', stop: config.colorStops[config.colorStops.length-1].stop+100})">
+    <mat-icon>add_circle</mat-icon>
+  </button>
+
+  <div>
+    <button mat-raised-button color="accent" (click)="giveMultiColor()">
+      Apply Stops
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #brightnessTmpl>
+  <!-- <button mat-icon-button (click)="lighten()">
+    <mat-icon>wb_sunny</mat-icon>
+  </button>
+  
+  <button mat-icon-button (click)="brighten()">
+    <mat-icon>nightlight_round</mat-icon>
+  </button>     -->
+</ng-template>
+
+<ng-template #pixelateTmpl>
+
+  <mat-radio-group [(ngModel)]="config.pixelate.outline" (change)="givePixelate()">
+    Outline Style
+    <mat-radio-button [value]="true">Y</mat-radio-button>
+    <mat-radio-button [value]="false">N</mat-radio-button>
+  </mat-radio-group>
+
+  <div>
+    Factor
+    <mat-slider thumbLabel [min]="2" [max]="15" [(ngModel)]="config.pixelate.factor" (change)="givePixelate()">
+    </mat-slider>
+  </div>      
+
+</ng-template>
+
+<ng-template #pixelateCircleTmpl>
+  <mat-radio-group [(ngModel)]="config.pixelate.circleOutline" (change)="givePixelate2()">
+    Outline Style
+    <mat-radio-button [value]="true">Y</mat-radio-button>
+    <mat-radio-button [value]="false">N</mat-radio-button>
+  </mat-radio-group>
+  
+  <div class="mrgn-t-sm">
+    Radius
+    <mat-slider thumbLabel [min]="2" [max]="15" [(ngModel)]="config.pixelate.circleFactor" 
+    (change)="givePixelate2()">
+    </mat-slider>
+  </div>      
+
+  <!-- <button mat-raised-button color="accent" (click)="givePixelate2()">Mosaic</button>
+  <button mat-raised-button color="accent" (click)="pixelateCircleData(true)">Mosaic Outline</button>  -->
+</ng-template>
+
+<ng-template #bnwTmpl>
+
+  <div>
+
+    <mat-form-field>
+      <mat-label>Type</mat-label>
+      <mat-select [(ngModel)]="config.bnw.rgb[0]" (selectionChange)="giveBNW()">
+        <mat-option *ngFor="let rgb of ['r', 'g', 'b']" [value]="rgb">
+          {{rgb}}
+      </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+  
+</ng-template>
+
+<ng-template #negativeTmpl>
+
+    <mat-slider thumbLabel [min]="70" [max]="255" [(ngModel)]="config.negative.brightness"
+    (change)="giveNegative()">
+    </mat-slider>
+
+</ng-template>
+
+<ng-template #exposureTmpl>
+
+  <mat-slider thumbLabel [min]="0.1" [max]="2" [step]=".1" 
+    [(ngModel)]="config.exposure.distance" 
+    (change)="giveExposure()">
+  </mat-slider>
+
+</ng-template>
+
+<ng-template #polychromeNegativeTmpl>
+  <div>
+    Middle
+    <mat-slider thumbLabel [min]="40" [max]="225" [step]="1" 
+      [(ngModel)]="config.polychromeNegative.middlePoint" 
+      (change)="givePolychromeNegative()">
+    </mat-slider> 
+  </div>
+
+  <div>
+    Reverse
+    <mat-slider thumbLabel [min]="40" [max]="225" [step]="1" 
+      [(ngModel)]="config.polychromeNegative.range" 
+      (change)="givePolychromeNegative()">
+    </mat-slider> 
+  </div>
+</ng-template>
+
+<ng-template #whiteNoiseTmpl>
+  <mat-slider thumbLabel [min]="0" [max]="205" [step]="1" 
+    [(ngModel)]="config.whiteNoise.factor" 
+    (change)="giveWhiteNoise()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #paradiseTmpl>
+  <mat-slider thumbLabel [min]="0.1" [max]="1" [step]=".1" 
+    [(ngModel)]="config.paradise.factor" 
+    (change)="giveParadise()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #intensityTmpl>
+  <mat-slider thumbLabel [min]="0" [max]="1" [step]=".01" 
+    [(ngModel)]="config.intensity.factor" 
+    (change)="giveIntensity()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #bloomTmpl>
+  <mat-slider thumbLabel [min]="1" [max]="200" [step]="1" 
+    [(ngModel)]="config.bloom.factor" 
+    (change)="giveBloom()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #outlinesTmpl>
+  <mat-slider thumbLabel [min]="1" [max]="50" [step]="1" 
+    [(ngModel)]="config.outlines.factor" 
+    (change)="giveOutlines()">
+  </mat-slider>
+  <div>
+
+    <mat-checkbox [(ngModel)]="config.outlines.hasBg" (change)="giveOutlines()">Custom bg?</mat-checkbox>
+    <app-picker-menu
+      [icon]="'brush'"
+      [color]="config.outlines.bgColor" 
+      (onPickColor)="config.outlines.bgColor = $event.color;">
+    </app-picker-menu>
+  </div>
+</ng-template>
+
+<ng-template #waterTmpl>
+  <mat-slider thumbLabel [min]="1" [max]="6" [step]="1" 
+    [(ngModel)]="config.water.factor" 
+    (change)="giveWater()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #blocksTmpl>
+  <mat-slider thumbLabel [min]="20" [max]="290" [step]="1" 
+    [(ngModel)]="config.blocks.factor" 
+    (change)="giveBlocks()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #framesTmpl>
+  <div>
+    Factor
+    <mat-slider thumbLabel [min]="1" [max]="80" [step]="1" 
+      [(ngModel)]="config.frames.factor" 
+      (change)="giveFrames()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Stop
+    <mat-slider thumbLabel [min]="0" [max]="(width/height)*100 | roundNum" [step]="1" 
+      [(ngModel)]="config.frames.stop" 
+      (change)="giveFrames()">
+    </mat-slider>
+  </div>
+
+</ng-template>
+
+<ng-template #rotatingFramesTmpl>
+  <div>
+    Scale Factor
+    <mat-slider thumbLabel [min]="0" [max]="1" [step]=".1" 
+      [(ngModel)]="config.rotatingFrames.scaleFactor" 
+      (change)="giveRotatingFrames()">
+    </mat-slider>
+  </div>
+  <div>
+    Degrees Stop
+    <mat-slider thumbLabel [min]="1" [max]="360" [step]="1"
+      [(ngModel)]="config.rotatingFrames.degreesStop" 
+      (change)="giveRotatingFrames()">
+    </mat-slider>
+  </div>
+  <div>
+    Degrees Plus
+    <mat-slider thumbLabel [min]="1" [max]="15" [step]="1" 
+      [(ngModel)]="config.rotatingFrames.degreesPlus" 
+      (change)="giveRotatingFrames()">
+    </mat-slider>
+  </div>
+
+</ng-template>
+
+<ng-template #cartoonColorsTmpl>
+  <div class="row around-xs">
+    <app-pallet-picker (onColorSelect)="config.cartoonColors=$event;giveCartoonColors()">
+    </app-pallet-picker>
+  </div>
+</ng-template>
+
+<ng-template #vinylTmpl>
+  <mat-slider thumbLabel [min]="0.01" [max]="0.3" [step]="0.01" 
+    [(ngModel)]="config.vinyl.factor" 
+    (change)="giveVinyl()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #holyLightTmpl>
+  <mat-slider thumbLabel [min]="1" [max]="10" [step]="1" 
+    [(ngModel)]="config.holyLight.factor" 
+    (change)="giveHolyLight()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #fluffyTmpl>
+  <mat-slider thumbLabel [min]="5" [max]="50" [step]="1" 
+    [(ngModel)]="config.fluffy.factor" 
+    (change)="giveFluffy()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #suckTmpl>
+  <mat-slider thumbLabel [min]="10" [max]="100" [step]="1" 
+    [(ngModel)]="config.suck.factor" 
+    (change)="giveSuck()">
+  </mat-slider>
+</ng-template>
+
+<ng-template #spotlightTmpl>
+
+  <div>
+    Control X
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="config.spotlight.controlX" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Control Y
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="config.spotlight.controlY" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Range X
+    <mat-slider thumbLabel [min]="0" [max]="width/2" [step]="1" 
+      [(ngModel)]="config.spotlight.rangeX" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Range Y
+    <mat-slider thumbLabel [min]="0" [max]="width" [step]="1" 
+      [(ngModel)]="config.spotlight.rangeY" 
+      (change)="giveSpotlight()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #blindsTmpl>
+
+  <div>
+    Frequency
+    <mat-slider thumbLabel [min]="10" [max]="(width/3) | roundNum" [step]="1" 
+      [(ngModel)]="config.blinds.freq" 
+      (change)="giveBlinds()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Depth
+    <mat-slider thumbLabel [min]="0.1" [max]="1.5" [step]="0.01" 
+      [(ngModel)]="config.blinds.depth" 
+      (change)="giveBlinds()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #tremoloTmpl>
+
+  <div>
+    Period
+    <mat-slider thumbLabel [min]="0.01" [max]=".2" [step]="0.01" 
+      [(ngModel)]="config.tremolo.period" 
+      (change)="giveTremolo()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Pitch
+    <mat-slider thumbLabel [min]="10" [max]="100" [step]="1" 
+      [(ngModel)]="config.tremolo.pitch" 
+      (change)="giveTremolo()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #ellipseTmpl>
+
+  <div>
+    Radius X
+    <mat-slider thumbLabel [min]="width*.25" [max]="width*.75" [step]="1" 
+      [(ngModel)]="config.ellipse.rx" 
+      (change)="giveEllipse()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Radius Y
+    <mat-slider thumbLabel [min]="height*.25" [max]="height*.75" [step]="1" 
+      [(ngModel)]="config.ellipse.ry" 
+      (change)="giveEllipse()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #brokenWallTmpl>
+
+  <div>
+    Size
+    <mat-slider thumbLabel [min]="1" [max]="96" [step]="1" 
+      [(ngModel)]="config.brokenWall.size" 
+      (change)="giveBrokenWall()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Distance
+    <mat-slider thumbLabel [min]="10" [max]="200" [step]="1" 
+      [(ngModel)]="config.brokenWall.dist" 
+      (change)="giveBrokenWall()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #klimtTmpl>
+
+  <div>
+    Size
+    <mat-slider thumbLabel [min]="1" [max]="40" [step]="1" 
+      [(ngModel)]="config.klimt.size" 
+      (change)="giveKlimt()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Randomness
+    <mat-slider thumbLabel [min]="40" [max]="200" [step]="1" 
+      [(ngModel)]="config.klimt.randomness" 
+      (change)="giveKlimt()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #pourPaintTmpl>
+  
+  <app-picker-menu
+    label="Color" 
+    [color]="config.pourPaint.color" 
+    (onPickColor)="config.pourPaint.color = $event.color;">
+  </app-picker-menu>
+
+  <div>
+    Range
+    <mat-slider thumbLabel [min]="1" [max]="20" [step]="1" 
+      [(ngModel)]="config.pourPaint.range" 
+      (change)="givePourPaint()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Density
+    <mat-slider thumbLabel [min]="1" [max]="60" [step]="1" 
+      [(ngModel)]="config.pourPaint.density" 
+      (change)="givePourPaint()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #colendarTmpl>
+  
+  <div>
+    <mat-slider thumbLabel [min]="3" [max]="20" [step]="1" 
+      [(ngModel)]="config.colendar.factor" 
+      (change)="giveColendar()">
+    </mat-slider>
+  </div>
+
+
+</ng-template>
+
+<ng-template #lettersTmpl>
+  
+  <div>
+    Size
+    <mat-slider thumbLabel [min]="6" [max]="20" [step]="1" 
+      [(ngModel)]="config.letters.size" 
+      (change)="giveLetters()">
+    </mat-slider>
+  </div>
+
+  <div>
+    Density
+    <mat-slider thumbLabel [min]=".5" [max]="2" [step]=".1" 
+      [(ngModel)]="config.letters.density" 
+      (change)="giveLetters()">
+    </mat-slider>
+  </div>
+  
+  <mat-form-field appearance="fill">
+    <mat-label>Phrase</mat-label>
+    <input matInput type="text" [(ngModel)]="config.letters.phrase">
+  </mat-form-field>
+
+</ng-template>
+
+<ng-template #comicTmpl>
+  <div>
+    Reverse<mat-slider thumbLabel [min]="20" [max]="80" [(ngModel)]="config.comic.reverse" (change)="giveComic()"></mat-slider>
+  </div>
+  <div>
+    Sum<mat-slider thumbLabel [min]="200" [max]="400" [(ngModel)]="config.comic.sumFactor" (change)="giveComic()"></mat-slider>        
+  </div>
+</ng-template>
+
+<ng-template #whirlpoolTmpl>
+  <div>
+    Deg Stop
+    <mat-slider thumbLabel [min]="180" [max]="720" [step]="1" 
+      [(ngModel)]="config.whirlpool.degreesStop" 
+      (change)="giveWhirlpool()">
+    </mat-slider>
+  </div>
+  <div>
+    Deg Plus
+    <mat-slider thumbLabel [min]=".2" [max]="1.5" [step]=".1" 
+      [(ngModel)]="config.whirlpool.degreesPlus" 
+      (change)="giveWhirlpool()">
+    </mat-slider>
+  </div> 
+</ng-template>
+
+<ng-template #backgroundTmpl>
+  <small>The background will affect only transparent pixels!</small>
+  <app-picker-menu
+    label="Color" 
+    [color]="background.color" 
+    (onPickColor)="background.color = $event.color;">
+    <div class="col middle-xs mrgn-t-sm">
+
+      <button mat-raised-button color="accent" (click)="giveBackground()">
+        Apply Background
+      </button>
+    </div>
+  </app-picker-menu>
+</ng-template>
+
+
+
+
+<ng-template #editorSettingsTmpl>
+
+  <button mat-icon-button [matMenuTriggerFor]="personalSettingsMenu" style="position:absolute;left:5px;top:5px;">
+    <mat-icon>settings</mat-icon>
+  </button>
+
+  <mat-menu #personalSettingsMenu="matMenu" hasBackdrop="false">
+    <div (click)="$event.stopPropagation()" class="pad-all-sm pad-r-md">
+
+      <div *ngIf="editor.sequence && editor.sequence.length">
+        <h4 class="pad-l-md">Effects Sequence</h4>
+       
+        <div class="my-scroll pad-all-sm" style="max-height: 200px">
+          <div *ngFor="let sequence of editor.sequence;index as i" class="row between-xs no-mrgn">
+            <button mat-button  (click)="giveEffectsFromSettings(sequence)">
+              {{sequence.name}}
+            </button>
+            <mat-icon color="warn" class="top-5" (click)="editor.sequence.splice(i, 1)">remove_circle</mat-icon>
+          </div>
+        </div>
+
+        <div class="end-xs mrgn-t-sm">
+          <button mat-raised-button color="accent" (click)="saveEditorSettings('sequence', editor.sequence)">
+            Save
+            <mat-icon>save</mat-icon>
+          </button>
+        </div>
+      
+      </div>
+
+      <div *ngIf="editor.patterns && editor.patterns.length">
+        <mat-divider class="mrgn-t-sm mrgn-b-sm"></mat-divider>
+        <h4 class="pad-l-md">Patterns</h4>
+    
+        <div class="my-scroll pad-all-sm" style="max-height: 200px">  
+          <div *ngFor="let pattern of editor.patterns;index as i" class="row between-xs no-mrgn">
+            <button mat-button  (click)="renderPatternSeries(pattern.series)">
+              {{pattern.name}}
+            </button>
+            <mat-icon color="warn" class="top-5" (click)="editor.patterns.splice(i, 1)">remove_circle</mat-icon>
+          </div>
+        </div>
+
+        <div class="end-xs mrgn-t-sm">
+          <button mat-raised-button color="accent" (click)="saveEditorSettings('patterns', editor.patterns);">
+            Save
+            <mat-icon>save</mat-icon>
+          </button>
+        </div>
+
+      </div>
+
+
+      <div>
+        Effects Height
+        <mat-slider thumbLabel [min]="50" [max]="500" [step]="1" [(ngModel)]="UI.effects.height"></mat-slider>
+      </div>
+
+    </div>
+  </mat-menu>
+
+
+
+</ng-template>
+
+<ng-template #sequenceTmpl>
+
+  
+  <div class="row middle-xs" style="height: 58px;">
+    
+    <div *ngIf="effectsSequence.length">
+      <button  mat-raised-button color="accent" (click)="giveEffectsSequence()" [disabled]="sequence.isRunning">
+        Run Sequence
+      </button>
+      <button mat-icon-button color="accent" (click)="effectsSequence = []">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+
+    <div *ngIf="!effectsSequence.length">
+  
+      <button mat-raised-button color="accent" (click)="giveRandomSequence()">
+        Random Sequence
+      </button>
+    
+      <mat-form-field class="mrgn-l-xs" style="width: 50px;">
+        <mat-label>Effects Num</mat-label>
+        <input matInput type="number" [(ngModel)]="sequence.effectsNum">
+      </mat-form-field>
+  
+    </div>
+
+    <div class="col-xs end-xs">
+
+      <button mat-icon-button [matMenuTriggerFor]="saveSeqMenu" [disabled]="!effectsSequence.length">
+        <mat-icon>save</mat-icon>
+      </button>
+  
+      <mat-menu #saveSeqMenu="matMenu">
+        <div (click)="$event.stopPropagation();">
+  
+          <mat-form-field appearance="fill">
+            <mat-label>Name</mat-label>
+            <input matInput type="text" [(ngModel)]="sequence.name">
+          </mat-form-field>
+  
+          <button mat-button (click)="saveSequence()" [disabled]="!effectsSequence.length">
+            Save
+          </button>
+  
+        </div>
+      </mat-menu>
+    
+    </div>
+
+
+  </div>
+
+  <div class="row">
+    
+    <div class="col-xs-6 start-xs">
+
+      <div class="my-scroll mat-grey sequence-effects-con">
+        <div *ngFor="let effect of effects;index as i">
+          <button mat-button *ngIf="!effect.hidden"  
+            (click)="effectsSequence.push(effect)"
+            [style.color]="effect.noParamsMethod ? 'red' : ''">
+            <mat-icon>add_circle</mat-icon>
+            {{effect.head}}
+          </button>
+        </div>
+      </div>
+        
+      <button mat-button [matMenuTriggerFor]="seqRandomMenu">
+        Randomness
+        <mat-icon svgIcon="random"></mat-icon>
+      </button>
+      <mat-menu #seqRandomMenu="matMenu">
+        <div (click)="$event.stopPropagation()" class="col pad-all-sm">
+          <mat-checkbox [(ngModel)]="sequence.randomness.config">Effect Params</mat-checkbox>
+          <mat-checkbox [(ngModel)]="sequence.randomness.rect" (change)="sequence.randomness.rect ? sequence.randomness.poly = false : ''">Rect Selection</mat-checkbox>
+          <mat-checkbox [(ngModel)]="sequence.randomness.poly" (change)="sequence.randomness.poly ? sequence.randomness.rect = false : ''">Poly Selections</mat-checkbox>        
+        </div>
+      </mat-menu>
+
+    </div>
+
+    <div class="col-xs-6">
+
+      <div  [sortablejs]="effectsSequence">
+
+        <div *ngFor="let effect of effectsSequence;index as i" class="row">
+          
+          <button mat-button color="accent" (click)="effectsSequence.splice(i, 1)">
+            <mat-icon color="warn">remove_circle</mat-icon>
+            {{effect.head}}
+            <mat-icon [style.opacity]="i !== effectsSequence.length-1 ? 1 : .5" (click)="effectsSequence.splice(i, 0, effect);$event.stopPropagation()">east</mat-icon>
+          </button>
+        </div> 
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-template>
+
+<ng-template #patternsTmpl>
+
+  <div class="row middle-xs center-xs">
+
+    <mat-checkbox [(ngModel)]="pattern.applyMethod">Run Method</mat-checkbox>
+
+    <mat-form-field class="mrgn-l-sm">
+      <mat-label>Select Effect</mat-label>
+      <mat-select [(ngModel)]="pattern.method" [disabled]="!pattern.applyMethod">
+        <mat-option *ngFor="let effect of effects" [value]="effect.method"
+        [style.display]="effect.noParamsMethod ? 'none' : 'flex'">
+          {{effect.head}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+
+  <div class="row">                  
+    <div class="col-xs-6">
+      Inc X
+      <mat-slider thumbLabel [min]="10" [max]="300" [step]="1" 
+        [(ngModel)]="pattern.xIncr">
+      </mat-slider>
+    </div>
+    <div class="col-xs-6">
+      Inc Y
+      <mat-slider thumbLabel [min]="10" [max]="300" [step]="1" 
+        [(ngModel)]="pattern.yIncr">
+      </mat-slider>
+    </div>             
+  </div>
+
+  <app-mini-fabric (onEmitPath)="onEmitPathPattern($event)">         
+    <button mat-button color="accent" (click)="pattern.append=true;" class="mrgn-all-xs">
+      Add to Series
+    </button>
+    <button mat-raised-button color="accent" (click)="pattern.append=false;" class="mrgn-all-xs">
+      Apply Pattern
+    </button>
+  </app-mini-fabric>
+
+  <div class="mrgn-top-xs" *ngIf="pattern.series.length">
+    <div class="row">
+      <div *ngFor="let pat of pattern.series;index as i" class="inline-block middle-xs">
+        <button mat-button [style.color]="pat.color">
+          Pattern {{ i }}
+          <mat-icon>remove</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- <div class="col">
+      <div *ngFor="let pat of pattern.series;index as i">
+        <div>
+          Pattern {{ i }}
+        </div>
+        <mat-form-field appearance="fill">
+          <mat-label>IncrX</mat-label>
+          <input matInput type="text" [(ngModel)]="pattern.incrX">
+        </mat-form-field>
+      </div>
+    </div> -->
+
+    <div class="row around-xs">
+      <button mat-icon-button color="accent" (click)="pattern.series = []">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-icon-button color="accent" [matMenuTriggerFor]="saveSeriesMenu">
+        <mat-icon>save</mat-icon>
+      </button>
+      <mat-menu #saveSeriesMenu="matMenu">
+        <div (click)="$event.stopPropagation()" class="pad-all-sm">
+          <mat-form-field appearance="fill">
+            <mat-label>Series Name</mat-label>
+            <input matInput type="text" [(ngModel)]="pattern.seriesName">
+          </mat-form-field>
+          <button mat-button color="primary" (click)="savePattern()">
+            Save
+          </button>
+        </div>
+      </mat-menu>
+      <button mat-raised-button color="accent" (click)="renderPatternSeries()" >
+        Render Series
+      </button>
+    </div>
+
+  </div>
+
+</ng-template>
+
+
+  <!-- 
+  <button  mat-raised-button color="primary" [matMenuTriggerFor]="menu" class="pos-abs" style="left: 10px;top: 10px;">
+    Save World
+    <mat-icon>save</mat-icon>
+  </button> 
+  -->
+
+  <!-- 
+  <mat-menu #menu="matMenu" (menuOpened)="true" [overlapTrigger]="false">
+    <div (click)="$event.stopPropagation()" class="pad-all-md">
+      <button class="pos-abs" mat-raised-button color="primary" (click)="getImageData()">text</button>                 
+    </div>
+  </mat-menu> 
+  -->
+
+  <!-- 
+    <canvas id="canvas" [width]="width" [height]="height"></canvas> 
+  -->
+

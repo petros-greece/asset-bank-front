@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit, AfterContentChecked, AfterContentInit, AfterViewChecked } from '@angular/core';
 import { fabric } from 'fabric';
 import { CoreService } from 'src/app/service/core.service';
 import { FabricService } from 'src/app/service/fabric.service';
@@ -19,14 +19,15 @@ export interface FabricOptionsI{
 })
 
 
-export class AppFabricComponent implements OnInit {
+export class AppFabricComponent implements OnInit,  AfterViewChecked{
   @Input()  fabricCanvas: any;
   @Input()  ctxFabric: any;
   @Input()  ctx: any;
   @Input()  view: string = 'edit'; 
-  @Input()  images: any[] = [];  
+  @Input()  images: any[] = []; 
 
-
+  gotEvent:boolean = false;
+  
   svgFiles = [
     { name: 'textbox', },
     { name: 'christmas', },  
@@ -37,18 +38,16 @@ export class AppFabricComponent implements OnInit {
   ];
   svgIcons: any;
 
+  fonts = ['sans-serif', 'serif', 'Times New Roman', 'Helvetica', 'Arial', 'Verdana', 'Courier New'];
+
+
   showGallery: boolean = false;
-  fabricCanvasOpts = {
-    isDrawingMode: false
-  }
+
   brush = {
     color: 'white', 
     strokeLineCap: 'butt',
     width: 30
   }
-
-  fonts = ['sans-serif', 'serif', 'Times New Roman', 'Helvetica', 'Arial', 'Verdana', 'Courier New'];
-
   textbox = {
     backgroundColor: 'rgba(255, 255, 255, 1)',
     stroke: 'rgba(50,50,50, 1)',
@@ -73,14 +72,64 @@ export class AppFabricComponent implements OnInit {
     ) { }
 
   ngOnInit(): void {
-  
+    console.log('ngOnInit fabric')
+    // if(this.fabricConfig){
+    //   this.brush = this.fabricConfig.brush;
+    //   this.textbox = this.fabricConfig.textbox;
+    //   this.icon = this.fabricConfig.icon;
+    // }
 
 
-    // this.fabricCanvas.on('before:path:created', (opt:any) => {
-    //   console.log(opt, this.fabricCanvas);
-    // });
-    
-   
+
+
+
+  }
+
+  ngAfterViewChecked(): void {
+    if(this.fabricCanvas && !this.gotEvent){
+      console.log('app fabric ngAfterContentInit triggered many times')
+      this.gotEvent = true;
+      this.fabricCanvas.on('mouse:down', (opt:any) => {
+
+        if(this.fabricCanvas.appStatus.indexOf('colorpicker') > -1){
+          let x = Math.round(opt.pointer.x); 
+          let y = Math.round(opt.pointer.y);
+          let pixel = this.ctxFabric.getImageData(x,y,1,1);
+          let color;
+          if(pixel && pixel.data[3]){
+            color = pixel.data;
+          }
+          else{
+            pixel = this.ctx.getImageData(x,y,1,1);
+            color = pixel.data;
+          }
+          this.fabricCanvas.isDrawingMode = true;
+          this.fabricCanvas.selectable = false;
+
+          let rgbColor = `rgba(${color[0]},${color[1]},${color[2]},${color[3]})`;
+
+          if(this.fabricCanvas.appStatus === 'colorpicker-icon'){
+            this.icon.fill = rgbColor;
+          }
+          else if(this.fabricCanvas.appStatus === 'colorpicker-brush'){
+            this.fabricCanvas.freeDrawingBrush.color = rgbColor;
+            this.brush.color = rgbColor;
+          }
+          else if(this.fabricCanvas.appStatus === 'colorpicker-textbox'){
+            this.textbox.backgroundColor = rgbColor;
+          }
+
+          this.fabricCanvas.appStatus = '';
+
+        }
+
+      }); 
+    }
+ 
+  }
+
+  ngAfterContentInit(): void {
+
   }
 
 
@@ -113,6 +162,16 @@ export class AppFabricComponent implements OnInit {
         left: (this.fabricCanvas.width/2)-25,
         top: (this.fabricCanvas.height/2)-25
       }); 
+  }
+
+  changeActiveBrush(){
+    let activeObject = this.fabricCanvas.getActiveObject();
+    //console.log(activeObject);
+    if(!activeObject || !activeObject.strokeMiterLimit){return}
+    activeObject.set('stroke', this.brush.color);
+    activeObject.set('strokeWidth', this.brush.width);
+    activeObject.set('strokeLineCap', this.brush.strokeLineCap);  
+    this.fabricCanvas.renderAll();
   }
 
   changeActiveIcon(){

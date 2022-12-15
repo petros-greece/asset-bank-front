@@ -1,19 +1,32 @@
 import { asNativeElements, Injectable } from '@angular/core';
 import { Observable, reduce } from 'rxjs';
 import { fabric } from 'fabric';
-import { ICanvasOptions, IImageOptions, IRectOptions, ITextboxOptions } from 'fabric/fabric-impl';
+import { Circle, ICanvasOptions, ICircleOptions, IImageOptions, IPolylineOptions, IRectOptions, ITextboxOptions, Polygon } from 'fabric/fabric-impl';
 import { ApiService } from './api.service';
-import { PointI } from '../components/app-canvas/app-canvas.component';
+import { PointI, PolyT } from '../interface/canvas.interface';
+import { CanvasHelpersService } from './canvas-helpers.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FabricService {
 
-  constructor(private apiService: ApiService) { }
+  constructor(
+    public helpers: CanvasHelpersService,
+    private apiService: ApiService
+  ) { }
 
+  removeSelection(fabricCanvas:any){
+    let selection = fabricCanvas.getActiveObject();
+    fabricCanvas.remove(selection);
+  }
 
-  getPolyInfoFromObj(obj:any) : {poly: [[number, number]], minPoint: PointI, maxPoint: PointI}{
+  doSelecteble(fabricCanvas:any){
+    fabricCanvas.selectable = true;
+    fabricCanvas.isDrawingMode = false;
+  }
+
+  getPolyInfoFromObj( obj:any ) : {poly: PolyT, minPoint: PointI, maxPoint: PointI}{
     let path = obj.path ? obj.path : [];
     let xx:any = [], yy:any = [], poly:any = [];
     path.forEach((path:any) => {
@@ -48,12 +61,52 @@ export class FabricService {
   addBrush(fabricCanvas:any, brushOpts:any){
     fabricCanvas.isDrawingMode = true;
     fabricCanvas.selection = false;
-    let PencilBrush = new fabric.PencilBrush(fabricCanvas);
+    let PencilBrush:any = new fabric.PencilBrush(fabricCanvas);
     PencilBrush.color = brushOpts.color;
     PencilBrush.width = brushOpts.width;
     PencilBrush.strokeLineCap = brushOpts.strokeLineCap;//'butt','round', 'square'
     fabricCanvas.freeDrawingBrush = PencilBrush;
   }
+
+  addSpray(fabricCanvas:any){
+    fabricCanvas.isDrawingMode = true;
+    fabricCanvas.selection = false;
+    let rect = new fabric.Rect();
+    rect.set({
+      width: 100,
+      height: 100
+    })
+    fabricCanvas.renderAll();
+    //fabricCanvas.freeDrawingBrush = brush;
+    // let PencilBrush = new fabric.PencilBrush(fabricCanvas);
+    // PencilBrush.color = brushOpts.color;
+    // PencilBrush.width = brushOpts.width;
+    // PencilBrush.strokeLineCap = brushOpts.strokeLineCap;//'butt','round', 'square'
+    // fabricCanvas.freeDrawingBrush = PencilBrush;
+
+    // var hLinePatternBrush = new fabric.PatternBrush(fabricCanvas);
+    // fabricCanvas.freeDrawingBrush =hLinePatternBrush
+
+    // hLinePatternBrush.getPatternSrc = () => {
+
+    //   let patternCanvas = fabric.document.createElement('canvas');
+    //   patternCanvas.width = patternCanvas.height = 10;
+    //   let ctx:any = patternCanvas.getContext('2d');
+
+    //   ctx.strokeStyle = 'red';
+    //   ctx.lineWidth = 25;
+    //   ctx.beginPath();
+    //   ctx.moveTo(5, 0);
+    //   ctx.lineTo(5, 10);
+    //   ctx.closePath();
+    //   ctx.stroke();
+
+    //   return patternCanvas;
+
+    //};
+
+    
+  }  
 
   addTextBox(fabricCanvas:any, textboxOpts:ITextboxOptions){
     fabricCanvas.isDrawingMode = false;
@@ -81,16 +134,148 @@ export class FabricService {
     fabricCanvas.add(textbox);
   }
 
-  addRect(fabricCanvas:any, opts:IRectOptions){
-    let rect = new fabric.Rect(opts);
-    fabricCanvas.add(rect);
+  /** SHAPES GET ***********/
+
+  getPolygon( points:any, polyOptions:IPolylineOptions ) : Polygon{ 
+    let defaultPolyOpts:IPolylineOptions = {   
+      selectable: true, 
+      objectCaching: false,  
+      originX: 'center',
+      originY: 'center',
+      fill: 'red',
+      hasControls:true,
+    }
+    Object.assign(defaultPolyOpts, polyOptions);
+    return new fabric.Polygon(points, defaultPolyOpts);       
+  } 
+
+  getCircle(handlerOptions?:ICircleOptions) : Circle{
+    let defaultHandlerOpts:ICircleOptions = {
+      objectCaching: false,
+      radius: 10,
+      originX: 'center',
+      originY: 'center',
+      hasBorders: false,
+      hasControls: false,
+      hoverCursor:'pointer'
+    }
+    Object.assign(defaultHandlerOpts, handlerOptions);
+    return new fabric.Circle(defaultHandlerOpts);
   }
 
-  addRolygon(fabricCanvas:any){
-    var rect = new fabric.Polygon([{x: 10, y: 10}, {x: 100, y: 10}, {x: 80, y: 100}, {x: 10, y: 100}], {selectable: true}); 
+  /** SHAPES */
+
+  addRect(fabricCanvas:any, options:IRectOptions){
+
+    let defaultRectOpts:IRectOptions = {
+      width: 100,
+      height: 100,
+      fill: 'red',
+      originX: 'center',
+      originY: 'center',
+      hasBorders: false,
+      hasControls: true,
+      name: 'rect'
+    }
+    Object.assign(defaultRectOpts, options)
+    let rect = new fabric.Rect(defaultRectOpts);
+    this.doSelecteble(fabricCanvas);
     fabricCanvas.add(rect);
+    fabricCanvas.renderAll();
   }
 
+  addPolygon(fabricCanvas:any, pointsNum:number, radius: number = 50, options?:IPolylineOptions){
+    let points = this.helpers.givePolygonPoints(radius, pointsNum);
+    let defaultPolyOpts:IPolylineOptions = {   
+      selectable: true, 
+      originX: 'center',
+      originY: 'center',
+      fill: 'red',
+    }  
+    Object.assign(defaultPolyOpts, options);
+    let poly = new fabric.Polygon(points, defaultPolyOpts); 
+    this.doSelecteble(fabricCanvas);
+    fabricCanvas.add(poly);
+    fabricCanvas.renderAll();
+  }
+
+  addEditablePolygon(fabricCanvas:any, pointsNum:number, radius: number = 50, polyOptions:IPolylineOptions, handlerOptions?:ICircleOptions ){
+
+    let points =  this.helpers.givePolygonPoints(radius, pointsNum);
+    Object.assign(polyOptions, {name: 'control-poly', hasControls: false}) 
+    let polygon:any = this.getPolygon(points, polyOptions);
+    console.log(polygon)
+    let circleHandlers:any = [];
+    
+    for(let i =0; i < pointsNum; i+=1){
+      let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-cirlce-handler`});
+      circleHandlers.push(circle)
+    }
+
+    fabricCanvas.on('object:moving', (opts:any) => {
+      let objType = opts.target.get('type');
+      let target = opts.target;
+      console.log('object:moving', target)
+      if(target.name === 'control-poly'){
+        for(let i =0; i < pointsNum; i+=1){
+          circleHandlers[i].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+          //circleHandlers.push(circle)       
+        }
+      }
+      if(target.name.includes('cirlce-handler')){
+        let index = target.name.charAt(0);
+        let polygonCenter = polygon.getCenterPoint();
+        polygon.points[index] = {x: target.left - polygonCenter.x, y: target.top - polygonCenter.y};     
+      }
+    });
+
+    fabricCanvas.on('mouse:up', (opts:any) => {
+      for(let i =0; i < pointsNum; i+=1){
+        fabricCanvas.remove(circleHandlers[i]);
+        let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-cirlce-handler`});
+        fabricCanvas.add(circle)
+        circleHandlers[i] = circle;
+      }
+
+
+      fabricCanvas.renderAll()
+      // let target = opts.target;
+      // console.log('mouse:up', target)
+
+      // if(target.name === 'control-poly'){
+      //   for(let i =0; i < pointsNum; i+=1){
+      //     circleHandlers[i].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+      //     //circleHandlers.push(circle)
+          
+      //   }
+      // }
+    })
+
+
+    fabricCanvas.add(polygon);
+    circleHandlers.forEach((circle:any) => {
+      fabricCanvas.add(circle);
+    });
+    fabricCanvas.renderAll()
+  }
+
+  addCircle(fabricCanvas:any, options?:ICircleOptions){
+    this.doSelecteble(fabricCanvas);
+
+    let defaultCirlceOpts:ICircleOptions = {
+      radius: 50,
+      fill: 'red',
+      originX: 'center',
+      originY: 'center',
+      hasBorders: false,
+      hasControls: true,
+      name: 'circle'
+    }
+    Object.assign(defaultCirlceOpts, options)
+    let circle = new fabric.Circle(defaultCirlceOpts);
+    fabricCanvas.add(circle);
+    
+  }
 
   addControl(fabricCanvas:any){
 
@@ -148,16 +333,19 @@ export class FabricService {
     });
   }
 
-  giveImgObj(dataUrl: any, fabricCanvas:any, startPoint:any){
-    fabric.Image.fromURL(dataUrl, function(img) {
+  giveImgObj(dataUrl: any, fabricCanvas:any, startPoint:any, scale:number = 1){
+    fabric.Image.fromURL(dataUrl, (img:any) => {
       img.left = startPoint.x;
       img.top = startPoint.y;
+
 
       let options = {
         cropX: 0,
         cropY: 0,
         width: img.width,
         height: img.height,
+        scaleX: scale,
+        scaleY: scale,
       };
       img.set(options);
       fabricCanvas.add(img);
@@ -357,6 +545,8 @@ export class FabricService {
       });
       let obj = fabric.util.groupSVGElements(objects, {
         name: 'svg-group',
+              originX: 'center',
+      originY: 'center',
       });
       obj.scaleX = opts.scale;
       obj.scaleY = opts.scale;

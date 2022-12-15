@@ -10,6 +10,12 @@
   <mat-icon>{{icon}}</mat-icon>
 </button> 
 
+<button *ngIf="iconNoBg" mat-icon-button
+  color="accent"
+  [matMenuTriggerFor]="menu">
+  <mat-icon>{{iconNoBg}}</mat-icon>
+</button> 
+
 <mat-menu #menu="matMenu">
 
   <div (click)="$event.stopPropagation()" class="pad-all-sm">

@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AppCanvasComponent } from './components/app-canvas/app-canvas.component';
+import { AppCanvasComponent } from './app-canvas/app-canvas.component';
 
 import { NgxDropzoneModule } from 'ngx-dropzone';
 import { AppDropzoneComponent } from './components/app-dropzone/app-dropzone.component';
@@ -27,13 +27,14 @@ import { GalleryComponent } from './components/gallery/gallery.component';
 import { ComicComponent } from './components/comic/comic.component';
 import { PalletPickerComponent } from './components/pallet-picker/pallet-picker.component';
 import { MiniTreeComponent } from './components/mini-tree/mini-tree.component';
+import { MiniFabricComponent } from './components/mini-fabric/mini-fabric.component';
+import { SpeechRecognitionComponent } from './components/speech-recognition/speech-recognition.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     AppCanvasComponent,
     AppDropzoneComponent,
-    AppCanvasComponent,
     PickerMenuComponent,
     TreeComponent,
     IconsComponent,
@@ -44,7 +45,9 @@ import { MiniTreeComponent } from './components/mini-tree/mini-tree.component';
     GalleryComponent,
     ComicComponent,
     PalletPickerComponent,
-    MiniTreeComponent
+    MiniTreeComponent,
+    MiniFabricComponent,
+    SpeechRecognitionComponent,
   ],
   imports: [
     BrowserModule,

@@ -3,6 +3,11 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+
+.inline-block {
+  display: inline-block !important;
+}
+
 .mat-radio-button:not(:first-child){
   margin-left: 0.5rem;
 }
@@ -1672,6 +1677,42 @@ body .mat-pad-none {
 	height: 20px;
 }
 
+.my-scroll-dark {
+	overflow-y: scroll;
+  overflow-x: none;
+}
+
+.my-scroll-dark::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+.my-scroll-dark::-webkit-scrollbar-track {
+	background: #858585;
+}
+.my-scroll-dark::-webkit-scrollbar-thumb {
+  background: #000;
+}
+.my-scroll-dark::-webkit-scrollbar-thumb:hover {
+	background: #000;
+}
+
+
+
+.my-scroll-big::-webkit-scrollbar {
+	width: 20px;
+	height: 20px;
+}
+
+.my-close-dialog {
+	position: absolute;
+	font-size: 40px;
+	width: 40px !important;
+	right: 5px;
+	top: 5px;
+	z-index: 2 !important;
+	cursor: pointer;
+  overflow: visible;
+}
 
 .align-right{
   margin-left: auto!important;
@@ -1693,4 +1734,12 @@ body .mat-pad-none {
 
 .space-between > * {
   margin: 0.5rem !important;
+}
+
+.full-wid{
+  width: 100%;
+}
+
+.no-mrgn {
+  margin: 0;
 }

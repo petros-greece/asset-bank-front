@@ -67,9 +67,7 @@ export class CoreService {
 
   /** LOCAL STORAGE ****************************************************/
  
-  /**
-   * getDeep(apiObj, ['level1', 'level2', 'target1']);
-   */
+  /** * getDeep(apiObj, ['level1', 'level2', 'target1']); */
    getDeep(obj:any, path:any) {
     let current = obj;
   
@@ -107,10 +105,8 @@ export class CoreService {
     }, obj);
   }
 
-  /**
-   *  Return a js object or false in object does
-   */
-   getStorageObj(objName: string) : any{
+  /** *  Return a js object or false in object does */
+  getStorageObj(objName: string) : any{
     let item = localStorage.getItem(objName);
     return item ? 
           JSON.parse(item) : false;
@@ -123,28 +119,26 @@ export class CoreService {
     return obj ? this.getDeep(obj, path) : false;
   }
 
-  /**
-   *  Appends properties to existing object or creates a new local 
-   *  storage json object. Overrides old ones  
-   */
+  /** *  Appends properties to existing object or creates a new local  storage json object. Overrides old ones */
   updateStorageObj(objName: string, obj: any) : void {
     let item = localStorage.getItem(objName);
     let storageObj = item ? JSON.parse(item) : {}; Object.assign(storageObj, obj);
     localStorage.setItem(objName, JSON.stringify(storageObj));
   }
 
-  /**
-   *  Appends properties to existing object or creates 
-   *  a new local storage json object  
-   */
+  /**   Appends properties to existing object or creates   a new local storage json object */
   updateStorageObjDeep(objName: string, path: any, value: any) : void {
     let item = localStorage.getItem(objName);
-    let storageObj = item ? item : {};  
+    let storageObj = item ? JSON.parse(item) : {};  
     this.setDeep(storageObj, path, value, true);
     localStorage.setItem(objName, JSON.stringify(storageObj));
   } 
 
-  /** */
+  /** LOCAL STORAGE CANVAS ****************************************************/
+
+
+
+  /** IMAGE *****************/
 
   dataURLtoFile(dataurl:string, filename:string) {
  
@@ -202,6 +196,10 @@ export class CoreService {
       }
     }
     return a;
+  }
+
+  clone(obj:any) : any{
+    return JSON.parse(JSON.stringify(obj));
   }
 
 }
