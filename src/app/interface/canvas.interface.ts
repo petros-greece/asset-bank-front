@@ -23,7 +23,7 @@ export type MethodNameT = 'giveConfusion' | 'giveMultiColor' | 'givePixelate' | 
 'giveExposure' | 'givePolychromeNegative' | 'giveWhiteNoise' | 'giveParadise' | 'giveIntensity' | 'giveBloom' | 'giveOutlines' | 
 'giveWater' | 'giveFluffy' | 'giveSuck' | 'giveSpotlight' | 'giveCartoonColors' | 'giveBlocks' | 'giveFrames' | 'giveRotatingFrames' |
 'giveVinyl'|'giveHolyLight'|'giveBlinds'|'giveEllipse'|'giveTremolo'|'giveBrokenWall'|'giveKlimt'|'givePourPaint' | 'giveColendar' |
-'giveLetters'|'giveComic'|'giveWhirlpool'|'giveBackground'
+'giveLetters'|'giveComic'|'giveWhirlpool'|'giveBackground'|'giveShadesOf'
 export type EffectT = {head: string, method: MethodNameT, tmpl?:any, noParamsMethod?: boolean, hidden?:boolean, config?:any, configProp?:any };
 export type SequenceT = {name:string, effects:EffectT[]}
 export type SeriesT   = {name:string, series:PatternSeriesT[]}

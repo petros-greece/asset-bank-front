@@ -31,6 +31,9 @@ export class AppComponent implements OnInit{
   ngOnInit(): void {
     console.log('app init');
     this.apiService.checkAccessToken();
+
+
+    
   }
 
   addOrUpdateConfigEditorSettings(){}

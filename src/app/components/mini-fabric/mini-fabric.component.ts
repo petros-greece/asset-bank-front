@@ -147,7 +147,7 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
         path.push([obj.aCoords[sides[i]].x, obj.aCoords[sides[i]].y]);
       }
     }
-    else if(obj.name === 'circle' || obj.name === 'control-poly'){
+    else if(obj.name === 'circle' || obj.name.includes('control-poly')){
       path = obj.points.map((point:PointI)=>{
         return [obj.left + (point.x* obj.scaleX), obj.top + (point.y* obj.scaleY)]
       });
@@ -169,5 +169,18 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
     return path;
   }
 
+  clear(){
+   // this.fabricCanvas.loadFromJSON({});
+    this.fabricCanvas.dispose()
+
+    this.fabricService.giveFabricCanvas('miniFabricCanvas', {width: this.width, height: this.height }).subscribe((canvas)=>{
+      this.fabricCanvas = canvas;
+      this.fabricCtx = this.fabricCanvas.getContext('2d');
+      //this.addRect(); 
+    });
+
+    
+   // console.log(this.fabricCanvas)
+  }
 
 }

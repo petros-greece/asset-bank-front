@@ -9,6 +9,7 @@ import {MatChipInputEvent} from '@angular/material/chips'
 import { PointI, ColorI, PolyT, CanvasInfoI, PatternT, PatternSeriesT, SeriesT } from 'src/app/interface/canvas.interface';
 import { CanvasHelpersService } from 'src/app/service/canvas-helpers.service';
 import { EffectT, SequenceT, MethodNameT } from 'src/app/interface/canvas.interface';
+import { CanvasService } from '../service/canvas.service';
 
 @Component({
   selector: 'app-canvas',
@@ -18,7 +19,7 @@ import { EffectT, SequenceT, MethodNameT } from 'src/app/interface/canvas.interf
 
 export class AppCanvasComponent implements OnInit {
  
-  @Input() selectedFile: any;
+  @Input() selectedFile: any = {tags: []};
   @Output() onRemoveFile = new EventEmitter<any>();
   @Output() onAddFile = new EventEmitter<any>();
 
@@ -138,7 +139,7 @@ export class AppCanvasComponent implements OnInit {
       height: 200
     },
     patterns : {
-      expanded : true
+      expanded : false
     },
     sequence: {
       expanded : false
@@ -172,12 +173,14 @@ export class AppCanvasComponent implements OnInit {
     public fabricService: FabricService,
     public coreService: CoreService, 
     public apiService: ApiService,
-    public helpers: CanvasHelpersService
+    public helpers: CanvasHelpersService,
+    public canvasService: CanvasService
   ) { 
 
   }
 
   ngOnInit(): void {
+
     this.getUIFromStorage();
     this.initEffects();
     this.canvas = document.getElementById('canvas');
@@ -191,21 +194,26 @@ export class AppCanvasComponent implements OnInit {
         this.ctxFabric = this.fabricCanvas.getContext('2d');
         this.doScaleCanvas(image.width);
         if(!this.hasEvents){
-          this.getConstants();
+          this.giveConstants();
           this.attachFabricEvents();
           this.getEditorSettings();
           this.hasEvents = true;
           if(!this.selectedFile.tags){
+            this.selectedFile.tags = [];
             this.apiService.getData(`/assetRow/${this.apiService.user.id}/${this.selectedFile.src}`).subscribe({
               next: (data)=>{
-                this.selectedFile.tags = data.tags ? JSON.parse(data.tags) : [];
+                if(data && data.tags){
+                  this.selectedFile.tags = data.tags;
+                  this.showTags = true;
+                }
               }
             });
           }
           else{
             this.selectedFile.tags = JSON.parse(this.selectedFile.tags);
+            this.showTags = true;
           }
-          this.showTags = true;
+          
         }
       });
     });
@@ -217,7 +225,7 @@ export class AppCanvasComponent implements OnInit {
     console.log(methodHead);
     let filtered = this.effects.filter((e)=>{return e.head.toLowerCase() === methodHead});
     if(filtered[0]){
-      this[filtered[0].method]();
+      //this[filtered[0].method]();
     }
   }
 
@@ -262,11 +270,10 @@ export class AppCanvasComponent implements OnInit {
     this.effects.sort((a:any,b:any)=>{return a['head'].localeCompare(b['head'])}); 
   }
 
-  getConstants(){
+  giveConstants(){
     this.center = { x: Math.round(this.width/2), y: Math.round(this.height/2), }
     this.config.ellipse = { rx: Math.round(this.width/2), ry: Math.round(this.height/2), } 
     this.maxHypo = Math.round(Math.hypot(this.center.x - 0, this.center.y - 0)) + 1;
-    this.config.blocks.factor = Math.round(this.width/4);
     this.config.cartoonColors = this.helpers.giveDefaultCartoonColors();
     //this.info.averageRgb
     //this.info.colorCount
@@ -318,6 +325,7 @@ export class AppCanvasComponent implements OnInit {
   /** */
 
   doScaleCanvas(w: number = 100){
+
     setTimeout(()=>{
       let box:any = document.getElementById('canvas-container');
       let width = box.offsetWidth;
@@ -325,6 +333,7 @@ export class AppCanvasComponent implements OnInit {
       this.canvasScale = scale > 1 ? 1 : scale;
       this.dummyCanvas = document.getElementById('dummy-canvas');
       this.dummyCtx = this.dummyCanvas.getContext('2d');
+
     }, 20);
   }
 
@@ -505,12 +514,9 @@ export class AppCanvasComponent implements OnInit {
 
     this.fabricCanvas.on('mouse:down', (opt:any) => {
       
-
       //this.fabricService.addControl(this.fabricCanvas)
-
       startPoint.x = Math.round(opt.pointer.x); 
-      startPoint.y = Math.round(opt.pointer.y);
-      
+      startPoint.y = Math.round(opt.pointer.y);  
       //console.log('mouse:down', opt.pointer);
 
     });
@@ -569,11 +575,11 @@ export class AppCanvasComponent implements OnInit {
       let minPoint = polyInfo.minPoint;  
       let maxPoint = polyInfo.maxPoint;
       let poly = polyInfo.poly;
-      this[methodName](minPoint, maxPoint, poly);
+     //this[methodName](minPoint, maxPoint, poly);
       this.fabricCanvas.remove(obj);  
     } 
     else{
-      this[methodName](startPoint, endPoint);
+    //  this[methodName](startPoint, endPoint);
     }
   }
 
@@ -788,7 +794,9 @@ export class AppCanvasComponent implements OnInit {
       this.doSomethingInLoop((i:number, point:any, color:any)=>{
         this.pixelNegative(i, color, this.config.negative.brightness);
       }, true, startP, endP, poly);        
-    });     
+    });   
+    
+    this.canvasService.giveNegative(this.config.negative.brightness);
   }
 
   giveExposure(startP?: PointI, endP?: PointI, poly?:PolyT){
@@ -1070,7 +1078,6 @@ export class AppCanvasComponent implements OnInit {
     });      
   }
 
-
   /** MULTI IMAGES EFFECTS **************************************/
 
   giveBlocks(){
@@ -1144,18 +1151,21 @@ export class AppCanvasComponent implements OnInit {
 
   giveVinyl(){
     this.runWithReinit(()=>{
+      let degreesStart = 180; //Not 0 so its faster
       let degreesStop = 360;
       let degreesPlus = 1;//@todo parameterize
-      for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
+      this.ctx.save();
+      this.ctx.globalAlpha = this.config.vinyl.factor;
+      for( let degrees = degreesStart; degrees < degreesStop; degrees+=degreesPlus ){
           this.ctx.save();
-          this.ctx.translate(this.center.x, this.center.y);
-          this.ctx.globalAlpha = this.config.vinyl.factor;
+          this.ctx.translate(this.center.x, this.center.y);        
           this.ctx.rotate(degrees*(Math.PI/180));
           this.ctx.drawImage(this.image, 
             0, 0, this.width, this.height, 
             -this.center.x, -this.center.y, this.width, this.height);      
             this.ctx.restore();
       }
+      this.ctx.restore();
       this.getImageData(); 
     });
  
@@ -1350,8 +1360,10 @@ export class AppCanvasComponent implements OnInit {
         for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
             this.ctx.save();
             this.ctx.translate(this.center.x, this.center.y);
-            this.ctx.rotate(degrees*(Math.PI/180)*this.scissorsTest.sumFactor);  
+            this.ctx.rotate(degrees*(Math.PI/180)*this.config.whirlpool.sumFactor);  
             this.ctx.translate(-this.center.x, -this.center.y);
+          // this.ctx.rect(this.center.x - distX, this.center.y - distY, distX*2, distY*2)
+          // this.ctx.clip();
             this.ctx.drawImage(this.image, 
              this.center.x - distX, this.center.y - distY, distX*2, distY*2,
              this.center.x - distX, this.center.y - distY, distX*2, distY*2,
@@ -1429,70 +1441,24 @@ export class AppCanvasComponent implements OnInit {
   }
 
   scissors(startP?: PointI, endP?: PointI, poly?:PolyT){
-
-
-    this.runWithReinit(()=>{
-      this.clearCanvas()
-      let degreesStop = this.scissorsTest.reverse;
-      let degreesPlus = 1;
-
-      let distX = 0;
-      let distY = 0;
-
-      let ratioX = (this.width/this.height);
-      let ratioY = (this.height/this.width);
-
-      let incrX = (this.center.x/degreesStop)*ratioX*2;
-      let incrY = (this.center.y/degreesStop)*ratioY*2; 
-
-
-      this.ctx.globalCompositeOperation = "destination-over";
-
-      for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
-          this.ctx.save();
-          this.ctx.translate(this.center.x, this.center.y);
-          this.ctx.rotate(degrees*(Math.PI/180)*this.scissorsTest.sumFactor);  
-          this.ctx.translate(-this.center.x, -this.center.y);
-
-          this.ctx.drawImage(this.image, 
-           this.center.x - distX, this.center.y - distY, distX*2, distY*2,
-           this.center.x - distX, this.center.y - distY, distX*2, distY*2,
-          ); 
-         
-
-          this.ctx.restore();
-          distX += incrX;
-          distY += incrY;
-   
-      }
-      this.getImageData(); 
-    });
-
-
-
-return;
-
+    let min = this.info.colorRange?.min || {r: 0, g: 0, b: 0};
+    let max = this.info.colorRange?.max || {r: 255, g: 255, b: 255};
+ 
     this.runWithReinit(()=>{
       //this.clearCanvas()
-      let factor = this.scissorsTest.reverse;
-      let sumFactor = this.scissorsTest.sumFactor;
-      let sumThird = Math.round(this.scissorsTest.sumFactor/3);
-      let r,g,b;
+      let factor = 100;
       this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{      
-          //let hypo = Math.hypot(this.center.x - point.x, this.center.y - point.y);
-          //let zeroToOne = 1-Math.abs(hypo/this.maxHypo);
-          let sum = color.r + color.g + color.b;
-          if(sum < sumFactor){
-            this.pixelEquals(i, color.r-factor, color.g-factor,color.b-factor)   
-          }
-          else{
-            this.pixelEquals(i, color.r+factor, color.g+factor,color.b+factor)
-          } 
+              
+        this.pixelEquals(i, color.r-factor, color.g-factor,color.b-factor)
+        
+        this.pixelEquals(i, color.r+factor, color.g+factor,color.b+factor)
+            //this.pixelNegative(i, color, 155);
           
       
       }, true, startP, endP, poly);
       //this.getImageData();
     });
+
   }
 
   scissorsOmokentroiKykloi(startP?: PointI, endP?: PointI, poly?:PolyT){
@@ -1865,10 +1831,10 @@ return;
     setTimeout(()=> {
       let time1 = new Date().getTime()
       if(effect.noParamsMethod){
-        this[effect.method]()
+//        this[effect.method]()
       }
       else{
-        this[effect.method](random.startP, random.endP, random.poly)
+//        this[effect.method](random.startP, random.endP, random.poly)
       }
       let time2 = new Date().getTime()
       time = time2-time1;
@@ -1993,12 +1959,12 @@ return;
     //Apply image manipulation method or draw the pattern
     if(pattern.applyMethod){
       let method:MethodNameT = pattern.method;
-      this[method]({x:0, y: 0}, {x:incrX, y:incrY}, obj.path);    
+//      this[method]({x:0, y: 0}, {x:incrX, y:incrY}, obj.path);    
       let nextPoints = this.helpers.getNextPointsSequence(obj.path, this.width, this.height, incrX, incrY);
-      this[method](nextPoints.minPoint, nextPoints.maxPoint, nextPoints.poly);
+ //     this[method](nextPoints.minPoint, nextPoints.maxPoint, nextPoints.poly);
       while(nextPoints.poly.length){
         nextPoints = this.helpers.getNextPointsSequence(nextPoints.poly, this.width, this.height, incrX, incrY);
-        this[method](nextPoints.minPoint, nextPoints.maxPoint, nextPoints.poly)
+//        this[method](nextPoints.minPoint, nextPoints.maxPoint, nextPoints.poly)
       }
     }
     else{

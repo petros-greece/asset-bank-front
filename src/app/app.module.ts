@@ -29,6 +29,9 @@ import { PalletPickerComponent } from './components/pallet-picker/pallet-picker.
 import { MiniTreeComponent } from './components/mini-tree/mini-tree.component';
 import { MiniFabricComponent } from './components/mini-fabric/mini-fabric.component';
 import { SpeechRecognitionComponent } from './components/speech-recognition/speech-recognition.component';
+import { SlickCarouselModule } from 'ngx-slick-carousel';
+import { CarouselComponent } from './components/carousel/carousel.component';
+import { ImageEffectsCanvasComponent } from './image-effects-canvas/image-effects-canvas.component';
 
 @NgModule({
   declarations: [
@@ -48,6 +51,8 @@ import { SpeechRecognitionComponent } from './components/speech-recognition/spee
     MiniTreeComponent,
     MiniFabricComponent,
     SpeechRecognitionComponent,
+    CarouselComponent,
+    ImageEffectsCanvasComponent,
   ],
   imports: [
     BrowserModule,
@@ -60,7 +65,8 @@ import { SpeechRecognitionComponent } from './components/speech-recognition/spee
     ColorPickerModule,
     HttpClientModule,
     SortablejsModule.forRoot({ animation: 150 }),
-    BankPipesModule
+    BankPipesModule,
+    SlickCarouselModule
   ],
   providers: [],
   bootstrap: [AppComponent]

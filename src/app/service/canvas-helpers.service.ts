@@ -13,6 +13,10 @@ export class CanvasHelpersService {
 
   }
 
+  randNum(min:number, max:number, floor:boolean = true) : number{
+    return floor ? min + Math.floor(Math.random()*(max-min)) : min + Math.ceil(Math.random()*(max-min)) ;
+  }
+
   /** COLORS ************************************/
 
   giveDefaultCartoonColors(){
@@ -124,6 +128,15 @@ export class CanvasHelpersService {
     return alpha ? `rgba(${r},${g},${b}, ${a})` : `rgb(${r},${g},${b})`;
   }
 
+  giveRandomColors(howMany: number, alpha:boolean = true) : string[]{
+    let colors = [];
+    for( let i = 0; i < howMany; i+=1 ){
+      let color = this.giveRandomColorStr();
+      colors.push(color);  
+    }
+    return colors;
+  }
+
   getColorsInfo(imageData:any, blockSize = 5, howMany = 20) : CanvasInfoI{
     let averageRgb:ColorI = this.getAverageRGB(imageData, blockSize);
     let colorsObj = this.getColorsObj(imageData, blockSize, howMany);
@@ -131,9 +144,25 @@ export class CanvasHelpersService {
     return Object.assign(colorsObj, {averageRgb: averageRgb, colorRange: colorRange});
   }
 
+  sumColor(color:ColorI){
+    let a = color.a || 0;
+    return color.r + color.g + color.b + a;
+  }
+
+  maxRGB(color:ColorI) : number{
+    return Math.max(...[color.r, color.g, color.b]);
+  }
+
+  colorsDiff(colorA:ColorI, colorB:ColorI) : number{
+    return Math.abs(colorA.r - colorB.r) + Math.abs(colorA.g - colorB.g) + Math.abs(colorA.b - colorB.b);
+  }
 
 
   /** GEOMETRY ************************************/
+
+  givePixelIndexFromPoint(point: PointI, width: number) : number{
+    return (((point.y)*width)+point.x)*4 | 0;
+  }
 
   givePolygonPoints(radius:number, numberOfPoints:number) : PointI[] {
 

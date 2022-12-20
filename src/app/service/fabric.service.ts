@@ -16,6 +16,26 @@ export class FabricService {
     private apiService: ApiService
   ) { }
 
+
+  giveFabricCanvas(elemId: string, opts: ICanvasOptions) : Observable<any>{
+    return new Observable((observer)=>{
+      let canvas = new fabric.Canvas(elemId, {
+        //controlsAboveOverlay: true,
+        backgroundColor: 'rgba(0,0,0,0)',
+        selection: false,
+        //selectionColor: 'yellow',
+        //selectionBorderColor: 'black',
+        //selectionLineWidth: 5,
+        isDrawingMode: false,
+        preserveObjectStacking: true,
+        freeDrawingCursor: 'pointer',
+        width: opts.width,
+        height: opts.height,
+      });
+      observer.next(canvas);
+    });
+  }
+
   removeSelection(fabricCanvas:any){
     let selection = fabricCanvas.getActiveObject();
     fabricCanvas.remove(selection);
@@ -37,25 +57,6 @@ export class FabricService {
     let minPoint = { x: Math.min(...xx), y: Math.min(...yy) };  
     let maxPoint = { x: Math.max(...xx), y: Math.max(...yy) };
     return {poly: poly, minPoint:minPoint, maxPoint:maxPoint};
-  }
-
-  giveFabricCanvas(name: string, opts: ICanvasOptions) : Observable<any>{
-    return new Observable((observer)=>{
-      let canvas = new fabric.Canvas(name, {
-        //controlsAboveOverlay: true,
-        backgroundColor: 'rgba(0,0,0,0)',
-        selection: false,
-        //selectionColor: 'yellow',
-        //selectionBorderColor: 'black',
-        //selectionLineWidth: 5,
-        isDrawingMode: false,
-        preserveObjectStacking: true,
-        freeDrawingCursor: 'pointer',
-        width: opts.width,
-        height: opts.height,
-      });
-      observer.next(canvas);
-    });
   }
 
   addBrush(fabricCanvas:any, brushOpts:any){
@@ -200,45 +201,53 @@ export class FabricService {
   }
 
   addEditablePolygon(fabricCanvas:any, pointsNum:number, radius: number = 50, polyOptions:IPolylineOptions, handlerOptions?:ICircleOptions ){
-
+    let time = new Date().getTime();
     let points =  this.helpers.givePolygonPoints(radius, pointsNum);
-    Object.assign(polyOptions, {name: 'control-poly', hasControls: false}) 
+    Object.assign(polyOptions, { name: `control-poly+${time}`, hasControls: false });
     let polygon:any = this.getPolygon(points, polyOptions);
-    console.log(polygon)
-    let circleHandlers:any = [];
+    let circleHandlers:any = {};
     
-    for(let i =0; i < pointsNum; i+=1){
-      let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-cirlce-handler`});
-      circleHandlers.push(circle)
+    for(let i = 0; i < pointsNum; i+=1){
+      let circle = this.getCircle({
+        left: polygon.left+points[i].x, 
+        top: polygon.top+points[i].y, 
+        name: `${i}${time}-cirlce-handler`
+      });
+      circleHandlers[`${i}${time}`] = circle;
     }
 
     fabricCanvas.on('object:moving', (opts:any) => {
-      let objType = opts.target.get('type');
+      //let objType = opts.target.get('type');
       let target = opts.target;
       console.log('object:moving', target)
-      if(target.name === 'control-poly'){
+      if(target.name.includes(`control-poly`)){
         for(let i =0; i < pointsNum; i+=1){
-          circleHandlers[i].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+          circleHandlers[`${i}${time}`].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
           //circleHandlers.push(circle)       
         }
       }
-      if(target.name.includes('cirlce-handler')){
+      if(target.name.includes(`${time}-cirlce-handler`)){
+        console.log('yoyo')
         let index = target.name.charAt(0);
         let polygonCenter = polygon.getCenterPoint();
-        polygon.points[index] = {x: target.left - polygonCenter.x, y: target.top - polygonCenter.y};     
+        polygon.points[index] = {x: target.left - polygonCenter.x, y: target.top - polygonCenter.y};
+        //console.log(polygon.points)     
       }
     });
 
     fabricCanvas.on('mouse:up', (opts:any) => {
-      for(let i =0; i < pointsNum; i+=1){
-        fabricCanvas.remove(circleHandlers[i]);
-        let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-cirlce-handler`});
-        fabricCanvas.add(circle)
-        circleHandlers[i] = circle;
+
+      if(opts.target){// && opts.target.name && opts.target.name.includes('cirlce-handler')){
+        console.log('mouse:up', opts.target)
+        for(let i = 0; i < pointsNum; i+=1){
+          fabricCanvas.remove(circleHandlers[`${i}${time}`]);
+          let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}${time}-cirlce-handler`});
+          fabricCanvas.add(circle)
+          circleHandlers[`${i}${time}`] = circle;
+        } 
+        fabricCanvas.renderAll()
       }
 
-
-      fabricCanvas.renderAll()
       // let target = opts.target;
       // console.log('mouse:up', target)
 
@@ -251,11 +260,18 @@ export class FabricService {
       // }
     })
 
-
-    fabricCanvas.add(polygon);
-    circleHandlers.forEach((circle:any) => {
-      fabricCanvas.add(circle);
+    fabricCanvas.on('object:removed', (opts:any) => {
+      //console.log('object:removed', opts.target.name)
+      //fabricCanvas.clear()
     });
+    
+    
+    fabricCanvas.add(polygon);
+
+    for(let h in circleHandlers){
+      fabricCanvas.add(circleHandlers[h]);
+    }
+
     fabricCanvas.renderAll()
   }
 

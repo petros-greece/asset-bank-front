@@ -87,7 +87,7 @@
 
         <div class="mrgn-t-xs">
 
-          <mat-expansion-panel>
+          <mat-expansion-panel [(expanded)]="UI.sequence.expanded">
             <mat-expansion-panel-header>  
               <mat-panel-title>
                 Effects Sequence
@@ -121,14 +121,19 @@
           SF<mat-slider thumbLabel [min]="0.1" [max]="5" [step]=".1" [(ngModel)]="scissorsTest.sumFactor"></mat-slider>        
           <button  mat-raised-button color="accent" (click)="scissors()">scissors()</button>
           @todo min max config and save state
+          @save TRee On  editor dialog
+          @more timeouts fot brething in intensive tasks
+          @resize images no more than 1000 * 1000?
+          @create dynamically masks by click?
+          @select history copy image
         </div>
 
         <!--== TAGS =====================================================-->
 
-        <div *ngIf="showTags" class="mrgn-t-lg">
+        <!-- <div *ngIf="showTags" class="mrgn-t-lg">
           <mat-form-field class="example-chip-list" appearance="fill">
             <mat-label>Image Tags</mat-label>
-            <mat-chip-list #chipList aria-label="Fruit selection">
+            <mat-chip-list #chipList>
               <mat-chip *ngFor="let tag of selectedFile.tags" (removed)="removeTag(tag)">
                 {{tag}}
                 <button matChipRemove>
@@ -147,7 +152,7 @@
             <mat-icon>save</mat-icon>
           </button>
 
-        </div>
+        </div> -->
 
       </div>
       
@@ -166,6 +171,7 @@
 
           <canvas style="position: absolute;top: 0;left: 0;z-index: -1" id="dummy-canvas" [width]="width" [height]="height"></canvas>
           <canvas style="position: absolute;top: 0;left: 0;" id="canvas" [width]="width" [height]="height"></canvas>
+          
           <div style="position: absolute;top: 0;left: 0;">
             <canvas id="fabricCanvas" [width]="width" [height]="height"></canvas>
           </div>
@@ -186,8 +192,6 @@
 
       </div>
       
-
-
     </div> 
 
     <div class="row center-xs pad-all-md space-between" *ngIf="apiService.selectedCategory">

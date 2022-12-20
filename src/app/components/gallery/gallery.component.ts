@@ -82,7 +82,7 @@ export class GalleryComponent implements OnInit {
     }
     //console.log(selectedAssets);
     if(!this.coreService.isProd){
-      this.openimageEditorDialog({src: 'U-1669365209.jpg'})
+      //this.openimageEditorDialog({src: 'U-1669365209.jpg'})
     }
 
     
