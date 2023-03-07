@@ -1,0 +1,370 @@
+[
+  {
+    "childsNum": 13,
+    "title": "Painting",
+    "icon": "color_lens",
+    "childs": [
+      {
+        "childsNum": 0,
+        "title": "Romanesque",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Gothic",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Renaissance",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Mannerism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Baroque",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Rococo",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Neoclassicism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Romanticism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Realism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Pre-Raphaelite",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Impressionism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Naturalism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Post-Impressionism",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      }
+    ],
+    "files": [
+
+    ]
+  },
+  {
+    "childsNum": 4,
+    "title": "Music",
+    "icon": "radio",
+    "childs": [
+      {
+        "childsNum": 3,
+        "title": "Rock",
+        "icon": "folder",
+        "childs": [
+          {
+            "childsNum": 0,
+            "title": "Metallica",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          },
+          {
+            "childsNum": 0,
+            "title": "AC/DC",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          },
+          {
+            "childsNum": 0,
+            "title": "PinkFloyd",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          }
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 1,
+        "title": "Jazz",
+        "icon": "folder",
+        "childs": [
+          {
+            "childsNum": 0,
+            "title": "George Benson",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          }
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 2,
+        "title": "Pop",
+        "icon": "folder",
+        "childs": [
+          {
+            "childsNum": 0,
+            "title": "Michael Jackson",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          },
+          {
+            "childsNum": 0,
+            "title": "Madonna",
+            "icon": "folder",
+            "childs": [
+
+            ],
+            "files": [
+
+            ]
+          }
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Electro",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      }
+    ]
+  },
+  {
+    "childsNum": 2,
+    "title": "Travel",
+    "icon": "flight",
+    "childs": [
+      {
+        "childsNum": 0,
+        "title": "Europe",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "America",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      }
+    ]
+  },
+  {
+    "childsNum": 2,
+    "title": "Cinema",
+    "icon": "movie",
+    "childs": [
+      {
+        "childsNum": 0,
+        "title": "Hollywood",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Bollywood",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      }
+    ]
+  },
+  {
+    "childsNum": 3,
+    "title": "Sports",
+    "icon": "pool",
+    "childs": [
+      {
+        "childsNum": 0,
+        "title": "Soccer",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Basketball",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      },
+      {
+        "childsNum": 0,
+        "title": "Track and fields",
+        "icon": "folder",
+        "childs": [
+
+        ],
+        "files": [
+
+        ]
+      }
+    ],
+    "files": [
+
+    ]
+  }
+]

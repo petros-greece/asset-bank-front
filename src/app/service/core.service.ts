@@ -55,7 +55,7 @@ export class CoreService {
   giveSnackbar(msg: string, opts:any = {}){
     let options = Object.assign({
                     horizontalPosition: 'start',
-                    verticalPosition: 'bottom',
+                    verticalPosition: 'top',
                     duration: 1000
                   }, opts);
     this.snackBar.open(msg, '', options);   

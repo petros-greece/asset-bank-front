@@ -1,0 +1,58 @@
+<div class="container">
+
+  <div class="flex flex-row bg-gray-500" style="position: relative;margin: 0;">
+
+    <div class="flex w-2/5">
+
+      <div *ngFor="let facePart of faceParts | keyvalue" class="flex">
+  
+        <div class="flex flex-row flex-wrap">
+          <button 
+            mat-button 
+            *ngFor="let svg of facePart.value" 
+            (click)="addSVGIcon(svg)"
+            class="svg-face-part-but">
+            <span [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)"></span>
+            {{svg.name}}
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!--== CANVAS AND FABRIC OPTIONS ===============================================--> 
+
+    <div class="flex w-3/5" 
+      [style.background]="'rgb('+canvasService.info.averageRgb.r+','+canvasService.info.averageRgb.g+','+canvasService.info.averageRgb.b+')'">
+
+      <div 
+        class="flex w-full"
+        style="position: relative;transform-origin: left top;" 
+        [style.transform]="'scale('+canvasScale+')'"
+        >
+      
+       
+
+        <div class="w-full h-full" id="canvas-container"></div>
+
+        <div style="position: absolute;top: 0;left: 0;right:0;width: 100%;border: 2px solid grey;">
+          <canvas id="fabricCanvas"></canvas>
+        </div>
+
+      </div>
+
+
+
+    </div>
+
+  </div>
+
+
+
+</div>
+
+<!-- <div class="center-xs">
+  <ng-template *ngTemplateOutlet="historyTmpl"></ng-template> 
+</div> -->

@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { CanvasService } from '../service/canvas.service';
 import { EffectT, SequenceT, MethodNameT, PointI, SeriesT, PolyT, PatternT, PatternSeriesT } from 'src/app/interface/canvas.interface';
 import { FabricService } from '../service/fabric.service';
@@ -7,24 +7,49 @@ import { CoreService } from '../service/core.service';
 import { CanvasGeometryService } from '../service/canvas-geometry.service';
 import { CanvasHelpersService } from '../service/canvas-helpers.service';
 import { CanvasPalleteService } from '../service/canvas-pallete.service';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-image-effects-canvas',
   templateUrl: './image-effects-canvas.component.html',
   styleUrls: ['./image-effects-canvas.component.scss']
 })
-export class ImageEffectsCanvasComponent implements OnInit {
+export class ImageEffectsCanvasComponent implements OnInit, OnDestroy {
+
+
+  slideConfig = {
+    "autoplay": 1, 
+    "adaptiveHeight": 0, 
+    "autoplaySpeed": 5000,
+    "arrows": 1, 
+    "centerMode": 1,  
+    "centerPadding": '0px', 
+    "cssEase": 'ease', 
+    "dots": 1,
+    "easing": 'linear',
+    "infinite": 1,
+    "initialSlide": 0,
+    "mobileFirst": 0,
+    "pauseOnFocus": 1,
+    "slidesToShow": 1, 
+    "slidesToScroll": 1,
+    "speed": 300,
+    // "vertical": 0, 
+};
+
+
+  interval: any;
+  canvasScale:number = 1; 
+  selectedFile:any = {
+    path: './assets/image-effects-editor/dogs.jpg' 
+  }
+
 
   fabricCanvas: any;
   ctxFabric: any;
 
   dummyCanvas: any;
   dummyCtx:any;
-
-  canvasScale:number = 1;
-  selectedFile:any = {
-    path: 'http://localhost/asset-bank-api/public/api/asset/1/U-1669365209/jpg'
-  }
 
   UI = {
     effects: {
@@ -41,7 +66,8 @@ export class ImageEffectsCanvasComponent implements OnInit {
     },
     history: {
       show: true
-    }
+    },
+    resizeImage: true
   }
 
   effects        :EffectT[] = [];
@@ -103,6 +129,11 @@ export class ImageEffectsCanvasComponent implements OnInit {
   @ViewChild('whirlpoolTmpl', {static: true}) whirlpoolTmpl: TemplateRef<any> | any;
   @ViewChild('backgroundTmpl', {static: true}) backgroundTmpl: TemplateRef<any> | any;
   @ViewChild('shadesOfTmpl', {static: true}) shadesOfTmpl: TemplateRef<any> | any;
+  @ViewChild('dreamTmpl', {static: true}) dreamTmpl: TemplateRef<any> | any;
+  @ViewChild('acrylicScratchTmpl', {static: true}) acrylicScratchTmpl: TemplateRef<any> | any;
+  @ViewChild('addImageDialogTmpl', {static: true}) addImageDialogTmpl: TemplateRef<any> | any; 
+  @ViewChild('introDialogTmpl', {static: true}) introDialogTmpl: TemplateRef<any> | any; 
+
 
   constructor(
     public canvasService: CanvasService,
@@ -115,15 +146,50 @@ export class ImageEffectsCanvasComponent implements OnInit {
     ) { }
 
   ngOnInit(): void {
+    this.getUIFromStorage();
     this.initCanvas();
+    this.interval = setInterval(()=>{
+      this.saveUIToStorage();
+      this.coreService.giveSnackbar('Autosaved...')
+    }, 120000);
+    
+
+
+    if(this.coreService.isProd){
+      
+      setTimeout(()=>{
+        this.openAddImageDialog();
+        this.coreService.openDialog({
+          template: this.introDialogTmpl,
+          headerText: 'false',
+          showClose: false,
+        },{
+          id: 'intro-dialog'
+        })
+      })
+    }
+
+
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.interval)
+  }
+
+
+  openAddImageDialog(){
+    this.coreService.openDialog({
+      template: this.addImageDialogTmpl,
+      headerText: `Add Image`
+    })
   }
 
   initCanvas(){
+    let box:any = document.getElementById('canvas-container');
+    let width = box.offsetWidth;
+    let resizeImageWidth = this.UI.resizeImage ? width : 0;
 
-    this.canvasService.initCanvasWithImage('canvas-container', this.selectedFile.path).subscribe((image)=>{
-    //setTimeout(()=>{    
-      let box:any = document.getElementById('canvas-container');
-      let width = box.offsetWidth;
+    this.canvasService.initCanvasWithImage('canvas-container', this.selectedFile.path, resizeImageWidth).subscribe((image)=>{  
       let scale = Number((width/image.width).toFixed(2));
       this.canvasScale = scale > 1 ? 1 : scale;
       this.initEffects();
@@ -132,8 +198,6 @@ export class ImageEffectsCanvasComponent implements OnInit {
       this.dummyCanvas.width = image.width;
       this.dummyCanvas.height = image.height;      
       this.dummyCtx = this.dummyCanvas.getContext('2d');
-    //}, 2000);
-
     })
 
   }
@@ -174,14 +238,17 @@ export class ImageEffectsCanvasComponent implements OnInit {
       {head: 'Letters',     method: 'giveLetters',    tmpl: this.lettersTmpl}, 
       {head: 'Comic',       method: 'giveComic',      tmpl: this.comicTmpl}, 
       {head: 'Whirlpool',   method: 'giveWhirlpool',  noParamsMethod: true,  tmpl: this.whirlpoolTmpl},
-      {head: 'Background',   method: 'giveBackground',  tmpl: this.backgroundTmpl}, 
-      {head: 'Shades Of',   method: 'giveShadesOf',  tmpl: this.shadesOfTmpl},               
+      {head: 'Background',  method: 'giveBackground',  tmpl: this.backgroundTmpl}, 
+      {head: 'Shades Of',   method: 'giveShadesOf',  tmpl: this.shadesOfTmpl},  
+      {head: 'Dream',       method: 'giveDream',  noParamsMethod: true,  tmpl: this.dreamTmpl},  
+      {head: 'Acrylic Scratch',   method: 'giveAcrylicScratch',  noParamsMethod: true,  tmpl: this.acrylicScratchTmpl},                      
     ];
     this.effects.sort((a:any,b:any)=>{return a['head'].localeCompare(b['head'])}); 
   }
 
   initFabricCanvas(width: number, height: number){
-    this.fabricService.giveFabricCanvas('fabricCanvas', {width: width, height: height, backgroundColor: 'green' }).subscribe((canvas)=>{
+    this.fabricService.giveFabricCanvas('fabricCanvas', 
+    {width: width, height: height }).subscribe((canvas)=>{
       this.fabricCanvas = canvas;
       this.fabricCanvas.appStatus = 'appStatus';
       this.fabricCanvas.preserveObjectStacking = false;
@@ -211,6 +278,35 @@ export class ImageEffectsCanvasComponent implements OnInit {
     });
   }
 
+
+  onDrop(event:any){
+
+    let box:any = document.getElementById('canvas-container');
+    let width = box.offsetWidth;
+    let resizeImageWidth = this.UI.resizeImage ? width : 0;
+
+    this.coreService.toBase64(event.addedFiles[0]).subscribe((path:any)=>{    
+        document.getElementById('canvas-container')?.children[0].remove();
+        this.canvasService.initCanvasWithImage('canvas-container', path, resizeImageWidth).subscribe((image)=>{ 
+          this.selectedFile.path = image.img;
+          let scale = resizeImageWidth ? 1 : Number((width/image.width).toFixed(2));
+          if(resizeImageWidth){
+            resizeImageWidth
+          }
+          this.canvasScale = scale > 1 ? 1 : scale;
+          this.fabricCanvas.clear();
+          this.fabricCanvas.setWidth(image.width);
+          this.fabricCanvas.setHeight(image.height);
+          this.dummyCanvas.width = image.width;
+          this.dummyCanvas.height = image.height;
+          this.coreService.closeAllDialogs();
+        })
+
+
+    })
+
+  }
+
    /** FABRIC LASSO AND CROP *****************************/
 
   attachFabricEvents(){
@@ -231,7 +327,8 @@ export class ImageEffectsCanvasComponent implements OnInit {
       endPoint.x = Math.round(opt.pointer.x); 
       endPoint.y = Math.round(opt.pointer.y);
     
-      console.log(this.fabricCanvas.appStatus)
+      console.log('mouse up')
+      //console.log(this.fabricCanvas.appStatus)
 
       if(this.fabricCanvas.appStatus === 'selectPart' || this.fabricCanvas.appStatus === 'selectAndRemovePart'){
         let remove = this.fabricCanvas.appStatus === 'selectAndRemovePart' ? true : false;
@@ -250,11 +347,18 @@ export class ImageEffectsCanvasComponent implements OnInit {
         }
         this.giveLassoEffect(this.fabricCanvas.effectMethod, startP, endP);
       } 
+      else if(this.fabricCanvas.appStatus === 'cropRectange'){
+        let excludeCrop = false;
+        this.fabricCanvas.appStatus = ''; 
+        //this.mpla();
+        this.lassoCrop(excludeCrop);
+      }
 
     });
 
     this.fabricCanvas.on('path:created', (opt:any) => {
-      if(this.fabricCanvas.appStatus === 'crop' || this.fabricCanvas.appStatus === 'excludeCrop'){
+      console.log('path:created', opt);
+      if(this.fabricCanvas.appStatus === 'excludeCrop'){
         let excludeCrop = this.fabricCanvas.appStatus === 'excludeCrop' ? true : false;
         this.fabricCanvas.appStatus = ''; 
         //this.mpla();
@@ -332,47 +436,47 @@ export class ImageEffectsCanvasComponent implements OnInit {
     //   console.log('from storage editor');
     //   return;
     // }
-    this.apiService.getData(`/accountSettings/${this.apiService.user.id}`).subscribe({
-      next: (res: any) => {
-        if(res){
-          this.editor = JSON.parse(res.editorSettings);
-        }
-      },
-      error: (err: any) => {
-        console.log(err)
-        this.coreService.giveSnackbar(err?.message, {
-          duration: 5000,
-          verticalPosition: 'top'
-        });        
-      },
-      complete: () => {
-        this.coreService.updateStorageObjDeep('asset-bank', ['editor'], this.editor)
-      },
-    })
+    // this.apiService.getData(`/accountSettings/${this.apiService.user.id}`).subscribe({
+    //   next: (res: any) => {
+    //     if(res){
+    //       this.editor = JSON.parse(res.editorSettings);
+    //     }
+    //   },
+    //   error: (err: any) => {
+    //     console.log(err)
+    //     this.coreService.giveSnackbar(err?.message, {
+    //       duration: 5000,
+    //       verticalPosition: 'top'
+    //     });        
+    //   },
+    //   complete: () => {
+    //     this.coreService.updateStorageObjDeep('asset-bank', ['editor'], this.editor)
+    //   },
+    // })
   }
 
   saveEditorSettings(type:string, settings:any){
-    this.apiService.postData('/editorSettings', {
-      accountId: 1, 
-      editorSettings: settings,
-      type: type
-    }).subscribe({
-      next: (res: any) => {
-        this.editor = res.data;
-        this.coreService.giveSnackbar(`${type} setting saved!`);
-      },
-      error: (err: any) => {
-        console.log(err)
-        this.coreService.giveSnackbar(err?.message, {
-          duration: 5000,
-          verticalPosition: 'top'
-        });        
-      },
-      complete: () => {
-        //this.coreService.closeAllDialogs();
-        //location.reload();
-      },
-    })
+    // this.apiService.postData('/editorSettings', {
+    //   accountId: 1, 
+    //   editorSettings: settings,
+    //   type: type
+    // }).subscribe({
+    //   next: (res: any) => {
+    //     this.editor = res.data;
+    //     this.coreService.giveSnackbar(`${type} setting saved!`);
+    //   },
+    //   error: (err: any) => {
+    //     console.log(err)
+    //     this.coreService.giveSnackbar(err?.message, {
+    //       duration: 5000,
+    //       verticalPosition: 'top'
+    //     });        
+    //   },
+    //   complete: () => {
+    //     //this.coreService.closeAllDialogs();
+    //     //location.reload();
+    //   },
+    // })
   }
 
   /** SEQUENCE *************************************************************************************/
@@ -413,7 +517,6 @@ export class ImageEffectsCanvasComponent implements OnInit {
       if(this.sequence.fromStorage){      
         this.canvasService.config = this.coreService.clone(this.state.config);
       }
-      this.canvasService.addToHistory(); 
       return;
     }
     //change the current effect config with the stored one
@@ -554,6 +657,7 @@ export class ImageEffectsCanvasComponent implements OnInit {
     let incrX = pattern.xIncr;
     let incrY = pattern.yIncr;
     //Apply image manipulation method or draw the pattern
+    this.canvasService.pattern.isRunning = true;
     if(pattern.applyMethod){
       let method:MethodNameT = pattern.method;
       this.state.applyEffectWithReInit = this.canvasService.applyEffectWithReInit;
@@ -576,12 +680,13 @@ export class ImageEffectsCanvasComponent implements OnInit {
         this.helpers.drawFromPath(this.canvasService.ctx, nextPoints.poly, pattern.color);
       } 
     }
+    this.canvasService.pattern.isRunning = false;
   }
 
   renderPatternSeries(series?:PatternSeriesT[]){ 
     //this.pattern.isRunning = true;
     let patternSeries = series ? series : this.pattern.series;
-    console.log(patternSeries);
+    //console.log(patternSeries);
     let time1 = new Date().getTime();
     patternSeries.forEach((pattern:any) => {
       this.renderPattern({color:pattern.color, path: pattern.path}, pattern);
@@ -635,25 +740,77 @@ export class ImageEffectsCanvasComponent implements OnInit {
     this.historySelected = [ ...Array(this.canvasService.history.length).keys() ].map( i => i);
   }
 
+  /** UI STATE ************************************************************************************************/
 
-
-  goToHistory(index:number){
-    let src = this.canvasService.history[index];
-    const image = new Image();
-    image.onload = () => {
-      this.canvasService.clearCanvas()
-      this.canvasService.ctx.drawImage(
-        image,
-        0,
-        0,
-        image.width,
-        image.height
-      );
-      this.canvasService.getImageData();
-    };
-    image.src = src;
-    image.crossOrigin = "Anonymous";
+  saveUIToStorage(){
+    this.coreService.updateStorageObj('editorUI', this.UI);
   }
+
+  getUIFromStorage(){
+    let UI = this.coreService.getStorageObj('editorUI');
+    UI ? this.UI = UI : null;
+  } 
+
+
+  mergeDataWithFabric(){
+    let imgData = this.ctxFabric.getImageData(0, 0, this.canvasService.width, this.canvasService.height); 
+    let data = imgData.data;
+
+    this.canvasService.doSomethingInLoop((i:number, point:any, color:any)=>{
+      if( data[i+3] ) {
+        let gravity = (data[i+3]/255);
+        let avg1 =  this.canvasService.imageData.data[i]*  (1-gravity) + data[i]* (gravity)   
+        let avg2 =  this.canvasService.imageData.data[i+1]*(1-gravity) + data[i+1]*(gravity) 
+        let avg3 =  this.canvasService.imageData.data[i+2]*(1-gravity) + data[i+2]*(gravity) 
+        //let avg4 = ( this.imageData.data[i+3]*(1-(data[i+3]/255)) + data[i+3]*((data[i+3]/255)) )/2
+        this.canvasService.imageData.data[i] = Math.round(avg1);
+        this.canvasService.imageData.data[i+1] = Math.round(avg2);
+        this.canvasService.imageData.data[i+2] = Math.round(avg3);
+        this.canvasService.imageData.data[i+3] = 255//avg4;
+      }
+    }, 
+    true);
+
+    this.fabricCanvas.clear();
+    this.canvasService.getImageData(); 
+    this.canvasService.assignCanvasToImage(true);
+    //this.canvas.toDataURL();   
+  }
+
+  mergeDataToDummy(){
+    let canvasImgData = this.canvasService.ctx.getImageData(0, 0, this.canvasService.width, this.canvasService.height);
+    let canvasData = canvasImgData.data;
+    let fabricImgData = this.ctxFabric.getImageData(0, 0, this.canvasService.width, this.canvasService.height);
+    let fabricData = fabricImgData.data;
+    let dummyImgData = this.dummyCtx.getImageData(0, 0, this.canvasService.width, this.canvasService.height);
+    let data = dummyImgData.data;
+    let i = -4;
+    let len = data.length;
+    while ( (i +=  4) < len ) {
+        if(fabricData[i+4]){
+          data[i] = fabricData[i];
+          data[i + 1] = fabricData[i+1];
+          data[i + 2] = fabricData[i+2];
+          data[i + 3] = fabricData[i+3];
+        }
+        else{
+          data[i] = canvasData[i];
+          data[i + 1] = canvasData[i+1];
+          data[i + 2] = canvasData[i+2];
+          data[i + 3] = canvasData[i+3];
+        }
+    }
+    this.dummyCtx.putImageData(dummyImgData, 0, 0);
+    //this.fabricCanvas.clear();
+  }
+
+  downloadImage(type: string){
+    this.mergeDataToDummy();
+    this.dummyCanvas.toBlob((blob:any)=>{
+      saveAs(blob, `siteland-asset-bank.${type}`);
+    })
+  }
+
 
 
 

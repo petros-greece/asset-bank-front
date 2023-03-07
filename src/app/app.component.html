@@ -1,24 +1,46 @@
-<mat-toolbar>
+<!-- <app-image-effects-canvas></app-image-effects-canvas> -->
+<app-face-canvas></app-face-canvas>
 
-      <a href="https://siteland.eu/" style="text-decoration: none;color: #000;">
-        Siteland
-      </a> 
-      &nbsp;- Asset Bank Demo
-
-      <app-user-forms class="align-right">
-      </app-user-forms>
-
-</mat-toolbar>
-
-<!-- <div>
-
-  <app-carousel></app-carousel>
-</div> -->
+<!-- 
 <div>
-
-  <app-image-effects-canvas></app-image-effects-canvas>
-  
+  <app-carousel></app-carousel>
+</div>  
+-->
+<!-- 
+<div>
+  <button 
+    *ngFor="let editor of editors" 
+    mat-raised-button 
+    color="primary" 
+    (click)="UI.visibleEditor=editor.type">
+    {{editor.verb}}
+  </button>
 </div>
+
+
+<div [ngSwitch]="UI.visibleEditor">
+
+  <div *ngSwitchCase="'imageEffects'">
+    <app-image-effects-canvas></app-image-effects-canvas>
+  </div>
+
+  <div *ngSwitchCase="'faceCanvas'">
+    <app-face-canvas></app-face-canvas>
+  </div>
+
+</div> -->
+
+
+
+
+<!-- 
+
+<app-face-canvas></app-face-canvas>
+
+ -->
+
+<!-- 
 
 <app-tree></app-tree>
 
+ -->

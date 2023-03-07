@@ -1,14 +1,15 @@
 <div>
 
-  <div class="row fabric-colors-con mat-grey-800" *ngIf="view === 'edit'">
+  <div class="flex flex-row fabric-colors-con p-4" *ngIf="view === 'edit'">
       
-    <div class="col" style="width: 100%">
+    <div class="flex flex-col w-full">
 
       <!--== GENERAL ===================-->
 
-      <div class="row middle-xs pad-l-sm mrgn-t-sm" style="margin: 0px;">
-            
-        <button 
+      <div class="flex flex-row flex-wrap">
+        <!--             
+        
+          <button 
           mat-icon-button 
           color="accent"
           [matMenuTriggerFor]="galleryMenu" 
@@ -20,44 +21,51 @@
           <div (click)="$event.stopPropagation()" *ngIf="showGallery" style="width: 600px;">
             <app-gallery (onAddSelected)="onAddSelected()" [addAction]="'image'"></app-gallery>
           </div>
-        </mat-menu>
+        </mat-menu> 
+      
+        -->
 
-        <button mat-icon-button color="accent"
+        <button mat-icon-button color="accent" matTooltip="Lasso crop"
           (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='excludeCrop'">
           <mat-icon svgIcon="lasso"></mat-icon>
         </button>
 
-        <button mat-icon-button color="accent"
-          (click)="fabricCanvas.isDrawingMode = true;fabricCanvas.appStatus='crop'">
+        <!-- 
+        <button mat-icon-button color="accent" matTooltip="Rectangle crop"
+          (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='cropRectange'">
           <mat-icon>crop_free</mat-icon>
-        </button>
+        </button> 
+        -->
 
-        <button mat-icon-button color="accent"
+        <button mat-icon-button color="accent" matTooltip="Rectangle crop"
           (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='selectAndRemovePart'">
           <mat-icon>crop</mat-icon>
         </button>
 
-        <!-- <button mat-raised-button color="accent"
+        <!-- 
+        <button mat-raised-button color="accent"
           (click)="fabricCanvas.selection = true;fabricCanvas.appStatus='selectPart'">
           <mat-icon>photo_size_select_large</mat-icon>
-        </button> -->
+        </button> 
+        -->
 
-        <button mat-icon-button color="accent"
+        <button mat-icon-button color="accent" matTooltip="Duplicate selection"
           (click)="duplicateSelection()">
           <mat-icon>content_copy</mat-icon>
         </button>
 
-        <button mat-icon-button color="accent"
+        <button mat-icon-button color="accent" matTooltip="Select objects"
           (click)="fabricCanvas.isDrawingMode = false;fabricCanvas.selection = true;">
           <mat-icon>touch_app</mat-icon>
         </button>
 
-        <button mat-icon-button color="accent"
+        <button mat-icon-button color="accent" matTooltip="Clear Selection"
           (click)="fabricCanvas.discardActiveObject().renderAll();">
           <mat-icon>remove_done</mat-icon>
         </button>
         
-        <button mat-icon-button color="warn" (click)="removeSelection()">
+        <button mat-icon-button color="warn" matTooltip="Remove Selected Objects"
+          (click)="removeSelection()">
           <mat-icon>remove</mat-icon>
         </button>
 
@@ -69,11 +77,11 @@
 
       <!--== TOOLS ===================-->
 
-      <div class="row middle-xs pad-l-sm mrgn-t-sm" style="margin: 0px;">
+      <div class="flex flex-row flex-wrap">
 
         <!--== BRUSH ===================-->
 
-        <div class="col pad-all-xs">
+        <div class="flex flex-col p-2">
           Brush
           <app-picker-menu
             (click)="fabricCanvas.appStatus = '';fabricService.addBrush(fabricCanvas, brush);"
@@ -81,7 +89,7 @@
             [color]="brush.color" 
             (onPickColor)="brush.color = $event.color;fabricService.addBrush(fabricCanvas, brush);changeActiveBrush()">
 
-            <div class="col">
+            <div class="flex flex-col">
               <div style="z-index: 9999">
                 Line Width
                 <mat-slider 
@@ -118,7 +126,7 @@
 
         <!--== TEXTBOXES ===================-->
 
-        <div class="col pad-all-xs">
+        <div class="flex flex-col p-2">
           Textbox
 
           <div>
@@ -171,7 +179,7 @@
         
         <!--== ICONS PANEL ===================-->
 
-        <div class="col pad-all-xs">
+        <div class="flex flex-col p-2">
           Icons
           <div>
             <app-picker-menu
@@ -202,17 +210,16 @@
               <mat-icon>image</mat-icon>
             </button>
 
-            <mat-menu #iconsMenu="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+            <mat-menu #iconsMenu="matMenu" class="my-menu p-2"  [overlapTrigger]="false">
               <div (click)="$event.stopPropagation()">
-                <div class="row">
-                  <div class="col-xs-4">
+                <div class="flex flex-row">
+                  <div class="w-1/3">
                     <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
                       {{file.name}}
                     </button>        
                   </div>
-                  <div class="col-xs-8">
-                    <div class="row">
-
+                  <div class="flex flex-col w-2/3">
+                    <div class="flex flex-row flex-wrap gap-2">
                       <button 
                         mat-raised-button color="primary"  
                         *ngFor="let svg of svgIcons" 
@@ -237,7 +244,7 @@
 
       <!--== DELETE ===================-->
 
-      <div class="row end-xs mrgn-b-sm pad-r-sm">
+      <div class="flex flex-row justify-end">
         <button mat-raised-button color="warn" (click)="fabricCanvas.clear()">
           <mat-icon>delete</mat-icon>
         </button>
@@ -379,9 +386,10 @@
 
         <!--== ICONS PANEL ===================-->
 
-        <div class="col pad-all-xs">
-          Icons
+        <div class="flex flex-col p-2">
+          Icons 
           <div>
+
             <app-picker-menu
               icon="border_color" 
               [color]="icon.stroke" 
@@ -406,17 +414,16 @@
               <mat-icon>image</mat-icon>
             </button>
 
-            <mat-menu #iconsMenu="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+            <mat-menu #iconsMenu="matMenu" class="my-menu p-2"  [overlapTrigger]="false">
               <div (click)="$event.stopPropagation()">
-                <div class="row">
-                  <div class="col-xs-4">
-                    <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
+                <div class="flex flex-row">
+                  <div class="w-1/3">
+                    <button *ngFor="let file of svgFiles" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
                       {{file.name}}
                     </button>        
                   </div>
-                  <div class="col-xs-8">
-                    <div class="row">
-
+                  <div class="w-2/3">
+                    <div class="flex flex-row">
                       <button 
                         mat-raised-button color="primary"  
                         *ngFor="let svg of svgIcons" 

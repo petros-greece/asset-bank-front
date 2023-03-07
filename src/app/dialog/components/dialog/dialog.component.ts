@@ -8,7 +8,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
   selector: 'app-dialog',
   styleUrls: ['dialog.component.scss'],
   template: `
-    <div style="position: relative;">        
+    <div style="position: relative;margin-bottom:-6px;overflow:hidden;">        
       <mat-icon mat-dialog-close
         *ngIf="data.showClose !== false" 
         class="my-close-dialog" 
@@ -23,7 +23,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
       </mat-toolbar>
    
       <ng-container
-        style="padding: 5px;"
         [ngTemplateOutlet]="data.template"
         [ngTemplateOutletContext]="data.context"
       ></ng-container>

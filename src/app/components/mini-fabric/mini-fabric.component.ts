@@ -1,8 +1,9 @@
 import { Component, Input, OnInit, AfterViewInit, Output, EventEmitter } from '@angular/core';
-import { PointI, PolyT } from 'src/app/interface/canvas.interface';
+import { PointI, PolyT, SvgT } from 'src/app/interface/canvas.interface';
 import { CoreService } from 'src/app/service/core.service';
 import { FabricService } from 'src/app/service/fabric.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
 
 @Component({
   selector: 'app-mini-fabric',
@@ -15,28 +16,11 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
   @Input() height: number = 200;
   @Output() onEmitPath = new EventEmitter<any>();
 
-  svgFiles = [
-    { name: 'textbox', },
-    { name: 'christmas', },  
-    { name: 'superheroes' },
-    { name: 'animals' },
-    { name: 'face-emotions' },
-    { name: 'instruments' },     
-  ];
-  svgIcons: any;
-
   fabricCanvas:any;
   fabricCtx:any;
   center:PointI = {x:0, y: 0}
 
   color: string = 'red';
-    /** PATTERNS *****/
-
-    // pattern = {
-    //   path: [],
-    //   startP: {x: 0, y: 0},
-    //   endP: {x: 0, y: 0}
-    // }
 
   constructor(
     public coreService: CoreService,
@@ -53,38 +37,37 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
     this.fabricService.giveFabricCanvas('miniFabricCanvas', {width: this.width, height: this.height }).subscribe((canvas)=>{
       this.fabricCanvas = canvas;
       this.fabricCtx = this.fabricCanvas.getContext('2d');
-      //this.addRect(); 
     });
 
   }
 
-  ngAfterViewInit(): void {
-       
-    //this.fabricService.addRect(this.fabricCanvas, {left: this.center.x,top: this.center.y});
-    //this.fabricService.addCircle(this.fabricCanvas, {left: this.center.x,top: this.center.y });
-    //this.fabricService.addPolygon(this.fabricCanvas, 7, 50, {left: this.center.x, top: this.center.y} )
-    //this.fabricService.addEditablePolygon(this.fabricCanvas, 7, 50, {left: this.center.x, top: this.center.y})
-    
-  }
+  ngAfterViewInit(): void { }
 
-  getSvgFile(fname: string){
-    this.coreService.getData(`./assets/json/svg-${fname}.json`).subscribe((data)=>{
-      this.svgIcons = data;
-    });
-  }
 
-  addSVGIcon(svg: any){
-    //this.fabricCanvas.clear();
-    this.fabricService.loadSVGFromString(this.fabricCanvas, {
-      path: svg,
-      fill: this.color,
-      stroke: '#000',
-      strokeWidth: 0,
-      scale: 1.5,
-      left: this.center.x,
-      top: this.center.y,
-      name: 'svg-icon'
-   }); 
+  addSVGIcon(svg: SvgT){
+    let opts:any = {};
+    if(svg.type){
+      opts = {
+        path: svg.svg,
+        left: this.center.x,
+        top: this.center.y,
+        name: 'svg-icon',
+        scale: 1.5,
+      }
+    } 
+    else{
+      opts = {
+        path: svg.svg,
+        fill: this.color,
+        stroke: '#000',
+        strokeWidth: 0,
+        scale: 1.5,
+        left: this.center.x,
+        top: this.center.y,
+        name: 'svg-icon'
+      }
+    }
+    this.fabricService.loadSVGFromString(this.fabricCanvas, opts);
   }
 
   addRect(){
@@ -113,7 +96,7 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
       }
       let path:any;
       let color:string;
-      if(obj._objects || obj.name.includes('cirlce-handler')){
+      if(obj._objects || (obj.name && obj.name.includes('cirlce-handler'))){
         continue;
       }
       else{
@@ -141,13 +124,13 @@ export class MiniFabricComponent implements OnInit, AfterViewInit {
       this.coreService.giveSnackbar('Select a pattern first!')
       return;
     }
-    if(obj.name === 'rect'){
+    if(obj.name && obj.name === 'rect'){
       let sides = ['tl', 'tr', 'br', 'bl'];
       for(let i=0;i<4;i+=1){
         path.push([obj.aCoords[sides[i]].x, obj.aCoords[sides[i]].y]);
       }
     }
-    else if(obj.name === 'circle' || obj.name.includes('control-poly')){
+    else if(obj.name && (obj.name === 'circle' || obj.name.includes('control-poly')) ){
       path = obj.points.map((point:PointI)=>{
         return [obj.left + (point.x* obj.scaleX), obj.top + (point.y* obj.scaleY)]
       });

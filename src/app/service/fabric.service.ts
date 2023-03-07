@@ -11,6 +11,7 @@ import { CanvasHelpersService } from './canvas-helpers.service';
 })
 export class FabricService {
 
+  
   constructor(
     public helpers: CanvasHelpersService,
     private apiService: ApiService
@@ -21,7 +22,7 @@ export class FabricService {
     return new Observable((observer)=>{
       let canvas = new fabric.Canvas(elemId, {
         //controlsAboveOverlay: true,
-        backgroundColor: 'rgba(0,0,0,0)',
+        backgroundColor: opts.backgroundColor ? opts.backgroundColor : 'rgba(0,0,0,0)',
         selection: false,
         //selectionColor: 'yellow',
         //selectionBorderColor: 'black',
@@ -211,24 +212,23 @@ export class FabricService {
       let circle = this.getCircle({
         left: polygon.left+points[i].x, 
         top: polygon.top+points[i].y, 
-        name: `${i}${time}-cirlce-handler`
+        name: `${i}-${time}-cirlce-handler`
       });
-      circleHandlers[`${i}${time}`] = circle;
+      circleHandlers[`${i}-${time}`] = circle;
     }
 
     fabricCanvas.on('object:moving', (opts:any) => {
       //let objType = opts.target.get('type');
       let target = opts.target;
-      console.log('object:moving', target)
+      //console.log('object:moving', target)
       if(target.name.includes(`control-poly`)){
         for(let i =0; i < pointsNum; i+=1){
-          circleHandlers[`${i}${time}`].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+          circleHandlers[`${i}-${time}`].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
           //circleHandlers.push(circle)       
         }
       }
       if(target.name.includes(`${time}-cirlce-handler`)){
-        console.log('yoyo')
-        let index = target.name.charAt(0);
+        let index = target.name.split('-')[0];
         let polygonCenter = polygon.getCenterPoint();
         polygon.points[index] = {x: target.left - polygonCenter.x, y: target.top - polygonCenter.y};
         //console.log(polygon.points)     
@@ -238,12 +238,12 @@ export class FabricService {
     fabricCanvas.on('mouse:up', (opts:any) => {
 
       if(opts.target){// && opts.target.name && opts.target.name.includes('cirlce-handler')){
-        console.log('mouse:up', opts.target)
+        //console.log('mouse:up', opts.target)
         for(let i = 0; i < pointsNum; i+=1){
-          fabricCanvas.remove(circleHandlers[`${i}${time}`]);
-          let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}${time}-cirlce-handler`});
+          fabricCanvas.remove(circleHandlers[`${i}-${time}`]);
+          let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-${time}-cirlce-handler`});
           fabricCanvas.add(circle)
-          circleHandlers[`${i}${time}`] = circle;
+          circleHandlers[`${i}-${time}`] = circle;
         } 
         fabricCanvas.renderAll()
       }
@@ -260,10 +260,10 @@ export class FabricService {
       // }
     })
 
-    fabricCanvas.on('object:removed', (opts:any) => {
-      //console.log('object:removed', opts.target.name)
-      //fabricCanvas.clear()
-    });
+    // fabricCanvas.on('object:removed', (opts:any) => {
+    //   //console.log('object:removed', opts.target.name)
+    //   //fabricCanvas.clear()
+    // });
     
     
     fabricCanvas.add(polygon);
@@ -274,6 +274,80 @@ export class FabricService {
 
     fabricCanvas.renderAll()
   }
+
+  //wrong
+  addEditableShape(fabricCanvas:any, points: any, polyOptions:IPolylineOptions, handlerOptions?:ICircleOptions ){
+    let time = new Date().getTime();
+    let pointsNum = points.length;
+    Object.assign(polyOptions, { name: `control-poly+${time}`, hasControls: false, originX: 'left', originY: 'top' });
+    let polygon:any = this.getPolygon(points, polyOptions);
+    let circleHandlers:any = {};
+    
+    for(let i = 0; i < pointsNum; i+=1){
+      let circle = this.getCircle({
+        left: polygon.left+points[i].x, 
+        top: polygon.top+points[i].y, 
+        name: `${i}-${time}-cirlce-handler`
+      });
+      circleHandlers[`${i}-${time}`] = circle;
+    }
+
+    fabricCanvas.on('object:moving', (opts:any) => {
+      //let objType = opts.target.get('type');
+      let target = opts.target;
+      //console.log('object:moving', target)
+      if(target.name.includes(`control-poly`)){
+        for(let i =0; i < pointsNum; i+=1){
+          circleHandlers[`${i}-${time}`].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+          //circleHandlers.push(circle)       
+        }
+      }
+      if(target.name.includes(`${time}-cirlce-handler`)){
+        let index = target.name.split('-')[0];
+        let polygonCenter = polygon.getCenterPoint();
+        //console.log(polygonCenter)
+        polygon.points[index] = {x: target.left - polygonCenter.x+polygon.pathOffset.x, y: target.top - polygonCenter.y+polygon.pathOffset.y};
+        //console.log(polygon.points)     
+      }
+    });
+
+    fabricCanvas.on('mouse:up', (opts:any) => {
+
+      if(opts.target){// && opts.target.name && opts.target.name.includes('cirlce-handler')){
+        console.log('mouse:up', opts.target)
+        for(let i = 0; i < pointsNum; i+=1){
+          fabricCanvas.remove(circleHandlers[`${i}-${time}`]);
+          let circle = this.getCircle({left: polygon.left+points[i].x, top: polygon.top+points[i].y, name: `${i}-${time}-cirlce-handler`});
+          fabricCanvas.add(circle)
+          circleHandlers[`${i}-${time}`] = circle;
+        } 
+        fabricCanvas.renderAll()
+      }
+
+      // let target = opts.target;
+      // console.log('mouse:up', target)
+
+      // if(target.name === 'control-poly'){
+      //   for(let i =0; i < pointsNum; i+=1){
+      //     circleHandlers[i].set({left: polygon.left+points[i].x, top: polygon.top+points[i].y});
+      //     //circleHandlers.push(circle)
+          
+      //   }
+      // }
+    })
+
+
+    
+    
+    fabricCanvas.add(polygon);
+
+    for(let h in circleHandlers){
+      fabricCanvas.add(circleHandlers[h]);
+    }
+
+    fabricCanvas.renderAll()
+  }
+
 
   addCircle(fabricCanvas:any, options?:ICircleOptions){
     this.doSelecteble(fabricCanvas);
@@ -550,24 +624,21 @@ export class FabricService {
   loadSVGFromString(canvas:any, opts:any){
 
     fabric.loadSVGFromString(opts.path, function(objects, options) {
-      console.log(objects, options)
       objects.forEach((object)=>{
-        object.fill= opts.fill;
-        object.stroke = opts.stroke;
-        object.strokeWidth = opts.strokeWidth;
-        //object.originY = 'center';
-        //object.originX = 'center';
-        //canvas.add(object);
+        opts.fill ? object.fill = opts.fill : null;
+        opts.stroke ? object.stroke = opts.stroke : null;
+        opts.strokeWidth ? object.strokeWidth = opts.strokeWidth : null;
       });
       let obj = fabric.util.groupSVGElements(objects, {
         name: 'svg-group',
-              originX: 'center',
-      originY: 'center',
+        originX: 'center',
+        originY: 'center',
       });
       obj.scaleX = opts.scale;
       obj.scaleY = opts.scale;
       obj.left = opts.left;
       obj.top = opts.top;
+      opts.opacity ? obj.opacity = opts.opacity : null;
   
       canvas.add(obj).renderAll();
       

@@ -67,12 +67,17 @@ export class CanvasService {
     comic: { reverse: 80, sumFactor: 382 },
     whirlpool:{ degreesStop: 360, degreesPlus: .5 },
     background: {color: 'rgba(100, 100, 100, .8)'},
-    shadesOf: { color: 'red' }
+    shadesOf: { color: 'red' },
+    dream: { factor: 20 },
+    acrylicScratch: { range: 3 }
   }
 
   history: any = [];
   historyCurrent: number = 0;
 
+  pattern = {
+    isRunning: false
+  }
 
   constructor(
     public helpers: CanvasHelpersService,
@@ -115,18 +120,14 @@ export class CanvasService {
     return canv.toDataURL();    
   }
 
-  loadImage(src:string = '') : Observable<HTMLImageElement>{ 
-    if(!this.imageSrc){
-      this.imageSrc = src;
-    }
+  loadImage(src:string) : Observable<HTMLImageElement>{ 
+    this.imageSrc = src; 
     return new Observable((observer) => {
-      const image = new Image();
+      let image = new Image();
       image.onload = () => {
         //@todo apply max width or device width
-        this.width = image.width;
-        this.height = image.height;
-        this.image = image;
-        this.imageProto = image;
+        // this.image = image;
+        // this.imageProto = image;
         setTimeout(()=>{
           observer.next(image)
         }, 0);
@@ -137,31 +138,57 @@ export class CanvasService {
     });
   }
 
-  initCanvasWithImage(elemId:string, src:string): Observable<HTMLImageElement>{
+  initCanvasWithImage(elemId:string, src:string, resizeW?:number): Observable<{img: string, width: number, height: number}>{
     return new Observable((observer:any)=>{
       this.loadImage(src).subscribe((image)=>{
-        let w = image.width, h = image.height;
-        this.createCanvas(elemId, w, h);
-        this.ctx.drawImage(image, 0, 0, w, h, 0, 0, w, h);
+        let w = image.width, h = image.height, resizedW = image.width, resizedH = image.height;
+        if(resizeW && (resizeW < w)){
+          let s = resizeW/w;
+          resizedW = w*s, resizedH = h*s;
+        }
+        this.width = resizedW;
+        this.height = resizedH;
+
+        this.createCanvas(elemId, resizedW, resizedH);
+        this.ctx.drawImage(image, 0, 0, w, h, 0, 0, resizedW, resizedH);
         this.center = {x: Math.round(this.width/2), y: Math.round(this.height/2) };
         this.getImageData();
         this.giveConstants();
         this.info = this.helpers.getColorsInfo(this.imageData);
-        observer.next(image);
+        const imageDataUrl = this.canvas.toDataURL();
+   
+        // this.image = this.canvas.toDataURL();
+        // this.imageProto = this.canvas.toDataURL();
+
+        const img = new Image();
+        img.onload = () => {
+          this.image = img;
+          this.imageProto = img;
+        };
+        img.src = imageDataUrl;
+        img.crossOrigin = "Anonymous";
+
+        
+
+
+        observer.next({img: imageDataUrl, width: resizedW, height: resizedH});
+        
       })
     })
   }
 
   reInitImage(getInfo:boolean = false){
     return new Observable((observer:any)=>{
-      this.loadImage(this.imageSrc).subscribe((image)=>{
-        this.ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.width, this.height);
+      //this.loadImage(this.imageSrc).subscribe((image)=>{
+        this.image = this.imageProto;
+        this.ctx.drawImage(this.image, 0, 0, this.image.width, this.image.height, 0, 0, this.width, this.height);
         this.getImageData();
+        //this.clearCanvas()
         if(getInfo){
           this.info = this.helpers.getColorsInfo(this.imageData);
         }
         observer.next(this.info);
-      })
+      //})
     })
   }
 
@@ -193,11 +220,12 @@ export class CanvasService {
 
   refresh(){
     //this.historyCurrent = this.history.length;
-    this.loadImage().subscribe((image)=>{
+    // this.loadImage(this.imageSrc).subscribe((image)=>{
+      this.image = this.imageProto;
       this.clearCanvas();
-      this.ctx.drawImage( image, 0, 0, image.width, image.height );
+      this.ctx.drawImage( this.image, 0, 0, this.image.width, this.image.height );
       setTimeout(()=>{ this.getImageData(); }, 10); 
-    })
+    // })
   }
 
   /** IN LOOP METHODS *****************************************/
@@ -326,9 +354,9 @@ export class CanvasService {
       clbk()
       setTimeout( ()=>{this.assignCanvasToThisImage()}, 0) 
     }
-    //if(!this.pattern.isRunning){ 
+    if(!this.pattern.isRunning){ 
       this.addToHistory(); 
-    //}
+    }
 
   }
 
@@ -442,7 +470,7 @@ export class CanvasService {
       let y = 0;
       let factor = this.config.pixelate.factor;
       let halfFactor = Math.round(factor/2)
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if( (!(point.x%factor*3)) && (!(point.y%factor*3))){  
           if(this.config.pixelate.outline){
             this.ctx.beginPath();
@@ -470,7 +498,7 @@ export class CanvasService {
     this.runWithReinit(()=>{
       let factor = this.config.pixelate.circleFactor;
       let y = 0;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if( (!(point.x%factor)) && (!(point.y%factor))){  
           if(this.config.pixelate.circleOutline){
             this.ctx.beginPath();
@@ -549,8 +577,8 @@ export class CanvasService {
     this.runWithReinit(()=>{ 
       let factor = this.config.paradise.factor;
       let add, hypo;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
-        hypo = Math.hypot(center.x-point.x, center.y-point.y);
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
+        hypo = Math.hypot(this.center.x-point.x, this.center.y-point.y);
         add = factor*hypo;
         this.pixelAddEach(i, add, add, add);       
       }, true, startP, endP, poly);        
@@ -561,7 +589,7 @@ export class CanvasService {
     this.runWithReinit(()=>{ 
       let factor = this.config.intensity.factor;
       let diffR, diffG, diffB
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         diffR = this.imageData.data[i] - this.info.averageRgb.r;
         diffG = this.imageData.data[i+1] - this.info.averageRgb.g;
         diffB = this.imageData.data[i+2] - this.info.averageRgb.b;  
@@ -591,7 +619,7 @@ export class CanvasService {
       let bg:any;
       if(this.config.outlines.hasBg){ bg = this.helpers.rgbStrToObj(this.config.outlines.bgColor); }  
       let wPixels = this.width*4;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if(bg){
           this.imageData.data[i] = bg.r;
           this.imageData.data[i+1] = bg.g;
@@ -622,7 +650,7 @@ export class CanvasService {
       let counter = 0;
       let asc = false;
       let factor = 84 + this.config.water.factor;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if(counter > factor){ asc = false; }
         else if(counter < -factor){ asc = true; }
         if(asc){ counter+=1; }
@@ -638,7 +666,7 @@ export class CanvasService {
 
   giveFluffy(startP?: PointI, endP?: PointI, poly?:PolyT){
     this.runWithReinit(()=>{ 
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         let rand = -this.config.fluffy.factor + Math.ceil(Math.random()*2*this.config.fluffy.factor);
         let rand2 = -this.config.fluffy.factor + Math.ceil(Math.random()*2*this.config.fluffy.factor);     
         this.ctx.beginPath();
@@ -656,7 +684,7 @@ export class CanvasService {
     this.runWithReinit(()=>{ 
       let data = JSON.parse(JSON.stringify(this.imageData.data));
       let hypo, dirRadians, dirX, dirY, newX, newY, newI;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         hypo = Math.round(Math.hypot( this.center.x-point.x, this.center.y - point.y));
         dirRadians = Math.atan2( this.center.y - point.y, this.center.x - point.x)//Math.sqrt(hypo);
         dirX = Math.cos(dirRadians)*this.config.suck.factor;
@@ -681,7 +709,7 @@ export class CanvasService {
         [this.config.spotlight.controlY+this.config.spotlight.rangeY, this.height], 
         [this.config.spotlight.controlY-this.config.spotlight.rangeY, this.height]
       ]
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if(this.helpers.inPolygon(point, polygon)){
           this.pixelAddEach(i, 30, 30, 30);      
         }
@@ -719,7 +747,7 @@ export class CanvasService {
     this.runWithReinit(()=>{
       this.clearCanvas()
       let factor = this.config.colendar.factor;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if(!(point.x%factor) && !(point.y%factor) || (point.x+factor > this.width) || (point.y+factor > this.height)){
           let hypo = Math.hypot(this.center.x - point.x, this.center.y - point.y);
           let zeroToOne = (1-Math.abs(hypo/this.maxHypo))*(factor/2);
@@ -744,7 +772,7 @@ export class CanvasService {
         alphabet = this.config.letters.phrase.split('');
       }
 
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{
         if(!(point.x%factor) && !(point.y%factor)){
           let rand = Math.floor(Math.random()*alphabet.length)
           this.ctx.clearRect(point.x, point.y, factor, factor);
@@ -762,7 +790,7 @@ export class CanvasService {
     this.runWithReinit(()=>{
       let factor = this.config.comic.reverse;
       let sumFactor = this.config.comic.sumFactor;
-      this.doSomethingInLoop((i:number, point:any, color:any, center:any)=>{      
+      this.doSomethingInLoop((i:number, point:any, color:any)=>{      
           let sum = color.r + color.g + color.b;
           if(sum < sumFactor){
             this.pixelEquals(i, color.r-factor, color.g-factor,color.b-factor)   
@@ -789,7 +817,6 @@ export class CanvasService {
   giveShadesOf(startP?: PointI, endP?: PointI, poly?:PolyT){
     let color = this.config.shadesOf.color;
     let shades = this.pallete.giveRgbShades(color).map((c:string)=>{ return this.helpers.rgbStrToObj(c); });
-    console.log(shades)
     let colorsLen = shades.length;
     let minDiffIndex, minDiff, diff, j;
     this.runWithReinit(()=>{
@@ -1088,10 +1115,10 @@ export class CanvasService {
         this.ctx.globalCompositeOperation = "destination-over";
 
         for( let degrees = 0; degrees < degreesStop; degrees+=degreesPlus ){
-
+          
             this.ctx.save();
             this.ctx.translate(this.center.x, this.center.y);
-            this.ctx.rotate(degrees*(Math.PI/180)*this.config.whirlpool.sumFactor);  
+            this.ctx.rotate(degrees*(Math.PI/180));  
             this.ctx.translate(-this.center.x, -this.center.y);
             // this.ctx.rect(this.center.x - distX, this.center.y - distY, distX*2, distY*2)
             // this.ctx.clip();
@@ -1110,7 +1137,58 @@ export class CanvasService {
       });      
   }
 
-  /** */
+  giveDream(){
+
+    this.runWithReinit(()=>{
+      this.clearCanvas()
+      let points = [];
+      for(let i=0;i<this.config.dream.factor;i+=1){ points.push({x:i, y:i}); }
+      points = this.coreService.shuffle(points);
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.1;
+      points.forEach((p)=>{ 
+        this.ctx.drawImage(this.image, 
+          0,0, this.width, this.height, 
+          p.x, p.y, this.width-(2*p.x), this.height-(2*p.y));        
+      });
+      this.ctx.restore();
+      this.getImageData(); 
+    });
+
+  }
+
+  giveAcrylicScratch(){
+
+    this.runWithReinit(()=>{
+      this.clearCanvas();
+      let points = [];
+      for(let i=-this.config.acrylicScratch.range;i<this.config.acrylicScratch.range;i+=1){
+        points.push([i,i]);
+      }
+      points = this.coreService.shuffle(points);
+
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'difference'
+      points.forEach((p)=>{
+        this.ctx.drawImage(this.image, 
+          0,0, this.width, this.height, 
+          p[0], p[1], this.width-(2*p[0]), this.height-(2*p[1]));      
+      });
+      this.ctx.restore();
+      this.getImageData(); 
+    });
+
+  }
+
+  /** TESTING ********************************************/
+
+
+  scissorsTest = {
+    var1: 1,
+    var2: 1
+  }
+
+
 
   scissors(startP?: PointI, endP?: PointI, poly?:PolyT){
     let min = this.info.colorRange?.min || {r: 0, g: 0, b: 0};
@@ -1118,17 +1196,39 @@ export class CanvasService {
  
     this.runWithReinit(()=>{
       //this.clearCanvas()
-      let factor = 100;
-      this.doSomethingInLoop((i:number, point:any, color:any)=>{      
-        if(i%12){
-          this.pixelEquals(i, color.r-factor, color.g-factor,color.b-factor)
-        }  
-        else{
-          this.pixelEquals(i, color.r+factor, color.g+factor,color.b+factor)
-        }
-            //this.pixelNegative(i, color, 155);
 
-      }, true, startP, endP, poly);
+      let points = [];
+
+      for(let i=-this.config.acrylicScratch.range;i<this.config.acrylicScratch.range;i+=1){
+        points.push([i,i]);
+      }
+
+      points = this.coreService.shuffle(points);
+
+      this.ctx.save();
+      //this.ctx.globalAlpha = .1;
+      this.ctx.globalCompositeOperation = 'difference'
+      points.forEach((p)=>{
+        console.log(p)
+        this.ctx.drawImage(this.image, 
+          0,0, this.width, this.height, 
+          p[0], p[1], this.width-(2*p[0]), this.height-(2*p[1]));      
+//this.ctx.clip();
+
+      });
+
+
+
+
+      this.ctx.restore();
+      this.getImageData(); 
+
+     // this.giveOutlines()
+
+      // this.doSomethingInLoop((i:number, point:any, color:any)=>{      
+        
+
+      // }, true, startP, endP, poly);
       //this.getImageData();
     });
 
@@ -1285,6 +1385,8 @@ export class CanvasService {
     })
   }
 
+  /** */
+
 
   addToHistory(){
     let dataUrl = this.tempCanvasDataUrl(this.imageData, this.width, this.height);
@@ -1294,5 +1396,30 @@ export class CanvasService {
     }
     this.historyCurrent = this.history.length;
   }
+
+  goToHistory(index:number){
+    let src = this.history[index];
+    const image = new Image();
+    image.onload = () => {
+      this.clearCanvas()
+      this.ctx.drawImage(
+        image,
+        0,
+        0,
+        image.width,
+        image.height
+      );
+      this.getImageData();
+    };
+    image.src = src;
+    image.crossOrigin = "Anonymous";
+  }
+
+  /** */
+
+
+
+
+  
 
 }

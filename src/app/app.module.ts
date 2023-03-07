@@ -32,6 +32,9 @@ import { SpeechRecognitionComponent } from './components/speech-recognition/spee
 import { SlickCarouselModule } from 'ngx-slick-carousel';
 import { CarouselComponent } from './components/carousel/carousel.component';
 import { ImageEffectsCanvasComponent } from './image-effects-canvas/image-effects-canvas.component';
+import { SvgIconsMenuComponent } from './components/svg-icons-menu/svg-icons-menu.component';
+import { FaceCanvasComponent } from './face-canvas/face-canvas.component';
+import { HeaderComponent } from './components/Shared/header/header.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +56,9 @@ import { ImageEffectsCanvasComponent } from './image-effects-canvas/image-effect
     SpeechRecognitionComponent,
     CarouselComponent,
     ImageEffectsCanvasComponent,
+    SvgIconsMenuComponent,
+    FaceCanvasComponent,
+    HeaderComponent,
   ],
   imports: [
     BrowserModule,

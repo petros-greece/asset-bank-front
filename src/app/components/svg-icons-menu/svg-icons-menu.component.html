@@ -1,0 +1,29 @@
+<button mat-icon-button color="accent" [matMenuTriggerFor]="iconsMenu">
+  <mat-icon>image</mat-icon>
+</button>
+
+<mat-menu #iconsMenu="matMenu" class="my-menu pad-all-sm"  [overlapTrigger]="false">
+  <div (click)="$event.stopPropagation()">
+    <div class="row">
+      <div class="col-xs-4">
+        <button *ngFor="let file of svgFiles" style="width: 100%" mat-raised-button color="primary" (click)="getSvgFile(file.name);">
+          {{file.name}}
+        </button>        
+      </div>
+      <div class="col-xs-8">
+        <div class="row">
+
+          <button 
+            mat-raised-button color="primary"  
+            *ngFor="let svg of svgIcons" 
+            (click)="emitSVGIcon(svg)"
+            [style.fill]="fill"
+            [style.stroke]="stroke"
+            [innerHTML]="sanitizer.bypassSecurityTrustHtml(svg.svg)" 
+            class="svg-but">
+          </button>  
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-menu>

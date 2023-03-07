@@ -47,7 +47,7 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 const MaterialComponents = [
           MatFormFieldModule,
           MatIconModule,
-          MatCardModule,
+          //MatCardModule,
           MatInputModule,
           MatTableModule,
           MatButtonModule,
@@ -55,7 +55,7 @@ const MaterialComponents = [
           MatGridListModule,
           MatDividerModule,
           MatSelectModule,
-          MatPaginatorModule,
+          //MatPaginatorModule,
           MatSortModule,
           MatTabsModule,
           MatRadioModule,
@@ -64,7 +64,7 @@ const MaterialComponents = [
           MatProgressBarModule,
           MatDialogModule,
           MatAutocompleteModule,
-          MatListModule,
+          //MatListModule,
           MatChipsModule,
           MatRippleModule,
           MatExpansionModule,
@@ -77,7 +77,7 @@ const MaterialComponents = [
           MatStepperModule,
           MatSidenavModule,
           MatSnackBarModule,
-          MatTreeModule,
+          //MatTreeModule,
           DragDropModule
       ];
           
